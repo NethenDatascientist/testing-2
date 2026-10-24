@@ -40,22 +40,22 @@ st.markdown(
             width: 100% !important;
         }
 
-        /* 1. Narrower, Sleek Left Sidebar */
+        /* 1. 15% Narrower Left Sidebar (200px instead of 235px) */
         section[data-testid="stSidebar"][aria-expanded="true"] {
-            width: 235px !important;
-            min-width: 235px !important;
-            max-width: 235px !important;
+            width: 200px !important;
+            min-width: 200px !important;
+            max-width: 200px !important;
             background: linear-gradient(180deg, rgba(15, 23, 42, 0.98) 0%, rgba(15, 23, 42, 0.92) 100%) !important;
             border-right: 1px solid rgba(148, 163, 184, 0.14) !important;
         }
         section[data-testid="stSidebar"] > div:first-child {
-            padding-top: 1rem !important;
-            padding-left: 0.75rem !important;
-            padding-right: 0.75rem !important;
+            padding-top: 0.85rem !important;
+            padding-left: 0.55rem !important;
+            padding-right: 0.55rem !important;
         }
         section[data-testid="stSidebar"] .stMarkdown p,
         section[data-testid="stSidebar"] label {
-            font-size: 0.83rem !important;
+            font-size: 0.79rem !important;
         }
 
         /* 2. Always-Visible Sidebar Collapse (<<) & Expand (>>) Button */
@@ -77,9 +77,9 @@ st.markdown(
             border-radius: 10px !important;
             color: #93C5FD !important;
             box-shadow: 0 0 12px rgba(59, 130, 246, 0.35), 0 2px 6px rgba(0, 0, 0, 0.5) !important;
-            width: 36px !important;
-            height: 36px !important;
-            min-height: 36px !important;
+            width: 34px !important;
+            height: 34px !important;
+            min-height: 34px !important;
             transition: all 0.2s ease-in-out !important;
         }
         [data-testid="stSidebarCollapseButton"] button:hover,
@@ -96,8 +96,8 @@ st.markdown(
         [data-testid="stExpandSidebarButton"] svg {
             fill: currentColor !important;
             color: inherit !important;
-            width: 1.25rem !important;
-            height: 1.25rem !important;
+            width: 1.2rem !important;
+            height: 1.2rem !important;
         }
 
         /* 3. Top Filter Control Cards */
@@ -159,9 +159,9 @@ st.markdown(
             font-size: 0.77rem;
         }
 
-        /* 5. CE-Friendly Combined Overdue Works Table (2-Line Work Name Wrapping) */
+        /* 5. CE-Friendly Combined Overdue Works Table (Wider + 3-Line Work Name Wrapping) */
         .ce-table-wrapper {
-            max-height: 560px;
+            max-height: 580px;
             overflow-y: auto;
             overflow-x: auto;
             border: 1px solid rgba(148, 163, 184, 0.22);
@@ -205,20 +205,21 @@ st.markdown(
             vertical-align: middle;
             line-height: 1.35;
         }
-        /* Clamp ಕಾಮಗಾರಿ ಹೆಸರು to 2 lines so table stays compact and easy to scan */
+        /* Wider ಕಾಮಗಾರಿ ಹೆಸರು column + up to 3 lines for long work names */
         .ce-work-name-cell {
-            min-width: 240px;
-            max-width: 320px;
+            width: 34%;
+            min-width: 380px;
+            max-width: 500px;
             white-space: normal;
         }
         .ce-work-name-clamp {
             display: -webkit-box;
-            -webkit-line-clamp: 2;
+            -webkit-line-clamp: 3;
             -webkit-box-orient: vertical;
             overflow: hidden;
             text-overflow: ellipsis;
             line-height: 1.35;
-            max-height: 2.7em;
+            max-height: 4.05em;
             font-weight: 600;
             color: #F8FAFC;
         }
@@ -254,8 +255,8 @@ st.markdown(
 # -----------------------------------------------------------------------------
 def inject_scroll_hud_graphics(enabled: bool = True):
     """
-    Injects an ultra-slim (14px — half of previous 26px width), 100% transparent,
-    writing-free right-edge scrolling ruler overlay.
+    Injects an ultra-slim (14px), 100% transparent, writing-free
+    right-edge scrolling ruler overlay.
     """
     components.html(
         f"""
@@ -265,7 +266,6 @@ def inject_scroll_hud_graphics(enabled: bool = True):
             const parentWin = window.parent;
             const isEnabled = {str(enabled).lower()};
 
-            // Remove any old HUD or leftover writing elements from previous versions
             const oldHud = parentDoc.getElementById("mi-scroll-hud-root");
             if (oldHud) oldHud.remove();
 
@@ -289,7 +289,7 @@ def inject_scroll_hud_graphics(enabled: bool = True):
                     position: fixed !important;
                     top: 0 !important;
                     right: 0 !important;
-                    width: 14px !important; /* Half width (14px) */
+                    width: 14px !important;
                     height: 100vh !important;
                     z-index: 999990 !important;
                     pointer-events: none !important;
@@ -500,7 +500,6 @@ def inject_scroll_hud_graphics(enabled: bool = True):
             parentWin.__miCurrentPct = parentWin.__miCurrentPct || 0;
 
             parentWin.__miHudStepFn = function() {{
-                // Keep any legacy topic nodes wiped
                 const strayTopic = parentDoc.getElementById("mi-scroll-hud-active-topic");
                 if (strayTopic) strayTopic.remove();
 
@@ -638,11 +637,6 @@ def get_shared_state_v10() -> dict:
 # HELPER FUNCTIONS
 # -----------------------------------------------------------------------------
 def compress_bar_length(val: float, threshold: int = BAR_SHRINK_THRESHOLD) -> float:
-    """
-    Keep values <= 250 at full 1:1 scale.
-    For values > 250, smoothly compress the excess into a tight 250..268 band
-    so normal bars use maximum horizontal width while labels stay 100% visible.
-    """
     v = float(val)
     t = float(threshold)
     if v <= t:
@@ -764,25 +758,8 @@ def download_xlsx_bytes(sheet_url: str) -> bytes:
 
 
 def find_matching_column_indices(headers: list[str]) -> dict:
-    """
-    Find required and optional 0-based column positions across sheets:
-    - division (ವಿಭಾಗ)
-    - subdivision (ಉಪವಿಭಾಗ)
-    - so (ಶಾಖಾಧಿಕಾರಿಯ ಹೆಸರು / Assistant Engineer)
-    - aee (ಸಹಾಯಕ ಕಾರ್ಯಪಾಲಕ ಇಂಜಿನಿಯರ್ ಹೆಸರು / Assistant Executive Engineer)
-    - ee (Executive Engineer)
-    - ta (Technical Assistant)
-    - as_off (Account Superintendent)
-    - work_name (ಕಾಮಗಾರಿ ಹೆಸರು)
-    - start_date (ಕಾಮಗಾರಿ ಪ್ರಾರಂಭಿಸಿದ ದಿನಾಂಕ)
-    - target_date (ಕಾಮಗಾರಿ ಮುಕ್ತಾಯಗೊಳಿಸಬೇಕಾದ ದಿನಾಂಕ)
-    - actual_date (ಮುಕ್ತಾಯವಾದ ದಿನಾಂಕ)
-    - hoa (ಲೆಕ್ಕಶೀರ್ಷಿಕೆ)
-    - status (CP/CF/P/TBS/TP/ETS/OTH)
-    """
     col_idx_map = {}
 
-    # Pass 1: Exact matches for Division, Sub-division, and new English columns
     for idx, col in enumerate(headers):
         norm_col = normalize_text(col)
         upper_col = norm_col.upper()
@@ -815,7 +792,6 @@ def find_matching_column_indices(headers: list[str]) -> dict:
         ):
             col_idx_map["hoa"] = idx
 
-    # Pass 2: Flexible substring matching
     for idx, col in enumerate(headers):
         norm_col = normalize_text(col)
         upper_col = norm_col.upper()
@@ -884,7 +860,6 @@ def find_matching_column_indices(headers: list[str]) -> dict:
         elif "CP/CF" in compact_upper and "status" not in col_idx_map:
             col_idx_map["status"] = idx
 
-    # Pass 3: Fallback for work_name if header simply says "ಕಾಮಗಾರಿ" or "Work Name"
     if "work_name" not in col_idx_map:
         for idx, col in enumerate(headers):
             norm_col = normalize_text(col)
@@ -980,7 +955,6 @@ def is_valid_division_text(val: str) -> bool:
 
 
 def map_optional_field(name: str) -> str:
-    """Map blank or placeholder cells in Sub-division, EE, TA, AS to UNSPECIFIED_LABEL."""
     if not name:
         return UNSPECIFIED_LABEL
     upper = name.upper().strip()
@@ -1001,7 +975,6 @@ def map_optional_field(name: str) -> str:
 
 
 def map_officer_or_unassigned(name: str) -> str:
-    """Map blank or placeholder AE / AEE officer cells to UNASSIGNED_LABEL."""
     if not name:
         return UNASSIGNED_LABEL
     upper = name.upper()
@@ -1028,7 +1001,6 @@ def shorten_label(name: str, max_len: int = 28) -> str:
 
 
 def display_clean_cell(val: str) -> str:
-    """Show '-' instead of internal 'Not Specified (Empty)' inside the CE table."""
     if not val or val in {UNSPECIFIED_LABEL, UNASSIGNED_LABEL}:
         return "-"
     return val
@@ -1036,8 +1008,8 @@ def display_clean_cell(val: str) -> str:
 
 def render_ce_overdue_html_table(df_display: pd.DataFrame) -> str:
     """
-    Render a clean, executive-friendly HTML table where 'ಕಾಮಗಾರಿ ಹೆಸರು' wraps
-    into 2 lines (with full text on hover) and all other columns stay crisp.
+    Render a clean, executive-friendly HTML table where 'ಕಾಮಗಾರಿ ಹೆಸರು' has
+    extra width and wraps up to 3 lines for long work names.
     """
     headers_html = "".join(
         f"<th>{html.escape(str(col))}</th>" for col in df_display.columns
@@ -1064,7 +1036,7 @@ def render_ce_overdue_html_table(df_display: pd.DataFrame) -> str:
                 cells_html.append(
                     f'<td class="ce-compact-cell">{escaped_text}</td>'
                 )
-        rows_html.append(f"<tr>{''.join(cells_html)}</tr>")
+        rows_html.append(f"<tr>{''.join(rows_html_inner := cells_html)}</tr>")
 
     return (
         f'<div class="ce-table-wrapper">'
@@ -1084,12 +1056,6 @@ def convert_df_to_excel_bytes(df: pd.DataFrame) -> bytes:
 
 
 def parse_xlsx_workbook(workbook_bytes: bytes):
-    """
-    Parse all 23 target worksheets.
-    A row is counted if and only if the 'ವಿಭಾಗ' (Division) column contains a valid text value.
-    Extracts Sub-division, Assistant Engineer, Assistant Executive Engineer,
-    Executive Engineer, Technical Assistant, Account Superintendent, and work details.
-    """
     progress = st.progress(0, text="Opening workbook...")
 
     try:
@@ -1291,7 +1257,6 @@ def parse_xlsx_workbook(workbook_bytes: bytes):
 
             is_overdue = is_status_p & target_is_before_today & actual_empty
 
-            # Row Inclusion Rule: Valid text in Division ('ವಿಭಾಗ') column
             valid_row_mask = s_div_raw.map(is_valid_division_text)
 
             s_subdiv_mapped = s_subdiv_raw.map(map_optional_field)
@@ -1360,7 +1325,6 @@ def parse_xlsx_workbook(workbook_bytes: bytes):
                         COL_START_DATE_KN: s_start_date.loc[overdue_mask].values,
                         COL_TARGET_DATE_KN: s_target_Formatted.loc[overdue_mask].values,
                         COL_HOA_KN: s_hoa.loc[overdue_mask].values,
-                        # Internal filter columns for exact matching
                         "_division_name": s_div_raw.loc[overdue_mask].values,
                         "_subdivision_name": s_subdiv_mapped.loc[overdue_mask].values,
                         "_ee_name": s_ee_mapped.loc[overdue_mask].values,
@@ -1439,7 +1403,6 @@ def save_shared_state(state: dict, data_tuple, source_label: str):
 
 
 def build_dropdown_options(df: pd.DataFrame, col_name: str) -> list[str]:
-    """Build sorted dropdown options with ALL at top and Not Specified (Empty) at bottom."""
     raw_vals = [
         v
         for v in df[col_name].dropna().unique().tolist()
@@ -1500,7 +1463,6 @@ shrink_outliers = st.sidebar.checkbox(
     help=f"Compresses bars above {BAR_SHRINK_THRESHOLD} works so all other bars look long and readable.",
 )
 
-# Default ticked (value=True) as requested
 hide_zero_overdue = st.sidebar.checkbox(
     "Show only officers with Overdue > 0",
     value=True,
@@ -2130,9 +2092,6 @@ if selected_officer:
                 officer_overdue_df["_as_name"] == selected_as
             ].copy()
 
-        # Opposite officer column rule:
-        # If in Assistant Engineer (ಶಾಖಾಧಿಕಾರಿಯ ಹೆಸರು) mode -> show ಸಹಾಯಕ ಕಾರ್ಯಪಾಲಕ ಇಂಜಿನಿಯರ್ ಹೆಸರು
-        # If in Assistant Executive Engineer (ಸಹಾಯಕ ಕಾರ್ಯಪಾಲಕ ಇಂಜಿನಿಯರ್ ಹೆಸರು) mode -> show ಶಾಖಾಧಿಕಾರಿಯ ಹೆಸರು
         opposite_officer_col = (
             COL_AEE_KN if view_choice == LABEL_AE_EN else COL_SO_KN
         )
@@ -2192,7 +2151,7 @@ if selected_officer:
                     use_container_width=True,
                 )
 
-            # Render the CE-friendly 2-line wrapped HTML table
+            # Render the CE-friendly 3-line wrapped HTML table
             st.markdown(
                 render_ce_overdue_html_table(officer_overdue_df),
                 unsafe_allow_html=True,
