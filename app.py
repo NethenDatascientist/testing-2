@@ -1,3 +1,4 @@
+import calendar
 import html
 import io
 import os
@@ -16,49 +17,37 @@ import streamlit as st
 import streamlit.components.v1 as components
 
 # -----------------------------------------------------------------------------
-# PAGE CONFIGURATION
+# PAGE CONFIGURATION (MOBILE PORTRAIT OPTIMIZED FOR CE)
 # -----------------------------------------------------------------------------
 st.set_page_config(
-    page_title="Overdue Works Dashboard",
-    page_icon="📊",
-    layout="wide",
-    initial_sidebar_state="expanded",
+    page_title="MI Overdue Works — CE Mobile View",
+    page_icon="📱",
+    layout="centered",
+    initial_sidebar_state="collapsed",
 )
 
 st.markdown(
     """
     <style>
-        /* Full-width layout */
-        .block-container {
-            max-width: 100% !important;
-            padding-left: 1.1rem !important;
-            padding-right: 1.2rem !important;
-            padding-top: 2.3rem !important;
-            padding-bottom: 2rem !important;
+        header[data-testid="stHeader"] {
+            background: transparent !important;
         }
-        [data-testid="stPlotlyChart"] {
-            width: 100% !important;
+        .block-container {
+            max-width: 680px !important;
+            padding-left: 0.65rem !important;
+            padding-right: 0.85rem !important;
+            padding-top: 3.4rem !important;
+            padding-bottom: 2.5rem !important;
         }
 
-        /* 1. 15% Narrower Left Sidebar (200px instead of 235px) */
+        /* Compact Mobile Sidebar (200px) & Always-Visible Toggle Button */
         section[data-testid="stSidebar"][aria-expanded="true"] {
             width: 200px !important;
             min-width: 200px !important;
             max-width: 200px !important;
-            background: linear-gradient(180deg, rgba(15, 23, 42, 0.98) 0%, rgba(15, 23, 42, 0.92) 100%) !important;
+            background: linear-gradient(180deg, rgba(15, 23, 42, 0.98) 0%, rgba(15, 23, 42, 0.94) 100%) !important;
             border-right: 1px solid rgba(148, 163, 184, 0.14) !important;
         }
-        section[data-testid="stSidebar"] > div:first-child {
-            padding-top: 0.85rem !important;
-            padding-left: 0.55rem !important;
-            padding-right: 0.55rem !important;
-        }
-        section[data-testid="stSidebar"] .stMarkdown p,
-        section[data-testid="stSidebar"] label {
-            font-size: 0.79rem !important;
-        }
-
-        /* 2. Always-Visible Sidebar Collapse (<<) & Expand (>>) Button */
         [data-testid="stSidebarCollapseButton"],
         [data-testid="collapsedControl"],
         [data-testid="stExpandSidebarButton"] {
@@ -76,140 +65,165 @@ st.markdown(
             border: 1.5px solid rgba(59, 130, 246, 0.75) !important;
             border-radius: 10px !important;
             color: #93C5FD !important;
-            box-shadow: 0 0 12px rgba(59, 130, 246, 0.35), 0 2px 6px rgba(0, 0, 0, 0.5) !important;
+            box-shadow: 0 0 10px rgba(59, 130, 246, 0.35), 0 2px 6px rgba(0, 0, 0, 0.5) !important;
             width: 34px !important;
             height: 34px !important;
             min-height: 34px !important;
-            transition: all 0.2s ease-in-out !important;
-        }
-        [data-testid="stSidebarCollapseButton"] button:hover,
-        [data-testid="collapsedControl"] button:hover,
-        [data-testid="stExpandSidebarButton"]:hover {
-            background: linear-gradient(135deg, #2563EB, #1D4ED8) !important;
-            border-color: #BFDBFE !important;
-            color: #FFFFFF !important;
-            box-shadow: 0 0 18px rgba(59, 130, 246, 0.85) !important;
-            transform: scale(1.06) !important;
-        }
-        [data-testid="stSidebarCollapseButton"] svg,
-        [data-testid="collapsedControl"] svg,
-        [data-testid="stExpandSidebarButton"] svg {
-            fill: currentColor !important;
-            color: inherit !important;
-            width: 1.2rem !important;
-            height: 1.2rem !important;
         }
 
-        /* 3. Top Filter Control Cards */
-        div[data-testid="stVerticalBlockBorderWrapper"] {
-            border-radius: 12px !important;
-            padding: 0.4rem 0.6rem !important;
-            background: linear-gradient(145deg, rgba(30, 41, 59, 0.48), rgba(15, 23, 42, 0.68)) !important;
-            border: 1px solid rgba(148, 163, 184, 0.18) !important;
-            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.22) !important;
+        /* Mobile Title & Status Banner */
+        .mobile-title {
+            font-size: 1.22rem;
+            font-weight: 800;
+            line-height: 1.3;
+            margin-bottom: 0.35rem;
         }
-        div[role="radiogroup"] {
-            gap: 0.8rem !important;
-            padding-top: 0.15rem !important;
-        }
-
-        /* 4. KPI Metric Cards */
-        div[data-testid="stMetric"] {
-            background: linear-gradient(145deg, rgba(30, 41, 59, 0.55), rgba(15, 23, 42, 0.78)) !important;
-            border: 1px solid rgba(148, 163, 184, 0.16) !important;
-            border-top: 3px solid #3B82F6 !important;
-            border-radius: 12px !important;
-            padding: 0.6rem 0.85rem !important;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2) !important;
-        }
-        div[data-testid="stMetricValue"] {
-            font-size: 1.6rem !important;
-            font-weight: 700 !important;
-        }
-        div[data-testid="stMetricLabel"] {
-            font-size: 0.82rem !important;
-            color: #CBD5E1 !important;
-        }
-
-        /* Status Bar Banner */
         .mi-status-bar {
             display: flex;
             flex-wrap: wrap;
             align-items: center;
-            gap: 0.6rem 1.1rem;
-            padding: 0.42rem 0.85rem;
-            margin-top: -0.35rem;
-            margin-bottom: 0.75rem;
+            gap: 0.35rem 0.65rem;
+            padding: 0.38rem 0.65rem;
+            margin-bottom: 0.65rem;
             border-radius: 10px;
             background: rgba(30, 41, 59, 0.45);
             border: 1px solid rgba(148, 163, 184, 0.14);
-            font-size: 0.81rem;
+            font-size: 0.74rem;
             color: #CBD5E1;
         }
         .mi-status-pill {
             display: inline-flex;
             align-items: center;
-            gap: 0.35rem;
-            padding: 0.12rem 0.55rem;
+            gap: 0.25rem;
+            padding: 0.1rem 0.45rem;
             border-radius: 999px;
             background: rgba(59, 130, 246, 0.15);
             border: 1px solid rgba(59, 130, 246, 0.35);
             color: #93C5FD;
             font-weight: 600;
-            font-size: 0.77rem;
+            font-size: 0.72rem;
         }
 
-        /* 5. CE-Friendly Combined Overdue Works Table (Wider + 3-Line Work Name Wrapping) */
+        /* Spaced Bordered Control Cards on Mobile */
+        div[data-testid="stVerticalBlockBorderWrapper"] {
+            border-radius: 12px !important;
+            padding: 0.35rem 0.5rem !important;
+            margin-bottom: 0.45rem !important;
+            background: linear-gradient(145deg, rgba(30, 41, 59, 0.48), rgba(15, 23, 42, 0.68)) !important;
+            border: 1px solid rgba(148, 163, 184, 0.18) !important;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2) !important;
+        }
+
+        /* 2x2 Responsive KPI Grid with Reddish & Greenish Layers */
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            margin-top: 6px;
+            margin-bottom: 8px;
+        }
+        .kpi-card {
+            background: linear-gradient(145deg, rgba(30, 41, 59, 0.55), rgba(15, 23, 42, 0.82));
+            border: 1px solid rgba(148, 163, 184, 0.20);
+            border-top: 3px solid #3B82F6;
+            border-radius: 10px;
+            padding: 9px 11px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        }
+        .kpi-card-red {
+            background: linear-gradient(145deg, rgba(127, 29, 29, 0.38), rgba(15, 23, 42, 0.85));
+            border: 1px solid rgba(239, 68, 68, 0.30);
+            border-top: 3px solid #EF4444;
+            border-radius: 10px;
+            padding: 9px 11px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        }
+        .kpi-card-green {
+            background: linear-gradient(145deg, rgba(6, 78, 59, 0.38), rgba(15, 23, 42, 0.85));
+            border: 1px solid rgba(74, 222, 128, 0.28);
+            border-top: 3px solid #4ADE80;
+            border-radius: 10px;
+            padding: 9px 11px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        }
+        .kpi-label {
+            font-size: 0.73rem;
+            font-weight: 600;
+            color: #CBD5E1;
+            margin-bottom: 2px;
+        }
+        .kpi-val {
+            font-size: 1.18rem;
+            font-weight: 800;
+            line-height: 1.2;
+            color: #F8FAFC;
+        }
+
+        /* Legend Pill Bar */
+        .legend-bar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin: 4px 0 4px 0;
+            padding: 6px 10px;
+            background: rgba(148, 163, 184, 0.08);
+            border-radius: 8px;
+        }
+        .dot-red { color: #EF4444; }
+        .dot-green { color: #4ADE80; }
+        .dot-grey { color: #94A3B8; }
+
+        /* CE-Friendly Mobile Overdue Table (Elevated Dark Header + Compact Work Name) */
         .ce-table-wrapper {
-            max-height: 580px;
+            max-height: 500px;
             overflow-y: auto;
             overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
             border: 1px solid rgba(148, 163, 184, 0.22);
             border-radius: 12px;
-            background: rgba(15, 23, 42, 0.75);
-            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.28);
-            margin-top: 0.4rem;
-            margin-bottom: 0.8rem;
+            background: rgba(15, 23, 42, 0.78);
+            box-shadow: 0 6px 18px rgba(0, 0, 0, 0.28);
+            margin-top: 0.35rem;
+            margin-bottom: 0.75rem;
         }
         table.ce-overdue-table {
             width: 100%;
             border-collapse: collapse;
-            font-size: 0.84rem;
+            font-size: 0.78rem;
             color: #E2E8F0;
         }
         table.ce-overdue-table thead th {
             position: sticky;
             top: 0;
             z-index: 10;
-            background: #1E293B;
-            color: #93C5FD;
+            background: #273346;
+            color: #F1F5F9;
             font-weight: 700;
             text-align: left;
-            padding: 10px 10px;
-            border-bottom: 2px solid rgba(59, 130, 246, 0.45);
+            padding: 9px 8px;
+            border-bottom: 2px solid #3B82F6;
             white-space: nowrap;
-            font-size: 0.81rem;
+            font-size: 0.76rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.4);
         }
         table.ce-overdue-table tbody tr {
             border-bottom: 1px solid rgba(148, 163, 184, 0.12);
-            transition: background-color 0.15s ease;
         }
         table.ce-overdue-table tbody tr:nth-child(even) {
             background: rgba(30, 41, 59, 0.32);
         }
-        table.ce-overdue-table tbody tr:hover {
-            background: rgba(59, 130, 246, 0.14);
-        }
         table.ce-overdue-table td {
-            padding: 8px 10px;
+            padding: 7px 8px;
             vertical-align: middle;
-            line-height: 1.35;
+            line-height: 1.32;
         }
-        /* Wider ಕಾಮಗಾರಿ ಹೆಸರು column + up to 3 lines for long work names */
+        /* Compact Work Name on Mobile (25% reduced width + 3-line clamp) */
         .ce-work-name-cell {
-            width: 34%;
-            min-width: 380px;
-            max-width: 500px;
+            width: 25%;
+            min-width: 210px;
+            max-width: 260px;
             white-space: normal;
         }
         .ce-work-name-clamp {
@@ -218,31 +232,38 @@ st.markdown(
             -webkit-box-orient: vertical;
             overflow: hidden;
             text-overflow: ellipsis;
-            line-height: 1.35;
-            max-height: 4.05em;
+            line-height: 1.32;
+            max-height: 3.96em;
             font-weight: 600;
             color: #F8FAFC;
         }
         .ce-compact-cell {
             white-space: nowrap;
-            font-size: 0.82rem;
+            font-size: 0.77rem;
         }
         .ce-date-overdue {
             color: #FCA5A5;
             font-weight: 700;
             white-space: nowrap;
+            font-size: 0.77rem;
         }
         .ce-sl-cell {
             text-align: center;
             font-weight: 600;
             color: #94A3B8;
-            width: 44px;
+            width: 36px;
         }
 
+        div[role="radiogroup"] {
+            gap: 0.5rem !important;
+        }
         hr {
-            margin-top: 0.55rem !important;
-            margin-bottom: 0.65rem !important;
+            margin-top: 0.45rem !important;
+            margin-bottom: 0.5rem !important;
             border-color: rgba(148, 163, 184, 0.15) !important;
+        }
+        [data-testid="stPlotlyChart"] {
+            width: 100% !important;
         }
     </style>
     """,
@@ -251,13 +272,9 @@ st.markdown(
 
 
 # -----------------------------------------------------------------------------
-# ULTRA-SLIM (14px), TEXT-FREE RIGHT-EDGE SCROLLER
+# ULTRA-SLIM (14px), TEXT-FREE RIGHT-EDGE SCROLLER (WITH RELOAD FIX)
 # -----------------------------------------------------------------------------
 def inject_scroll_hud_graphics(enabled: bool = True):
-    """
-    Injects an ultra-slim (14px), 100% transparent, writing-free
-    right-edge scrolling ruler overlay.
-    """
     components.html(
         f"""
         <script>
@@ -265,6 +282,14 @@ def inject_scroll_hud_graphics(enabled: bool = True):
             const parentDoc = window.parent.document;
             const parentWin = window.parent;
             const isEnabled = {str(enabled).lower()};
+
+            // 1. CLEANUP PREVIOUS RUN (Prevents freeze after Sync/Reload)
+            if (parentWin.__miScrollHudRAF) {{
+                parentWin.cancelAnimationFrame(parentWin.__miScrollHudRAF);
+            }}
+            if (parentWin.__miScrollHandler) {{
+                parentDoc.removeEventListener("scroll", parentWin.__miScrollHandler, {{ capture: true }});
+            }}
 
             const oldHud = parentDoc.getElementById("mi-scroll-hud-root");
             if (oldHud) oldHud.remove();
@@ -276,10 +301,9 @@ def inject_scroll_hud_graphics(enabled: bool = True):
                 "#mi-scroll-hud-active-topic, .mi-hud-section-Node, #mi-scroll-hud-crosshair"
             ).forEach(el => el.remove());
 
-            if (!isEnabled) {{
-                return;
-            }}
+            if (!isEnabled) return;
 
+            // 2. INJECT CSS
             const style = parentDoc.createElement("style");
             style.id = "mi-scroll-hud-style";
             style.innerHTML = `
@@ -330,7 +354,7 @@ def inject_scroll_hud_graphics(enabled: bool = True):
                 }}
 
                 .mi-hud-tick-label {{
-                    font-size: 7.5px;
+                    font-size: 7px;
                     font-weight: 600;
                     color: rgba(226, 232, 240, 0.42);
                     margin-right: 1.5px;
@@ -371,7 +395,7 @@ def inject_scroll_hud_graphics(enabled: bool = True):
                     margin-top: 2px;
                     padding-right: 1px;
                     text-align: right;
-                    font-size: 7.5px;
+                    font-size: 7px;
                     font-weight: 700;
                     color: #93C5FD;
                     white-space: nowrap;
@@ -380,7 +404,7 @@ def inject_scroll_hud_graphics(enabled: bool = True):
             `;
             parentDoc.head.appendChild(style);
 
-            const PX_PER_UNIT = 40;
+            const PX_PER_UNIT = 38;
 
             const hudRoot = parentDoc.createElement("div");
             hudRoot.id = "mi-scroll-hud-root";
@@ -417,26 +441,20 @@ def inject_scroll_hud_graphics(enabled: bool = True):
             `;
             parentDoc.body.appendChild(hudRoot);
 
-            if (!parentWin.__miScrollHudListenerAttached) {{
-                parentWin.__miScrollHudListenerAttached = true;
-                parentWin.__miActiveScroller = null;
-
-                parentDoc.addEventListener(
-                    "scroll",
-                    function(e) {{
-                        const t = e.target;
-                        if (
-                            t &&
-                            t !== parentDoc &&
-                            t.scrollHeight > t.clientHeight + 20 &&
-                            t.clientHeight > parentWin.innerHeight * 0.45
-                        ) {{
-                            parentWin.__miActiveScroller = t;
-                        }}
-                    }},
-                    {{ passive: true, capture: true }}
-                );
-            }}
+            // 3. RE-BIND SCROLL EVENT LISTENER
+            parentWin.__miActiveScroller = null;
+            parentWin.__miScrollHandler = function(e) {{
+                const t = e.target;
+                if (
+                    t &&
+                    t !== parentDoc &&
+                    t.scrollHeight > t.clientHeight + 20 &&
+                    t.clientHeight > parentWin.innerHeight * 0.45
+                ) {{
+                    parentWin.__miActiveScroller = t;
+                }}
+            }};
+            parentDoc.addEventListener("scroll", parentWin.__miScrollHandler, {{ passive: true, capture: true }});
 
             function findScrollElement() {{
                 const activeScroller = parentWin.__miActiveScroller;
@@ -497,12 +515,10 @@ def inject_scroll_hud_graphics(enabled: bool = True):
                 return Math.max(0, Math.min(100, pct));
             }}
 
+            // 4. RE-BIND ANIMATION LOOP
             parentWin.__miCurrentPct = parentWin.__miCurrentPct || 0;
 
             parentWin.__miHudStepFn = function() {{
-                const strayTopic = parentDoc.getElementById("mi-scroll-hud-active-topic");
-                if (strayTopic) strayTopic.remove();
-
                 const root = parentDoc.getElementById("mi-scroll-hud-root");
                 const inner = parentDoc.getElementById("mi-scroll-hud-ticks-inner");
                 const indicator = parentDoc.getElementById("mi-scroll-hud-indicator");
@@ -524,16 +540,14 @@ def inject_scroll_hud_graphics(enabled: bool = True):
                 }}
             }};
 
-            if (!parentWin.__miScrollHudLoopRunning) {{
-                parentWin.__miScrollHudLoopRunning = true;
-                function loop() {{
-                    if (parentWin.__miHudStepFn) {{
-                        parentWin.__miHudStepFn();
-                    }}
-                    parentWin.requestAnimationFrame(loop);
+            function loop() {{
+                if (parentWin.__miHudStepFn) {{
+                    parentWin.__miHudStepFn();
                 }}
-                parentWin.requestAnimationFrame(loop);
+                parentWin.__miScrollHudRAF = parentWin.requestAnimationFrame(loop);
             }}
+
+            parentWin.__miScrollHudRAF = parentWin.requestAnimationFrame(loop);
         }})();
         </script>
         """,
@@ -571,8 +585,7 @@ TARGET_SHEETS = [
     "NABARD - Other Flood Control",
 ]
 
-# Raw Kannada / Sheet Column Identifiers (Used inside Combined Overdue Works Table)
-COL_WORK_NAME_KN = "ಕಾಮಗಾರಿ ಹೆಸರು"
+COL_WORK_NAME_KN = "Work Name"
 COL_DIV_KN = "ವಿಭಾಗ"
 COL_SUBDIV_KN = "ಉಪವಿಭಾಗ"
 COL_SO_KN = "ಶಾಖಾಧಿಕಾರಿಯ ಹೆಸರು"
@@ -583,7 +596,6 @@ COL_ACTUAL_DATE_KN = "ಮುಕ್ತಾಯವಾದ ದಿನಾಂಕ"
 COL_HOA_KN = "ಲೆಕ್ಕಶೀರ್ಷಿಕೆ"
 COL_STATUS_STD = "CP/CF/P/TBS/TP/ETS/OTH"
 
-# English Labels Used Across the Dashboard UI
 LABEL_DIV_EN = "Division"
 LABEL_SUBDIV_EN = "Sub-division"
 LABEL_AE_EN = "Assistant Engineer"
@@ -604,15 +616,15 @@ DEFAULT_SHEET_URL = st.secrets.get(
     "https://docs.google.com/spreadsheets/d/13W04z-fdU3RhuVJ5vQFRpK4BBSQRJWfscPqpr7Oj2Y8/edit?gid=1055199869#gid=1055199869",
 )
 
-SCHEMA_VERSION = "v10_ce_exec_dashboard"
-DISK_BACKUP_FILE = "/tmp/mi_overdue_shared_snapshot_v10.pkl"
+SCHEMA_VERSION = "v11_ce_overdue_dashboard"
+DISK_BACKUP_FILE = "/tmp/mi_overdue_shared_snapshot_v11.pkl"
 
 
 # -----------------------------------------------------------------------------
 # SHARED SERVER MEMORY & LOCK
 # -----------------------------------------------------------------------------
 @st.cache_resource
-def get_shared_state_v10() -> dict:
+def get_shared_state_v11() -> dict:
     state = {
         "version": SCHEMA_VERSION,
         "lock": threading.Lock(),
@@ -636,6 +648,50 @@ def get_shared_state_v10() -> dict:
 # -----------------------------------------------------------------------------
 # HELPER FUNCTIONS
 # -----------------------------------------------------------------------------
+def calc_overdue_duration(target_date_obj, current_date_obj) -> str:
+    """Calculates the exact elapsed time (Years, Months, Days) including today."""
+    if not isinstance(target_date_obj, date) or target_date_obj >= current_date_obj:
+        return "-"
+
+    y = current_date_obj.year - target_date_obj.year
+    m = current_date_obj.month - target_date_obj.month
+    d = current_date_obj.day - target_date_obj.day + 1  # Include today
+
+    if d <= 0:
+        m -= 1
+        prev_month = current_date_obj.month - 1 if current_date_obj.month > 1 else 12
+        prev_year = (
+            current_date_obj.year
+            if current_date_obj.month > 1
+            else current_date_obj.year - 1
+        )
+        d += calendar.monthrange(prev_year, prev_month)[1]
+
+    if m < 0:
+        y -= 1
+        m += 12
+
+    days_in_current_month = calendar.monthrange(
+        current_date_obj.year, current_date_obj.month
+    )[1]
+    if d > days_in_current_month:
+        d -= days_in_current_month
+        m += 1
+        if m >= 12:
+            m -= 12
+            y += 1
+
+    parts = []
+    if y > 0:
+        parts.append(f"{y} year{'s' if y > 1 else ''}")
+    if m > 0:
+        parts.append(f"{m} month{'s' if m > 1 else ''}")
+    if d > 0:
+        parts.append(f"{d} day{'s' if d > 1 else ''}")
+
+    return "(" + ", ".join(parts) + ")" if parts else "(0 days)"
+
+
 def compress_bar_length(val: float, threshold: int = BAR_SHRINK_THRESHOLD) -> float:
     v = float(val)
     t = float(threshold)
@@ -722,7 +778,7 @@ def format_cell_for_display(val) -> str:
 def extract_spreadsheet_key(sheet_url: str) -> str:
     match = re.search(r"/spreadsheets/d/([a-zA-Z0-9-_]+)", sheet_url)
     if not match:
-        raise ValueError("Invalid Google Sheet URL. Could not extract spreadsheet key.")
+        raise ValueError("Invalid Google Sheet URL.")
     return match.group(1)
 
 
@@ -734,9 +790,9 @@ def download_xlsx_bytes(sheet_url: str) -> bytes:
     ]
     headers = {
         "User-Agent": (
-            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+            "Mozilla/5.0 (Linux; Android 14; Pixel 8) "
             "AppleWebKit/537.36 (KHTML, like Gecko) "
-            "Chrome/128.0.0.0 Safari/537.36"
+            "Chrome/128.0.0.0 Mobile Safari/537.36"
         ),
     }
 
@@ -782,7 +838,14 @@ def find_matching_column_indices(headers: list[str]) -> dict:
         ):
             col_idx_map["as_off"] = idx
         elif (
-            norm_col in {"ಕಾಮಗಾರಿ ಹೆಸರು", "ಕಾಮಗಾರಿಯ ಹೆಸರು", "ಕಾಮಗಾರಿಗಳ ಹೆಸರು"}
+            norm_col
+            in {
+                "ಕಾಮಗಾರಿ ಹೆಸರು",
+                "ಕಾಮಗಾರಿಯ ಹೆಸರು",
+                "ಕಾಮಗಾರಿಗಳ ಹೆಸರು",
+                "WORK NAME",
+                "NAME OF WORK",
+            }
             and "work_name" not in col_idx_map
         ):
             col_idx_map["work_name"] = idx
@@ -847,7 +910,11 @@ def find_matching_column_indices(headers: list[str]) -> dict:
         ) and "start_date" not in col_idx_map:
             col_idx_map["start_date"] = idx
         elif (
-            ("ಕಾಮಗಾರಿ ಹೆಸರು" in norm_col or "ಕಾಮಗಾರಿಯ ಹೆಸರು" in norm_col or "ಕಾಮಗಾರಿಗಳ ಹೆಸರು" in norm_col)
+            (
+                "ಕಾಮಗಾರಿ ಹೆಸರು" in norm_col
+                or "ಕಾಮಗಾರಿಯ ಹೆಸರು" in norm_col
+                or "ಕಾಮಗಾರಿಗಳ ಹೆಸರು" in norm_col
+            )
             and "ದಿನಾಂಕ" not in norm_col
             and "work_name" not in col_idx_map
         ):
@@ -865,7 +932,11 @@ def find_matching_column_indices(headers: list[str]) -> dict:
             norm_col = normalize_text(col)
             upper_col = norm_col.upper()
             if (
-                ("ಕಾಮಗಾರಿ" in norm_col or "WORK NAME" in upper_col or "NAME OF WORK" in upper_col)
+                (
+                    "ಕಾಮಗಾರಿ" in norm_col
+                    or "WORK NAME" in upper_col
+                    or "NAME OF WORK" in upper_col
+                )
                 and "ದಿನಾಂಕ" not in norm_col
                 and "ಮೊತ್ತ" not in norm_col
                 and "ಸಂಖ್ಯೆ" not in norm_col
@@ -968,7 +1039,13 @@ def map_optional_field(name: str) -> str:
         or "ಒಟ್ಟು" in name
         or "TOTAL" in upper
         or name in {COL_SUBDIV_KN, "ಉಪ ವಿಭಾಗ", "ಉಪವಿಭಾಗದ ಹೆಸರು"}
-        or upper in {"EXECUTIVE ENGINEER", "TECHNICAL ASSISTANT", "ACCOUNT SUPERINTENDENT", "ACCOUNTS SUPERINTENDENT"}
+        or upper
+        in {
+            "EXECUTIVE ENGINEER",
+            "TECHNICAL ASSISTANT",
+            "ACCOUNT SUPERINTENDENT",
+            "ACCOUNTS SUPERINTENDENT",
+        }
     ):
         return UNSPECIFIED_LABEL
     return name
@@ -994,10 +1071,12 @@ def map_officer_or_unassigned(name: str) -> str:
     return name
 
 
-def shorten_label(name: str, max_len: int = 28) -> str:
+def shorten_mobile_label(name: str, max_len: int = 15) -> str:
+    """Shorten Y-axis officer names on portrait phones so bars have maximum width."""
     if name == UNASSIGNED_LABEL:
-        return "⚠️ Unassigned (Empty)"
-    return name if len(name) <= max_len else name[: max_len - 1] + "…"
+        return "⚠️ Unassigned"
+    clean = re.sub(r"^(ಶ್ರೀ|ಶ್ರೀಮತಿ|ಕುಮಾರಿ)\.?\s*", "", name).strip()
+    return clean if len(clean) <= max_len else clean[: max_len - 1] + "…"
 
 
 def display_clean_cell(val: str) -> str:
@@ -1007,10 +1086,6 @@ def display_clean_cell(val: str) -> str:
 
 
 def render_ce_overdue_html_table(df_display: pd.DataFrame) -> str:
-    """
-    Render a clean, executive-friendly HTML table where 'ಕಾಮಗಾರಿ ಹೆಸರು' has
-    extra width and wraps up to 3 lines for long work names.
-    """
     headers_html = "".join(
         f"<th>{html.escape(str(col))}</th>" for col in df_display.columns
     )
@@ -1022,13 +1097,13 @@ def render_ce_overdue_html_table(df_display: pd.DataFrame) -> str:
             raw_text = str(row[col]) if pd.notna(row[col]) else "-"
             escaped_text = html.escape(raw_text if raw_text else "-")
 
-            if col == COL_WORK_NAME_KN:
+            if col == "Work Name":
                 cells_html.append(
                     f'<td class="ce-work-name-cell" title="{escaped_text}">'
                     f'<div class="ce-work-name-clamp">{escaped_text}</div>'
                     f"</td>"
                 )
-            elif col == COL_TARGET_DATE_KN:
+            elif col in ["Target Date", "Overdue By"]:
                 cells_html.append(
                     f'<td class="ce-date-overdue">{escaped_text}</td>'
                 )
@@ -1036,7 +1111,7 @@ def render_ce_overdue_html_table(df_display: pd.DataFrame) -> str:
                 cells_html.append(
                     f'<td class="ce-compact-cell">{escaped_text}</td>'
                 )
-        rows_html.append(f"<tr>{''.join(rows_html_inner := cells_html)}</tr>")
+        rows_html.append(f"<tr>{''.join(cells_html)}</tr>")
 
     return (
         f'<div class="ce-table-wrapper">'
@@ -1077,7 +1152,7 @@ def parse_xlsx_workbook(workbook_bytes: bytes):
     for idx_sheet, target in enumerate(TARGET_SHEETS, start=1):
         progress.progress(
             idx_sheet / total_targets,
-            text=f"Processing worksheet {idx_sheet}/{total_targets}: {target}...",
+            text=f"Reading {idx_sheet}/{total_targets}: {target}...",
         )
 
         norm_target = normalize_text(target).lower()
@@ -1087,7 +1162,7 @@ def parse_xlsx_workbook(workbook_bytes: bytes):
             sheet_diagnostics.append(
                 {
                     "Sheet": target,
-                    "Status": "Missing in Workbook",
+                    "Status": "Missing",
                     "Sub-division Col": "N/A",
                     "EE / TA / AS Cols": "N/A",
                     "Rows Loaded": 0,
@@ -1100,17 +1175,6 @@ def parse_xlsx_workbook(workbook_bytes: bytes):
         try:
             raw_df = read_sheet_safely(excel_file, workbook_bytes, actual_sheet_name)
             if raw_df.empty:
-                sheet_diagnostics.append(
-                    {
-                        "Sheet": target,
-                        "Status": "Empty Sheet",
-                        "Sub-division Col": "N/A",
-                        "EE / TA / AS Cols": "N/A",
-                        "Rows Loaded": 0,
-                        "Overdue ('P')": 0,
-                        "ETS": 0,
-                    }
-                )
                 continue
 
             header_idx = None
@@ -1127,17 +1191,6 @@ def parse_xlsx_workbook(workbook_bytes: bytes):
                     break
 
             if header_idx is None:
-                sheet_diagnostics.append(
-                    {
-                        "Sheet": target,
-                        "Status": "Header Row Not Found",
-                        "Sub-division Col": "N/A",
-                        "EE / TA / AS Cols": "N/A",
-                        "Rows Loaded": 0,
-                        "Overdue ('P')": 0,
-                        "ETS": 0,
-                    }
-                )
                 continue
 
             raw_headers = [
@@ -1190,23 +1243,7 @@ def parse_xlsx_workbook(workbook_bytes: bytes):
                     if k not in col_idx_map:
                         col_idx_map[k] = v
 
-            missing_keys = required_keys - set(col_idx_map.keys())
-            if missing_keys:
-                sheet_diagnostics.append(
-                    {
-                        "Sheet": target,
-                        "Status": f"Missing Columns: {', '.join(sorted(missing_keys))}",
-                        "Sub-division Col": "Found" if "subdivision" in col_idx_map else "Missing",
-                        "EE / TA / AS Cols": (
-                            f"EE:{'Y' if 'ee' in col_idx_map else 'N'} "
-                            f"TA:{'Y' if 'ta' in col_idx_map else 'N'} "
-                            f"AS:{'Y' if 'as_off' in col_idx_map else 'N'}"
-                        ),
-                        "Rows Loaded": 0,
-                        "Overdue ('P')": 0,
-                        "ETS": 0,
-                    }
-                )
+            if required_keys - set(col_idx_map.keys()):
                 continue
 
             df = raw_df.iloc[header_idx + 1 :].reset_index(drop=True).copy()
@@ -1242,6 +1279,11 @@ def parse_xlsx_workbook(workbook_bytes: bytes):
 
             target_date_list = parse_indian_date_list(s_target_raw)
             actual_empty = is_empty_date(s_actual_raw)
+
+            duration_list = [
+                calc_overdue_duration(td, today_ist_date) for td in target_date_list
+            ]
+            s_overdue_duration = pd.Series(duration_list, index=df.index, dtype=str)
 
             is_status_p = s_status_upper == "P"
             is_status_ets = s_status_upper == "ETS"
@@ -1324,6 +1366,7 @@ def parse_xlsx_workbook(workbook_bytes: bytes):
                         ],
                         COL_START_DATE_KN: s_start_date.loc[overdue_mask].values,
                         COL_TARGET_DATE_KN: s_target_Formatted.loc[overdue_mask].values,
+                        "Overdue By": s_overdue_duration.loc[overdue_mask].values,
                         COL_HOA_KN: s_hoa.loc[overdue_mask].values,
                         "_division_name": s_div_raw.loc[overdue_mask].values,
                         "_subdivision_name": s_subdiv_mapped.loc[overdue_mask].values,
@@ -1340,7 +1383,7 @@ def parse_xlsx_workbook(workbook_bytes: bytes):
                 {
                     "Sheet": target,
                     "Status": "Loaded",
-                    "Sub-division Col": "Found" if "subdivision" in col_idx_map else "Not in Sheet (Included)",
+                    "Sub-division Col": "Found" if "subdivision" in col_idx_map else "Missing",
                     "EE / TA / AS Cols": (
                         f"EE:{'Y' if 'ee' in col_idx_map else 'N'} | "
                         f"TA:{'Y' if 'ta' in col_idx_map else 'N'} | "
@@ -1422,13 +1465,11 @@ st.sidebar.header("⚙️ Dashboard Controls")
 sheet_url_input = st.sidebar.text_input(
     "Google Spreadsheet Link",
     value=DEFAULT_SHEET_URL,
-    help="Ensure the Google Sheet is set to 'Anyone with the link can view'.",
 )
 
 uploaded_xlsx = st.sidebar.file_uploader(
     "Or Upload Workbook (.xlsx) Directly",
     type=["xlsx"],
-    help="Optional: Upload a downloaded .xlsx copy to update all screens immediately.",
 )
 
 sync_clicked = st.sidebar.button(
@@ -1446,21 +1487,9 @@ denominator_mode = st.sidebar.radio(
     index=0,
 )
 
-chart_style = st.sidebar.radio(
-    "Bar Width Mode:",
-    options=[
-        "Overlay (Overdue + ETS + Rest of Works)",
-        "Scale by Overdue Works (Full-Width Bars)",
-        "Scale by Overdue Percentage (%)",
-    ],
-    index=0,
-    help="Choose how the horizontal bars are scaled across the page.",
-)
-
 shrink_outliers = st.sidebar.checkbox(
     f"Shrink long bars above {BAR_SHRINK_THRESHOLD} works",
     value=True,
-    help=f"Compresses bars above {BAR_SHRINK_THRESHOLD} works so all other bars look long and readable.",
 )
 
 hide_zero_overdue = st.sidebar.checkbox(
@@ -1471,21 +1500,22 @@ hide_zero_overdue = st.sidebar.checkbox(
 show_unassigned_bar = st.sidebar.checkbox(
     "Include Empty / Unassigned Officer bar at the bottom",
     value=True,
-    help="Groups all works where the officer name is blank into a single bar pinned at the bottom.",
 )
 
 show_scroll_hud = st.sidebar.checkbox(
     "Show Right-Edge Scroll HUD Ruler",
     value=True,
-    help="Displays the ultra-slim 14px transparent scrolling ruler on the right edge.",
 )
 
 # -----------------------------------------------------------------------------
-# MAIN UI & THREAD-SAFE DATA LOADING
+# MOBILE HEADER & DATA LOAD
 # -----------------------------------------------------------------------------
-st.title("📊 Minor Irrigation — Overdue Works Dashboard")
+st.markdown(
+    '<div class="mobile-title">📊 Minor Irrigation — Overdue Works Dashboard</div>',
+    unsafe_allow_html=True,
+)
 
-shared_state = get_shared_state_v10()
+shared_state = get_shared_state_v11()
 
 if uploaded_xlsx is not None:
     file_id = f"{uploaded_xlsx.name}_{uploaded_xlsx.size}_{SCHEMA_VERSION}"
@@ -1508,9 +1538,7 @@ elif (
             or shared_state.get("version") != SCHEMA_VERSION
             or sync_clicked
         ):
-            with st.spinner(
-                "Downloading workbook snapshot from Google Sheets (takes ~15-20s)..."
-            ):
+            with st.spinner("Loading 23 worksheets from Google Sheets..."):
                 try:
                     xlsx_bytes = download_xlsx_bytes(sheet_url_input)
                     parsed = parse_xlsx_workbook(xlsx_bytes)
@@ -1520,14 +1548,10 @@ elif (
                 except Exception as e:
                     if shared_state["data"] is not None:
                         st.warning(
-                            f"Google Sheets is busy right now ({e}). Showing last synced snapshot from {shared_state['last_synced']}."
+                            f"Google Sheets is busy ({e}). Showing snapshot from {shared_state['last_synced']}."
                         )
                     else:
-                        st.error(
-                            f"Could not download from Google Sheets right now.\n\n"
-                            f"**Tip:** Wait 10 seconds and click **Sync Latest Data**, or upload the `.xlsx` file in the sidebar.\n\n"
-                            f"Details: {e}"
-                        )
+                        st.error(f"Unable to load data right now. ({e})")
                         st.stop()
 
 master_df, overdue_full_df, diag_df, today_str = shared_state["data"]
@@ -1536,90 +1560,84 @@ st.markdown(
     f"""
     <div class="mi-status-bar">
         <span class="mi-status-pill">⚡ {shared_state['source_label']}</span>
-        <span>🕒 <b>Last Synced:</b> {shared_state['last_synced']} IST</span>
-        <span>📌 <b>Row Rule:</b> Valid text in <b>Division</b> column (empty <b>Sub-division</b> rows included)</span>
+        <span>📅 <b>Today:</b> {today_str}</span>
+        <span>🕒 <b>Synced:</b> {shared_state['last_synced']} IST</span>
     </div>
     """,
     unsafe_allow_html=True,
 )
 
 if master_df.empty:
-    st.warning("No matching data rows were found across the target worksheets.")
-    st.dataframe(diag_df, use_container_width=True)
+    st.warning("No matching data rows found.")
     st.stop()
 
 # -----------------------------------------------------------------------------
-# TOP CONTROLS ROW 1: 5 CASCADING DROPDOWNS (Division, Sub-division, EE, TA, AS)
+# TOUCH-FRIENDLY TOP FILTER CARDS (5 CASCADING DROPDOWNS + VIEW & SORT)
 # -----------------------------------------------------------------------------
-f_col1, f_col2, f_col3, f_col4, f_col5 = st.columns(5, gap="small")
-
 unique_divisions = sorted(
     [d for d in master_df["division_name"].dropna().unique().tolist() if d != ""]
 )
 division_options = [ALL_OPTION] + unique_divisions
 
-with f_col1:
-    with st.container(border=True):
+with st.container(border=True):
+    d_col1, d_col2 = st.columns(2, gap="small")
+    with d_col1:
         selected_division = st.selectbox(
             f"🏛️ Select {LABEL_DIV_EN}:",
             options=division_options,
             index=0,
         )
 
-df_step1 = (
-    master_df[master_df["division_name"] == selected_division].copy()
-    if selected_division != ALL_OPTION
-    else master_df.copy()
-)
+    df_step1 = (
+        master_df[master_df["division_name"] == selected_division].copy()
+        if selected_division != ALL_OPTION
+        else master_df.copy()
+    )
 
-subdivision_options = build_dropdown_options(df_step1, "subdivision_name")
-with f_col2:
-    with st.container(border=True):
+    subdivision_options = build_dropdown_options(df_step1, "subdivision_name")
+    with d_col2:
         selected_subdivision = st.selectbox(
             f"🏢 Select {LABEL_SUBDIV_EN}:",
             options=subdivision_options,
             index=0,
         )
 
-df_step2 = (
-    df_step1[df_step1["subdivision_name"] == selected_subdivision].copy()
-    if selected_subdivision != ALL_OPTION
-    else df_step1.copy()
-)
+    df_step2 = (
+        df_step1[df_step1["subdivision_name"] == selected_subdivision].copy()
+        if selected_subdivision != ALL_OPTION
+        else df_step1.copy()
+    )
 
-ee_options = build_dropdown_options(df_step2, "ee_name")
-with f_col3:
-    with st.container(border=True):
-        selected_ee = st.selectbox(
-            f"👔 Select {LABEL_EE_EN}:",
-            options=ee_options,
-            index=0,
-        )
+    ee_options = build_dropdown_options(df_step2, "ee_name")
+    selected_ee = st.selectbox(
+        f"👔 Select {LABEL_EE_EN}:",
+        options=ee_options,
+        index=0,
+    )
 
-df_step3 = (
-    df_step2[df_step2["ee_name"] == selected_ee].copy()
-    if selected_ee != ALL_OPTION
-    else df_step2.copy()
-)
+    df_step3 = (
+        df_step2[df_step2["ee_name"] == selected_ee].copy()
+        if selected_ee != ALL_OPTION
+        else df_step2.copy()
+    )
 
-ta_options = build_dropdown_options(df_step3, "ta_name")
-with f_col4:
-    with st.container(border=True):
+    o_col1, o_col2 = st.columns(2, gap="small")
+    ta_options = build_dropdown_options(df_step3, "ta_name")
+    with o_col1:
         selected_ta = st.selectbox(
             f"🛠️ Select {LABEL_TA_EN}:",
             options=ta_options,
             index=0,
         )
 
-df_step4 = (
-    df_step3[df_step3["ta_name"] == selected_ta].copy()
-    if selected_ta != ALL_OPTION
-    else df_step3.copy()
-)
+    df_step4 = (
+        df_step3[df_step3["ta_name"] == selected_ta].copy()
+        if selected_ta != ALL_OPTION
+        else df_step3.copy()
+    )
 
-as_options = build_dropdown_options(df_step4, "as_name")
-with f_col5:
-    with st.container(border=True):
+    as_options = build_dropdown_options(df_step4, "as_name")
+    with o_col2:
         selected_as = st.selectbox(
             f"📑 Select {LABEL_AS_EN}:",
             options=as_options,
@@ -1632,31 +1650,22 @@ filtered_master_df = (
     else df_step4.copy()
 )
 
-# -----------------------------------------------------------------------------
-# TOP CONTROLS ROW 2: OFFICER VIEW & SORT ORDER (ENGLISH)
-# -----------------------------------------------------------------------------
-r_col1, r_col2 = st.columns(2, gap="medium")
+# Card 2: Officer View & Sort Order
+with st.container(border=True):
+    view_choice = st.radio(
+        "👤 Select Officer View:",
+        options=[LABEL_AE_EN, LABEL_AEE_EN],
+        horizontal=True,
+    )
 
-with r_col1:
-    with st.container(border=True):
-        view_choice = st.radio(
-            "👤 Select Officer View:",
-            options=[LABEL_AE_EN, LABEL_AEE_EN],
-            horizontal=True,
-        )
-
-with r_col2:
-    with st.container(border=True):
-        sort_choice = st.radio(
-            "⬇️ Sort Chart & Table By:",
-            options=[
-                "Highest Overdue Count at Top",
-                "Highest Overdue Percentage (%) at Top",
-            ],
-            horizontal=True,
-        )
-
-st.markdown("<div style='margin-top: 0.4rem;'></div>", unsafe_allow_html=True)
+    sort_choice = st.radio(
+        "⬇️ Sort Chart & Table By:",
+        options=[
+            "Highest Overdue Count at Top",
+            "Highest Overdue Percentage (%) at Top",
+        ],
+        horizontal=True,
+    )
 
 group_col = "so_name" if view_choice == LABEL_AE_EN else "aee_name"
 full_filter_col = "_so_name" if view_choice == LABEL_AE_EN else "_aee_name"
@@ -1709,15 +1718,18 @@ else:
     ).reset_index(drop=True)
 
 # -----------------------------------------------------------------------------
-# KPI SUMMARY METRIC CARDS (5 COLUMNS)
+# 2x2 MOBILE PORTRAIT KPI GRID (RED/GREEN TINTS & DYNAMIC OFFICER COUNT)
 # -----------------------------------------------------------------------------
 total_assigned_all = int(summary_df["total_works"].sum())
 total_overdue_all = int(summary_df["overdue_works"].sum())
 total_ets_all = int(summary_df["ets_works"].sum())
-named_officers_count = int((~summary_df["_is_unassigned"]).sum())
-unassigned_works_count = int(
-    summary_df.loc[summary_df["_is_unassigned"], "total_works"].sum()
-)
+
+if hide_zero_overdue:
+    named_officers_count = int(
+        ((~summary_df["_is_unassigned"]) & (summary_df["overdue_works"] > 0)).sum()
+    )
+else:
+    named_officers_count = int((~summary_df["_is_unassigned"]).sum())
 
 overall_overdue_pct = (
     round((total_overdue_all / total_assigned_all) * 100, 1)
@@ -1736,28 +1748,34 @@ if selected_as != ALL_OPTION:
     active_scope_parts.append(f"AS: {selected_as}")
 filter_scope_label = " | ".join(active_scope_parts)
 
-k1, k2, k3, k4, k5 = st.columns([1.1, 1.0, 1.05, 1.35, 1.0], gap="medium")
-k1.metric("📅 Date (Today)", today_str)
-k2.metric(
-    f"👥 {view_choice}s",
-    f"{named_officers_count:,}",
-    help=f"Named {view_choice}s (plus {unassigned_works_count:,} unassigned works).",
+st.markdown(
+    f"""
+    <div class="kpi-grid">
+        <div class="kpi-card-red">
+            <div class="kpi-label">🔴 Overdue Works ('P')</div>
+            <div class="kpi-val">{total_overdue_all:,} ({overall_overdue_pct}%)</div>
+        </div>
+        <div class="kpi-card-green">
+            <div class="kpi-label">🟢 'ETS' Works</div>
+            <div class="kpi-val">{total_ets_all:,}</div>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-label">📋 Total Works</div>
+            <div class="kpi-val">{total_assigned_all:,}</div>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-label">👥 {view_choice}s</div>
+            <div class="kpi-val">{named_officers_count:,}</div>
+        </div>
+    </div>
+    """,
+    unsafe_allow_html=True,
 )
-k3.metric("📋 Total Works", f"{total_assigned_all:,}")
-k4.metric(
-    "🔴 Overdue Works ('P')",
-    f"{total_overdue_all:,} ({overall_overdue_pct}%)",
-)
-k5.metric("🟢 'ETS' Works", f"{total_ets_all:,}")
-
-st.divider()
 
 # =============================================================================
-# SECTION 1 (FIRST): HORIZONTAL BAR CHART
+# SECTION 1 (FIRST): MOBILE PORTRAIT HORIZONTAL BAR CHART
 # =============================================================================
-st.subheader(
-    f"📈 Overdue & ETS Works by {view_choice} — [{filter_scope_label}] ({sort_choice})"
-)
+st.markdown(f"##### 📈 Overdue & ETS Works by {view_choice}")
 
 if hide_zero_overdue:
     chart_source_df = summary_df[
@@ -1766,241 +1784,167 @@ if hide_zero_overdue:
 else:
     chart_source_df = summary_df.copy()
 
+st.markdown(
+    """
+    <div class="legend-bar">
+        <span><span class="dot-red">■</span> Overdue ('P')</span>
+        <span><span class="dot-green">■</span> ETS Works</span>
+        <span><span class="dot-grey">■</span> Rest of Works</span>
+    </div>
+    """,
+    unsafe_allow_html=True,
+)
+
 if chart_source_df.empty:
-    st.info("No officers match the current filter (try unchecking 'Show only officers with Overdue > 0' in the sidebar).")
+    st.info(
+        "No officers match the current filter (try unchecking 'Show only officers with Overdue > 0' in the sidebar)."
+    )
 else:
     plot_df = chart_source_df.iloc[::-1].copy()
-    plot_df["y_short"] = plot_df[view_choice].map(lambda s: shorten_label(s, 28))
+    plot_df["y_short"] = plot_df[view_choice].map(lambda s: shorten_mobile_label(s, 14))
+    plot_df["overdue_plus_ets"] = plot_df["overdue_works"] + plot_df["ets_works"]
     plot_df["is_shrunk"] = shrink_outliers & (
         plot_df["total_works"] > BAR_SHRINK_THRESHOLD
     )
 
-    def _build_bar_label(r) -> str:
+    if shrink_outliers:
+        plot_df["vis_total"] = plot_df["total_works"].map(compress_bar_length)
+        plot_df["vis_overdue_plus_ets"] = plot_df["overdue_plus_ets"].map(
+            compress_bar_length
+        )
+        plot_df["vis_overdue"] = plot_df["overdue_works"].map(compress_bar_length)
+    else:
+        plot_df["vis_total"] = plot_df["total_works"].astype(float)
+        plot_df["vis_overdue_plus_ets"] = plot_df["overdue_plus_ets"].astype(float)
+        plot_df["vis_overdue"] = plot_df["overdue_works"].astype(float)
+
+    def _build_mobile_bar_label(r) -> str:
         shrink_tag = (
-            f" <span style='color:#FBBF24'>[>{BAR_SHRINK_THRESHOLD} Shrunk]</span>"
+            f" <span style='color:#FBBF24'>[>{BAR_SHRINK_THRESHOLD}]</span>"
             if r["is_shrunk"]
-            and chart_style == "Overlay (Overdue + ETS + Rest of Works)"
             else ""
         )
         if sort_choice == "Highest Overdue Percentage (%) at Top":
             return (
-                f"  <b>{r['overdue_pct']:.1f}% Overdue</b> "
-                f"({int(r['overdue_works'])} Overdue | "
+                f" <b>{r['overdue_pct']:.1f}%</b> "
+                f"({int(r['overdue_works'])} OD | "
                 f"<span style='color:#4ADE80'>{int(r['ets_works'])} ETS</span> / "
-                f"{int(r['total_works'])} Total){shrink_tag}"
+                f"{int(r['total_works'])}){shrink_tag}"
             )
         return (
-            f"  <b>{int(r['overdue_works'])} Overdue</b> | "
+            f" <b>{int(r['overdue_works'])} OD</b> | "
             f"<span style='color:#4ADE80'>{int(r['ets_works'])} ETS</span> / "
-            f"{int(r['total_works'])} Total ({r['overdue_pct']:.1f}%){shrink_tag}"
+            f"{int(r['total_works'])} ({r['overdue_pct']:.1f}%){shrink_tag}"
         )
 
-    plot_df["bar_label"] = plot_df.apply(_build_bar_label, axis=1)
+    plot_df["bar_label"] = plot_df.apply(_build_mobile_bar_label, axis=1)
 
     fig = go.Figure()
 
-    if chart_style == "Scale by Overdue Works (Full-Width Bars)":
-        fig.add_trace(
-            go.Bar(
-                y=plot_df[view_choice],
-                x=plot_df["overdue_works"],
-                name="Overdue Works ('P')",
-                orientation="h",
-                marker=dict(
-                    color="#EF4444",
-                    line=dict(color="#DC2626", width=1),
-                ),
-                text=plot_df["bar_label"],
-                textposition="outside",
-                textfont=dict(size=13),
-                cliponaxis=False,
-                customdata=plot_df[
-                    [
-                        view_choice,
-                        "total_works",
-                        "ongoing_p_works",
-                        "ets_works",
-                        "rest_works",
-                        "overdue_pct",
-                    ]
-                ],
-                hovertemplate=(
-                    f"<b>{view_choice}:</b> %{{customdata[0]}}<br>"
-                    "<b>Overdue Works ('P'):</b> %{x}<br>"
-                    "<b>ETS Works ('ETS'):</b> %{customdata[3]}<br>"
-                    "<b>Rest of Works:</b> %{customdata[4]}<br>"
-                    "<b>Total Works Assigned:</b> %{customdata[1]}<br>"
-                    "<b>Overdue Percentage:</b> %{customdata[5]:.1f}%<extra></extra>"
-                ),
-            )
+    fig.add_trace(
+        go.Bar(
+            y=plot_df[view_choice],
+            x=plot_df["vis_total"],
+            name="Rest of Works",
+            orientation="h",
+            marker=dict(
+                color="rgba(148, 163, 184, 0.28)",
+                line=dict(color="#64748B", width=1),
+            ),
+            text=plot_df["bar_label"],
+            textposition="outside",
+            textfont=dict(size=10.5),
+            cliponaxis=False,
+            customdata=plot_df[
+                [
+                    view_choice,
+                    "total_works",
+                    "overdue_works",
+                    "ets_works",
+                    "rest_works",
+                    "overdue_pct",
+                ]
+            ],
+            hovertemplate=(
+                "<b>%{customdata[0]}</b><br>"
+                "🔴 Overdue ('P'): <b>%{customdata[2]}</b> (%{customdata[5]:.1f}%)<br>"
+                "🟢 ETS Works: <b>%{customdata[3]}</b><br>"
+                "⚪ Rest of Works: <b>%{customdata[4]}</b><br>"
+                "📋 Total Works: <b>%{customdata[1]}</b><extra></extra>"
+            ),
         )
-        max_x = max(int(plot_df["overdue_works"].max()), 1)
-        x_range_max = max_x * 1.25
-        x_axis_title = "Number of Overdue Works"
+    )
 
-    elif chart_style == "Scale by Overdue Percentage (%)":
-        fig.add_trace(
-            go.Bar(
-                y=plot_df[view_choice],
-                x=plot_df["overdue_pct"],
-                name="Overdue %",
-                orientation="h",
-                marker=dict(
-                    color="#EF4444",
-                    line=dict(color="#DC2626", width=1),
-                ),
-                text=plot_df["bar_label"],
-                textposition="outside",
-                textfont=dict(size=13),
-                cliponaxis=False,
-                customdata=plot_df[
-                    [
-                        view_choice,
-                        "total_works",
-                        "ongoing_p_works",
-                        "overdue_works",
-                        "ets_works",
-                        "rest_works",
-                    ]
-                ],
-                hovertemplate=(
-                    f"<b>{view_choice}:</b> %{{customdata[0]}}<br>"
-                    "<b>Overdue Percentage:</b> %{x:.1f}%<br>"
-                    "<b>Overdue Works ('P'):</b> %{customdata[3]}<br>"
-                    "<b>ETS Works ('ETS'):</b> %{customdata[4]}<br>"
-                    "<b>Rest of Works:</b> %{customdata[5]}<br>"
-                    "<b>Total Works Assigned:</b> %{customdata[1]}<extra></extra>"
-                ),
-            )
+    fig.add_trace(
+        go.Bar(
+            y=plot_df[view_choice],
+            x=plot_df["vis_overdue_plus_ets"],
+            name="ETS Works",
+            orientation="h",
+            marker=dict(color="#4ADE80"),
+            customdata=plot_df[
+                [
+                    view_choice,
+                    "total_works",
+                    "overdue_works",
+                    "ets_works",
+                    "rest_works",
+                    "overdue_pct",
+                ]
+            ],
+            hovertemplate=(
+                "<b>%{customdata[0]}</b><br>"
+                "🟢 ETS Works: <b>%{customdata[3]}</b><br>"
+                "🔴 Overdue ('P'): <b>%{customdata[2]}</b> (%{customdata[5]:.1f}%)<br>"
+                "📋 Total Works: <b>%{customdata[1]}</b><extra></extra>"
+            ),
         )
-        max_x = max(float(plot_df["overdue_pct"].max()), 1.0)
-        x_range_max = max_x * 1.25
-        x_axis_title = "Overdue Percentage (%)"
+    )
 
-    else:
-        plot_df["overdue_plus_ets"] = plot_df["overdue_works"] + plot_df["ets_works"]
-
-        if shrink_outliers:
-            plot_df["vis_total"] = plot_df["total_works"].map(compress_bar_length)
-            plot_df["vis_overdue_plus_ets"] = plot_df["overdue_plus_ets"].map(
-                compress_bar_length
-            )
-            plot_df["vis_overdue"] = plot_df["overdue_works"].map(compress_bar_length)
-        else:
-            plot_df["vis_total"] = plot_df["total_works"].astype(float)
-            plot_df["vis_overdue_plus_ets"] = plot_df["overdue_plus_ets"].astype(float)
-            plot_df["vis_overdue"] = plot_df["overdue_works"].astype(float)
-
-        fig.add_trace(
-            go.Bar(
-                y=plot_df[view_choice],
-                x=plot_df["vis_total"],
-                name="Rest of Works (Other Statuses)",
-                orientation="h",
-                marker=dict(
-                    color="rgba(148, 163, 184, 0.30)",
-                    line=dict(color="#64748B", width=1),
-                ),
-                text=plot_df["bar_label"],
-                textposition="outside",
-                textfont=dict(size=13),
-                cliponaxis=False,
-                customdata=plot_df[
-                    [
-                        view_choice,
-                        "total_works",
-                        "overdue_works",
-                        "ets_works",
-                        "rest_works",
-                        "overdue_pct",
-                    ]
-                ],
-                hovertemplate=(
-                    f"<b>{view_choice}:</b> %{{customdata[0]}}<br>"
-                    "<b>Total Works Assigned (Actual):</b> %{customdata[1]}<br>"
-                    "<b>Overdue Works ('P'):</b> %{customdata[2]}<br>"
-                    "<b>ETS Works ('ETS'):</b> %{customdata[3]}<br>"
-                    "<b>Rest of Works:</b> %{customdata[4]}<br>"
-                    "<b>Overdue Percentage:</b> %{customdata[5]:.1f}%<extra></extra>"
-                ),
-            )
+    fig.add_trace(
+        go.Bar(
+            y=plot_df[view_choice],
+            x=plot_df["vis_overdue"],
+            name="Overdue Works ('P')",
+            orientation="h",
+            marker=dict(color="#EF4444"),
+            customdata=plot_df[
+                [
+                    view_choice,
+                    "total_works",
+                    "overdue_works",
+                    "ets_works",
+                    "rest_works",
+                    "overdue_pct",
+                ]
+            ],
+            hovertemplate=(
+                "<b>%{customdata[0]}</b><br>"
+                "🔴 Overdue ('P'): <b>%{customdata[2]}</b> (%{customdata[5]:.1f}%)<br>"
+                "🟢 ETS Works: <b>%{customdata[3]}</b><br>"
+                "📋 Total Works: <b>%{customdata[1]}</b><extra></extra>"
+            ),
         )
+    )
 
-        fig.add_trace(
-            go.Bar(
-                y=plot_df[view_choice],
-                x=plot_df["vis_overdue_plus_ets"],
-                name="ETS Works ('ETS')",
-                orientation="h",
-                marker=dict(color="#4ADE80"),
-                customdata=plot_df[
-                    [
-                        view_choice,
-                        "total_works",
-                        "overdue_works",
-                        "ets_works",
-                        "rest_works",
-                        "overdue_pct",
-                    ]
-                ],
-                hovertemplate=(
-                    f"<b>{view_choice}:</b> %{{customdata[0]}}<br>"
-                    "<b>ETS Works ('ETS'):</b> %{customdata[3]}<br>"
-                    "<b>Overdue Works ('P'):</b> %{customdata[2]}<br>"
-                    "<b>Rest of Works:</b> %{customdata[4]}<br>"
-                    "<b>Total Works Assigned (Actual):</b> %{customdata[1]}<br>"
-                    "<b>Overdue Percentage:</b> %{customdata[5]:.1f}%<extra></extra>"
-                ),
-            )
-        )
-
-        fig.add_trace(
-            go.Bar(
-                y=plot_df[view_choice],
-                x=plot_df["vis_overdue"],
-                name="Overdue Works ('P')",
-                orientation="h",
-                marker=dict(color="#EF4444"),
-                customdata=plot_df[
-                    [
-                        view_choice,
-                        "total_works",
-                        "ongoing_p_works",
-                        "overdue_pct",
-                        "ets_works",
-                        "rest_works",
-                        "overdue_works",
-                    ]
-                ],
-                hovertemplate=(
-                    f"<b>{view_choice}:</b> %{{customdata[0]}}<br>"
-                    "<b>Overdue Works ('P'):</b> %{customdata[6]}<br>"
-                    "<b>ETS Works ('ETS'):</b> %{customdata[4]}<br>"
-                    "<b>Rest of Works:</b> %{customdata[5]}<br>"
-                    "<b>Total Works Assigned (Actual):</b> %{customdata[1]}<br>"
-                    "<b>Overdue Percentage:</b> %{customdata[3]:.1f}%<extra></extra>"
-                ),
-            )
-        )
-
-        max_x = max(float(plot_df["vis_total"].max()), 1.0)
-        x_range_max = max_x * 1.24
-        x_axis_title = "Number of Works"
-
-    chart_height = max(480, len(plot_df) * 36 + 90)
+    max_x = max(float(plot_df["vis_total"].max()), 1.0)
+    x_range_max = max_x * 1.58
+    chart_height = max(360, len(plot_df) * 32 + 50)
 
     fig.update_layout(
         barmode="overlay",
         height=chart_height,
-        bargap=0.22,
+        bargap=0.24,
+        showlegend=False,
         paper_bgcolor="rgba(0,0,0,0)",
         plot_bgcolor="rgba(15, 23, 42, 0.35)",
         xaxis=dict(
-            title=x_axis_title,
+            title="",
             range=[0, x_range_max],
             gridcolor="rgba(148, 163, 184, 0.14)",
             zeroline=True,
-            zerolinecolor="rgba(148, 163, 184, 0.3)",
+            fixedrange=True,
+            showticklabels=False,
         ),
         yaxis=dict(
             title="",
@@ -2008,29 +1952,24 @@ else:
             tickmode="array",
             tickvals=plot_df[view_choice],
             ticktext=plot_df["y_short"],
-            tickfont=dict(size=13),
+            tickfont=dict(size=11),
+            fixedrange=True,
         ),
-        legend=dict(
-            orientation="h",
-            yanchor="bottom",
-            y=1.01,
-            xanchor="left",
-            x=0,
-            traceorder="reversed",
-        ),
-        margin=dict(l=210, r=14, t=35, b=40),
+        margin=dict(l=108, r=14, t=8, b=16),
     )
 
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(
+        fig,
+        use_container_width=True,
+        config={"displayModeBar": False, "scrollZoom": False},
+    )
 
 st.divider()
 
 # =============================================================================
-# SECTION 2 (SECOND): COMBINED OVERDUE WORKS TABLE (CE CURATED VIEW + DOWNLOAD)
+# SECTION 2 (SECOND): COMBINED OVERDUE WORKS TABLE (ENGLISH HEADERS + OVERDUE BY)
 # =============================================================================
-st.subheader(
-    f"📂 Combined Overdue Works by {view_choice} — [{filter_scope_label}]"
-)
+st.markdown(f"##### 📂 Combined Overdue Works by {view_choice}")
 
 officer_options = (
     chart_source_df[view_choice].tolist()
@@ -2049,13 +1988,13 @@ officer_stats_map = {
 }
 
 selected_officer = st.selectbox(
-    f"Select {view_choice} to view and download their Overdue Works:",
+    f"Tap to select {view_choice}:",
     options=officer_options,
     index=0 if officer_options else None,
     format_func=lambda name: (
-        f"{name}  —  ({officer_stats_map[name][0]} Overdue | "
-        f"{officer_stats_map[name][1]} ETS / "
-        f"{officer_stats_map[name][2]} Total | {officer_stats_map[name][3]:.1f}%)"
+        f"{name} ({officer_stats_map[name][0]} OD | "
+        f"{officer_stats_map[name][1]} ETS / {officer_stats_map[name][2]} Total — "
+        f"{officer_stats_map[name][3]:.1f}%)"
     ),
 )
 
@@ -2095,6 +2034,9 @@ if selected_officer:
         opposite_officer_col = (
             COL_AEE_KN if view_choice == LABEL_AE_EN else COL_SO_KN
         )
+        opposite_officer_en = (
+            LABEL_AEE_EN if view_choice == LABEL_AE_EN else LABEL_AE_EN
+        )
 
         curated_cols = [
             COL_WORK_NAME_KN,
@@ -2106,10 +2048,22 @@ if selected_officer:
             LABEL_EE_EN,
             COL_START_DATE_KN,
             COL_TARGET_DATE_KN,
+            "Overdue By",
             COL_HOA_KN,
         ]
 
         officer_overdue_df = officer_overdue_df[curated_cols].reset_index(drop=True)
+
+        rename_map = {
+            COL_WORK_NAME_KN: "Work Name",
+            COL_DIV_KN: LABEL_DIV_EN,
+            COL_SUBDIV_KN: LABEL_SUBDIV_EN,
+            opposite_officer_col: opposite_officer_en,
+            COL_START_DATE_KN: "Start Date",
+            COL_TARGET_DATE_KN: "Target Date",
+            COL_HOA_KN: "H.O.A.",
+        }
+        officer_overdue_df.rename(columns=rename_map, inplace=True)
         officer_overdue_df.insert(0, "Sl. No.", range(1, len(officer_overdue_df) + 1))
 
         if officer_overdue_df.empty:
@@ -2117,41 +2071,40 @@ if selected_officer:
                 f"🎉 **{selected_officer}** has **0** overdue works in **{filter_scope_label}**!"
             )
         else:
-            hoa_involved = officer_overdue_df[COL_HOA_KN].unique().tolist()
-            st.markdown(
+            hoa_involved = officer_overdue_df["H.O.A."].unique().tolist()
+            st.caption(
                 f"**Selected {view_choice}:** `{selected_officer}` &nbsp;|&nbsp; "
-                f"**Total Overdue Works:** `{len(officer_overdue_df)}` &nbsp;|&nbsp; "
-                f"**Account Heads (`{COL_HOA_KN}`):** `{', '.join(hoa_involved)}`"
+                f"**Overdue Works:** `{len(officer_overdue_df)}` &nbsp;|&nbsp; "
+                f"**H.O.A.:** `{', '.join(hoa_involved)}`"
             )
 
             safe_name = (
                 re.sub(r"[^\w\-]+", "_", selected_officer).strip("_") or "Unassigned"
             )
             safe_div = (
-                re.sub(r"[^\w\-]+", "_", selected_division).strip("_") or "All_Divisions"
+                re.sub(r"[^\w\-]+", "_", selected_division).strip("_") or "All_Div"
             )
             excel_bytes = convert_df_to_excel_bytes(officer_overdue_df)
             csv_bytes = officer_overdue_df.to_csv(index=False).encode("utf-8-sig")
 
-            dl_col1, dl_col2, _ = st.columns([1.5, 1.5, 5])
-            with dl_col1:
+            dl1, dl2 = st.columns(2)
+            with dl1:
                 st.download_button(
-                    label="📥 Download Excel (.xlsx)",
+                    label="📥 Excel (.xlsx)",
                     data=excel_bytes,
                     file_name=f"Overdue_Works_{safe_div}_{safe_name}_{today_str}.xlsx",
                     mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
                     use_container_width=True,
                 )
-            with dl_col2:
+            with dl2:
                 st.download_button(
-                    label="📥 Download CSV (.csv)",
+                    label="📥 CSV (.csv)",
                     data=csv_bytes,
                     file_name=f"Overdue_Works_{safe_div}_{safe_name}_{today_str}.csv",
                     mime="text/csv",
                     use_container_width=True,
                 )
 
-            # Render the CE-friendly 3-line wrapped HTML table
             st.markdown(
                 render_ce_overdue_html_table(officer_overdue_df),
                 unsafe_allow_html=True,
@@ -2162,7 +2115,7 @@ st.divider()
 # =============================================================================
 # SECTION 3 (THIRD): OFFICER-WISE SUMMARY TABLE (ENGLISH)
 # =============================================================================
-st.subheader(f"📋 Officer-Wise Summary Table — [{filter_scope_label}]")
+st.markdown(f"##### 📋 Officer-Wise Summary Table — [{filter_scope_label}]")
 
 display_table = summary_df[
     [
@@ -2191,7 +2144,21 @@ st.dataframe(
     use_container_width=True,
 )
 
-with st.expander("🔍 Inspect Worksheet Loading Status (23 Target Sheets)"):
+with st.expander("🔍 Inspect Worksheet Loading Status & Quick Sync (23 Target Sheets)"):
+    if st.button(
+        "🔄 Sync Latest Data Now",
+        use_container_width=True,
+        type="primary",
+        key="mobile_bottom_sync",
+    ):
+        with shared_state["lock"]:
+            with st.spinner("Syncing latest changes from Google Sheets..."):
+                xlsx_bytes = download_xlsx_bytes(sheet_url_input)
+                parsed = parse_xlsx_workbook(xlsx_bytes)
+                save_shared_state(
+                    shared_state, parsed, "Google Sheets Live Snapshot"
+                )
+                st.rerun()
     st.dataframe(diag_df, use_container_width=True)
 
 # Mount the ultra-slim 14px, writing-free right-edge scrolling HUD overlay
