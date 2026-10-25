@@ -17,37 +17,78 @@ import streamlit as st
 import streamlit.components.v1 as components
 
 # -----------------------------------------------------------------------------
-# PAGE CONFIGURATION (MOBILE PORTRAIT OPTIMIZED FOR CE)
+# PAGE CONFIGURATION
 # -----------------------------------------------------------------------------
 st.set_page_config(
-    page_title="MI Overdue Works — CE Mobile View",
-    page_icon="📱",
-    layout="centered",
-    initial_sidebar_state="collapsed",
+    page_title="Minor Irrigation — Overdue Works Dashboard",
+    page_icon="📊",
+    layout="wide",
+    initial_sidebar_state="expanded",
 )
 
 st.markdown(
     """
     <style>
-        header[data-testid="stHeader"] {
-            background: transparent !important;
-        }
-        .block-container {
-            max-width: 680px !important;
-            padding-left: 0.65rem !important;
-            padding-right: 0.85rem !important;
-            padding-top: 3.4rem !important;
-            padding-bottom: 2.5rem !important;
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@600;700&display=swap');
+
+        /* Global App Ambient Background & Typography */
+        .stApp {
+            background:
+                radial-gradient(circle at 12% 8%, rgba(37, 99, 235, 0.10), transparent 32%),
+                radial-gradient(circle at 88% 14%, rgba(239, 68, 68, 0.07), transparent 30%),
+                radial-gradient(circle at 50% 95%, rgba(16, 185, 129, 0.05), transparent 35%),
+                #0B0F19 !important;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif !important;
         }
 
-        /* Compact Mobile Sidebar (200px) & Always-Visible Toggle Button */
+        .block-container {
+            max-width: 100% !important;
+            padding-left: 1.2rem !important;
+            padding-right: 1.3rem !important;
+            padding-top: 2.1rem !important;
+            padding-bottom: 2.2rem !important;
+        }
+        [data-testid="stPlotlyChart"] {
+            width: 100% !important;
+        }
+
+        /* Custom Sleek Dark Scrollbars */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(15, 23, 42, 0.6);
+            border-radius: 6px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(71, 85, 105, 0.7);
+            border-radius: 6px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(59, 130, 246, 0.85);
+        }
+
+        /* 1. Sleek 200px Left Sidebar */
         section[data-testid="stSidebar"][aria-expanded="true"] {
             width: 200px !important;
             min-width: 200px !important;
             max-width: 200px !important;
-            background: linear-gradient(180deg, rgba(15, 23, 42, 0.98) 0%, rgba(15, 23, 42, 0.94) 100%) !important;
+            background: linear-gradient(180deg, rgba(15, 23, 42, 0.98) 0%, rgba(11, 15, 25, 0.98) 100%) !important;
             border-right: 1px solid rgba(148, 163, 184, 0.14) !important;
+            box-shadow: 4px 0 24px rgba(0, 0, 0, 0.35) !important;
         }
+        section[data-testid="stSidebar"] > div:first-child {
+            padding-top: 0.85rem !important;
+            padding-left: 0.55rem !important;
+            padding-right: 0.55rem !important;
+        }
+        section[data-testid="stSidebar"] .stMarkdown p,
+        section[data-testid="stSidebar"] label {
+            font-size: 0.79rem !important;
+        }
+
+        /* 2. Always-Visible Glowing Sidebar Collapse (<<) & Expand (>>) Button */
         [data-testid="stSidebarCollapseButton"],
         [data-testid="collapsedControl"],
         [data-testid="stExpandSidebarButton"] {
@@ -62,208 +103,391 @@ st.markdown(
             opacity: 1 !important;
             visibility: visible !important;
             background: linear-gradient(135deg, rgba(30, 41, 59, 0.95), rgba(15, 23, 42, 0.98)) !important;
-            border: 1.5px solid rgba(59, 130, 246, 0.75) !important;
+            border: 1.5px solid rgba(59, 130, 246, 0.8) !important;
             border-radius: 10px !important;
             color: #93C5FD !important;
-            box-shadow: 0 0 10px rgba(59, 130, 246, 0.35), 0 2px 6px rgba(0, 0, 0, 0.5) !important;
+            box-shadow: 0 0 14px rgba(59, 130, 246, 0.4), 0 2px 6px rgba(0, 0, 0, 0.6) !important;
             width: 34px !important;
             height: 34px !important;
             min-height: 34px !important;
+            transition: all 0.2s cubic-bezier(0.22, 1, 0.36, 1) !important;
+        }
+        [data-testid="stSidebarCollapseButton"] button:hover,
+        [data-testid="collapsedControl"] button:hover,
+        [data-testid="stExpandSidebarButton"]:hover {
+            background: linear-gradient(135deg, #2563EB, #1D4ED8) !important;
+            border-color: #BFDBFE !important;
+            color: #FFFFFF !important;
+            box-shadow: 0 0 20px rgba(59, 130, 246, 0.9) !important;
+            transform: scale(1.07) !important;
+        }
+        [data-testid="stSidebarCollapseButton"] svg,
+        [data-testid="collapsedControl"] svg,
+        [data-testid="stExpandSidebarButton"] svg {
+            fill: currentColor !important;
+            color: inherit !important;
+            width: 1.2rem !important;
+            height: 1.2rem !important;
         }
 
-        /* Mobile Title & Status Banner */
-        .mobile-title {
-            font-size: 1.22rem;
-            font-weight: 800;
-            line-height: 1.3;
-            margin-bottom: 0.35rem;
-        }
-        .mi-status-bar {
+        /* 3. Executive Command Header Banner */
+        .exec-header-card {
             display: flex;
             flex-wrap: wrap;
             align-items: center;
-            gap: 0.35rem 0.65rem;
-            padding: 0.38rem 0.65rem;
-            margin-bottom: 0.65rem;
-            border-radius: 10px;
-            background: rgba(30, 41, 59, 0.45);
-            border: 1px solid rgba(148, 163, 184, 0.14);
-            font-size: 0.74rem;
-            color: #CBD5E1;
+            justify-content: space-between;
+            gap: 0.75rem 1.2rem;
+            padding: 0.85rem 1.15rem;
+            margin-bottom: 0.85rem;
+            border-radius: 14px;
+            background:
+                radial-gradient(circle at 0% 0%, rgba(59, 130, 246, 0.16), transparent 50%),
+                linear-gradient(135deg, rgba(30, 41, 59, 0.65) 0%, rgba(15, 23, 42, 0.85) 100%);
+            border: 1px solid rgba(148, 163, 184, 0.18);
+            border-left: 4px solid #3B82F6;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.08);
         }
-        .mi-status-pill {
-            display: inline-flex;
+        .exec-title-block {
+            display: flex;
             align-items: center;
-            gap: 0.25rem;
-            padding: 0.1rem 0.45rem;
-            border-radius: 999px;
-            background: rgba(59, 130, 246, 0.15);
-            border: 1px solid rgba(59, 130, 246, 0.35);
-            color: #93C5FD;
-            font-weight: 600;
-            font-size: 0.72rem;
+            gap: 0.85rem;
         }
-
-        /* Spaced Bordered Control Cards on Mobile */
-        div[data-testid="stVerticalBlockBorderWrapper"] {
-            border-radius: 12px !important;
-            padding: 0.35rem 0.5rem !important;
-            margin-bottom: 0.45rem !important;
-            background: linear-gradient(145deg, rgba(30, 41, 59, 0.48), rgba(15, 23, 42, 0.68)) !important;
-            border: 1px solid rgba(148, 163, 184, 0.18) !important;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2) !important;
+        .exec-icon-box {
+            width: 46px;
+            height: 46px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.25), rgba(37, 99, 235, 0.1));
+            border: 1px solid rgba(96, 165, 250, 0.4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.55rem;
+            box-shadow: 0 0 16px rgba(59, 130, 246, 0.25);
         }
-
-        /* 2x2 Responsive KPI Grid with Reddish & Greenish Layers */
-        .kpi-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 8px;
-            margin-top: 6px;
-            margin-bottom: 8px;
-        }
-        .kpi-card {
-            background: linear-gradient(145deg, rgba(30, 41, 59, 0.55), rgba(15, 23, 42, 0.82));
-            border: 1px solid rgba(148, 163, 184, 0.20);
-            border-top: 3px solid #3B82F6;
-            border-radius: 10px;
-            padding: 9px 11px;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
-        }
-        .kpi-card-red {
-            background: linear-gradient(145deg, rgba(127, 29, 29, 0.38), rgba(15, 23, 42, 0.85));
-            border: 1px solid rgba(239, 68, 68, 0.30);
-            border-top: 3px solid #EF4444;
-            border-radius: 10px;
-            padding: 9px 11px;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
-        }
-        .kpi-card-green {
-            background: linear-gradient(145deg, rgba(6, 78, 59, 0.38), rgba(15, 23, 42, 0.85));
-            border: 1px solid rgba(74, 222, 128, 0.28);
-            border-top: 3px solid #4ADE80;
-            border-radius: 10px;
-            padding: 9px 11px;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
-        }
-        .kpi-label {
-            font-size: 0.73rem;
-            font-weight: 600;
-            color: #CBD5E1;
+        .exec-kicker {
+            font-size: 0.68rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1.4px;
+            color: #60A5FA;
             margin-bottom: 2px;
         }
-        .kpi-val {
-            font-size: 1.18rem;
+        .exec-main-title {
+            font-size: 1.65rem;
             font-weight: 800;
-            line-height: 1.2;
+            letter-spacing: -0.4px;
             color: #F8FAFC;
+            line-height: 1.15;
+            margin: 0;
         }
-
-        /* Legend Pill Bar */
-        .legend-bar {
+        .exec-meta-cluster {
             display: flex;
             flex-wrap: wrap;
-            gap: 10px;
-            font-size: 0.75rem;
-            font-weight: 600;
-            margin: 4px 0 4px 0;
-            padding: 6px 10px;
-            background: rgba(148, 163, 184, 0.08);
-            border-radius: 8px;
+            align-items: center;
+            gap: 0.5rem 0.75rem;
+            font-size: 0.79rem;
+            color: #CBD5E1;
         }
-        .dot-red { color: #EF4444; }
-        .dot-green { color: #4ADE80; }
-        .dot-grey { color: #94A3B8; }
+        .exec-live-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            padding: 0.22rem 0.65rem;
+            border-radius: 999px;
+            background: rgba(59, 130, 246, 0.16);
+            border: 1px solid rgba(59, 130, 246, 0.45);
+            color: #93C5FD;
+            font-weight: 600;
+            font-size: 0.76rem;
+            box-shadow: 0 0 12px rgba(59, 130, 246, 0.2);
+        }
+        .pulse-dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: #38BDF8;
+            box-shadow: 0 0 8px #38BDF8;
+            animation: execPulse 2s infinite ease-in-out;
+        }
+        @keyframes execPulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.45; transform: scale(0.85); }
+        }
+        .exec-meta-tag {
+            padding: 0.2rem 0.6rem;
+            border-radius: 8px;
+            background: rgba(15, 23, 42, 0.65);
+            border: 1px solid rgba(148, 163, 184, 0.16);
+            color: #E2E8F0;
+            font-size: 0.76rem;
+        }
 
-        /* CE-Friendly Mobile Overdue Table (Elevated Dark Header + Compact Work Name) */
+        /* 4. Glassmorphic Top Filter & Radio Control Cards */
+        div[data-testid="stVerticalBlockBorderWrapper"] {
+            border-radius: 13px !important;
+            padding: 0.45rem 0.65rem !important;
+            background: linear-gradient(155deg, rgba(30, 41, 59, 0.55) 0%, rgba(15, 23, 42, 0.78) 100%) !important;
+            border: 1px solid rgba(148, 163, 184, 0.18) !important;
+            box-shadow: 0 6px 18px rgba(0, 0, 0, 0.24), inset 0 1px 0 rgba(255, 255, 255, 0.08) !important;
+            transition: all 0.22s ease !important;
+        }
+        div[data-testid="stVerticalBlockBorderWrapper"]:hover {
+            border-color: rgba(96, 165, 250, 0.48) !important;
+            box-shadow: 0 8px 22px rgba(37, 99, 235, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.14) !important;
+            transform: translateY(-1px) !important;
+        }
+        div[role="radiogroup"] {
+            gap: 0.9rem !important;
+            padding-top: 0.18rem !important;
+        }
+
+        /* 5. Bespoke Multi-Layered KPI Metric Cards */
+        div[data-testid="stMetric"] {
+            background:
+                radial-gradient(circle at 85% 0%, rgba(59, 130, 246, 0.18), transparent 55%),
+                linear-gradient(155deg, rgba(30, 41, 59, 0.62) 0%, rgba(15, 23, 42, 0.88) 100%) !important;
+            border: 1px solid rgba(148, 163, 184, 0.18) !important;
+            border-top: 3px solid #3B82F6 !important;
+            border-radius: 14px !important;
+            padding: 0.7rem 0.95rem !important;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.08) !important;
+            transition: transform 0.2s ease, box-shadow 0.2s ease !important;
+        }
+        div[data-testid="stMetric"]:hover {
+            transform: translateY(-2px) !important;
+            box-shadow: 0 12px 26px rgba(0, 0, 0, 0.36) !important;
+        }
+
+        /* 2nd KPI Card: Violet Accent (Officers) */
+        div[data-testid="stHorizontalBlock"] > div:nth-child(2) div[data-testid="stMetric"],
+        div[data-testid="column"]:nth-child(2) div[data-testid="stMetric"] {
+            border-top: 3px solid #8B5CF6 !important;
+            background:
+                radial-gradient(circle at 85% 0%, rgba(139, 92, 246, 0.20), transparent 55%),
+                linear-gradient(155deg, rgba(30, 27, 75, 0.45) 0%, rgba(15, 23, 42, 0.88) 100%) !important;
+        }
+
+        /* 3rd KPI Card: Cyan Accent (Total Works) */
+        div[data-testid="stHorizontalBlock"] > div:nth-child(3) div[data-testid="stMetric"],
+        div[data-testid="column"]:nth-child(3) div[data-testid="stMetric"] {
+            border-top: 3px solid #06B6D4 !important;
+            background:
+                radial-gradient(circle at 85% 0%, rgba(6, 182, 212, 0.18), transparent 55%),
+                linear-gradient(155deg, rgba(22, 78, 99, 0.35) 0%, rgba(15, 23, 42, 0.88) 100%) !important;
+        }
+
+        /* 4th KPI Card: Crimson Red Glow (Overdue Works) */
+        div[data-testid="stHorizontalBlock"] > div:nth-child(4) div[data-testid="stMetric"],
+        div[data-testid="column"]:nth-child(4) div[data-testid="stMetric"] {
+            border-top: 3px solid #EF4444 !important;
+            border-color: rgba(239, 68, 68, 0.28) !important;
+            background:
+                radial-gradient(circle at 85% 0%, rgba(239, 68, 68, 0.26), transparent 60%),
+                linear-gradient(145deg, rgba(127, 29, 29, 0.42) 0%, rgba(15, 23, 42, 0.90) 100%) !important;
+            box-shadow: 0 8px 22px rgba(239, 68, 68, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.08) !important;
+        }
+
+        /* 5th KPI Card: Emerald Green Glow (ETS Works) */
+        div[data-testid="stHorizontalBlock"] > div:nth-child(5) div[data-testid="stMetric"],
+        div[data-testid="column"]:nth-child(5) div[data-testid="stMetric"] {
+            border-top: 3px solid #10B981 !important;
+            border-color: rgba(16, 185, 129, 0.28) !important;
+            background:
+                radial-gradient(circle at 85% 0%, rgba(16, 185, 129, 0.24), transparent 60%),
+                linear-gradient(145deg, rgba(6, 78, 59, 0.42) 0%, rgba(15, 23, 42, 0.90) 100%) !important;
+            box-shadow: 0 8px 22px rgba(16, 185, 129, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.08) !important;
+        }
+
+        div[data-testid="stMetricValue"] {
+            font-size: 1.72rem !important;
+            font-weight: 800 !important;
+            letter-spacing: -0.5px !important;
+            color: #F8FAFC !important;
+        }
+        div[data-testid="stMetricLabel"] {
+            font-size: 0.82rem !important;
+            font-weight: 600 !important;
+            color: #CBD5E1 !important;
+        }
+
+        /* 6. Section Header Banners */
+        .exec-section-banner {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.5rem 1rem;
+            padding: 0.55rem 0.95rem;
+            margin-top: 0.25rem;
+            margin-bottom: 0.65rem;
+            border-radius: 11px;
+            background: linear-gradient(90deg, rgba(30, 41, 59, 0.72) 0%, rgba(15, 23, 42, 0.45) 100%);
+            border: 1px solid rgba(148, 163, 184, 0.16);
+            border-left: 4px solid #3B82F6;
+        }
+        .exec-section-title {
+            font-size: 1.15rem;
+            font-weight: 700;
+            color: #F8FAFC;
+            letter-spacing: -0.2px;
+        }
+        .exec-scope-badge {
+            font-size: 0.76rem;
+            font-weight: 600;
+            padding: 0.2rem 0.65rem;
+            border-radius: 999px;
+            background: rgba(59, 130, 246, 0.14);
+            border: 1px solid rgba(96, 165, 250, 0.35);
+            color: #93C5FD;
+        }
+
+        /* Selected Officer Summary Strip */
+        .officer-summary-strip {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 0.55rem 0.9rem;
+            padding: 0.5rem 0.85rem;
+            margin-top: 0.15rem;
+            margin-bottom: 0.65rem;
+            border-radius: 10px;
+            background: rgba(30, 41, 59, 0.50);
+            border: 1px solid rgba(148, 163, 184, 0.16);
+            font-size: 0.83rem;
+        }
+        .strip-badge-officer {
+            background: rgba(59, 130, 246, 0.18);
+            border: 1px solid rgba(96, 165, 250, 0.4);
+            color: #BFDBFE;
+            padding: 0.15rem 0.6rem;
+            border-radius: 6px;
+            font-weight: 700;
+        }
+        .strip-badge-overdue {
+            background: rgba(239, 68, 68, 0.18);
+            border: 1px solid rgba(248, 113, 113, 0.45);
+            color: #FCA5A5;
+            padding: 0.15rem 0.6rem;
+            border-radius: 6px;
+            font-weight: 700;
+        }
+        .strip-badge-hoa {
+            background: rgba(16, 185, 129, 0.15);
+            border: 1px solid rgba(52, 211, 153, 0.38);
+            color: #6EE7B7;
+            padding: 0.15rem 0.6rem;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 0.79rem;
+        }
+
+        /* 7. Flagship CE Combined Overdue Works Table */
         .ce-table-wrapper {
-            max-height: 500px;
+            max-height: 590px;
             overflow-y: auto;
             overflow-x: auto;
-            -webkit-overflow-scrolling: touch;
-            border: 1px solid rgba(148, 163, 184, 0.22);
-            border-radius: 12px;
-            background: rgba(15, 23, 42, 0.78);
-            box-shadow: 0 6px 18px rgba(0, 0, 0, 0.28);
-            margin-top: 0.35rem;
-            margin-bottom: 0.75rem;
+            border: 1px solid rgba(148, 163, 184, 0.24);
+            border-radius: 14px;
+            background: rgba(15, 23, 42, 0.82);
+            box-shadow: 0 10px 28px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+            margin-top: 0.45rem;
+            margin-bottom: 0.85rem;
         }
         table.ce-overdue-table {
             width: 100%;
             border-collapse: collapse;
-            font-size: 0.78rem;
+            font-size: 0.84rem;
             color: #E2E8F0;
         }
         table.ce-overdue-table thead th {
             position: sticky;
             top: 0;
             z-index: 10;
-            background: #273346;
-            color: #F1F5F9;
+            background: linear-gradient(180deg, #2B394F 0%, #1E293B 100%);
+            color: #F8FAFC;
             font-weight: 700;
             text-align: left;
-            padding: 9px 8px;
+            padding: 12px 10px;
             border-bottom: 2px solid #3B82F6;
             white-space: nowrap;
-            font-size: 0.76rem;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.4);
+            font-size: 0.81rem;
+            letter-spacing: 0.2px;
+            box-shadow: 0 4px 8px -1px rgba(0, 0, 0, 0.45);
         }
         table.ce-overdue-table tbody tr {
-            border-bottom: 1px solid rgba(148, 163, 184, 0.12);
+            border-bottom: 1px solid rgba(148, 163, 184, 0.11);
+            transition: background-color 0.15s ease;
         }
         table.ce-overdue-table tbody tr:nth-child(even) {
-            background: rgba(30, 41, 59, 0.32);
+            background: rgba(30, 41, 59, 0.34);
+        }
+        table.ce-overdue-table tbody tr:hover {
+            background: rgba(59, 130, 246, 0.16);
         }
         table.ce-overdue-table td {
-            padding: 7px 8px;
+            padding: 9px 10px;
             vertical-align: middle;
-            line-height: 1.32;
+            line-height: 1.38;
         }
-        /* Compact Work Name on Mobile (25% reduced width + 3-line clamp) */
+
+        /* 25% Compact Width + 4-Line Clamp for Work Name */
         .ce-work-name-cell {
             width: 25%;
-            min-width: 210px;
-            max-width: 260px;
+            min-width: 285px;
+            max-width: 375px;
             white-space: normal;
         }
         .ce-work-name-clamp {
             display: -webkit-box;
-            -webkit-line-clamp: 3;
+            -webkit-line-clamp: 4;
             -webkit-box-orient: vertical;
             overflow: hidden;
             text-overflow: ellipsis;
-            line-height: 1.32;
-            max-height: 3.96em;
+            line-height: 1.35;
+            max-height: 5.4em;
             font-weight: 600;
             color: #F8FAFC;
         }
         .ce-compact-cell {
             white-space: nowrap;
-            font-size: 0.77rem;
+            font-size: 0.82rem;
+            color: #E2E8F0;
         }
         .ce-date-overdue {
-            color: #FCA5A5;
-            font-weight: 700;
             white-space: nowrap;
-            font-size: 0.77rem;
+        }
+        .ce-overdue-pill {
+            display: inline-block;
+            color: #FCA5A5;
+            background: rgba(239, 68, 68, 0.14);
+            border: 1px solid rgba(239, 68, 68, 0.32);
+            border-radius: 6px;
+            padding: 2px 7px;
+            font-weight: 700;
+            font-size: 0.80rem;
+        }
+        .ce-hoa-pill {
+            display: inline-block;
+            color: #93C5FD;
+            background: rgba(59, 130, 246, 0.14);
+            border: 1px solid rgba(59, 130, 246, 0.30);
+            border-radius: 6px;
+            padding: 2px 7px;
+            font-weight: 600;
+            font-size: 0.78rem;
+            white-space: nowrap;
         }
         .ce-sl-cell {
             text-align: center;
-            font-weight: 600;
+            font-weight: 700;
             color: #94A3B8;
-            width: 36px;
+            width: 44px;
         }
 
-        div[role="radiogroup"] {
-            gap: 0.5rem !important;
-        }
         hr {
-            margin-top: 0.45rem !important;
-            margin-bottom: 0.5rem !important;
+            margin-top: 0.65rem !important;
+            margin-bottom: 0.75rem !important;
             border-color: rgba(148, 163, 184, 0.15) !important;
-        }
-        [data-testid="stPlotlyChart"] {
-            width: 100% !important;
         }
     </style>
     """,
@@ -283,7 +507,6 @@ def inject_scroll_hud_graphics(enabled: bool = True):
             const parentWin = window.parent;
             const isEnabled = {str(enabled).lower()};
 
-            // 1. CLEANUP PREVIOUS RUN (Prevents freeze after Sync/Reload)
             if (parentWin.__miScrollHudRAF) {{
                 parentWin.cancelAnimationFrame(parentWin.__miScrollHudRAF);
             }}
@@ -303,7 +526,6 @@ def inject_scroll_hud_graphics(enabled: bool = True):
 
             if (!isEnabled) return;
 
-            // 2. INJECT CSS
             const style = parentDoc.createElement("style");
             style.id = "mi-scroll-hud-style";
             style.innerHTML = `
@@ -354,7 +576,7 @@ def inject_scroll_hud_graphics(enabled: bool = True):
                 }}
 
                 .mi-hud-tick-label {{
-                    font-size: 7px;
+                    font-size: 7.5px;
                     font-weight: 600;
                     color: rgba(226, 232, 240, 0.42);
                     margin-right: 1.5px;
@@ -395,7 +617,7 @@ def inject_scroll_hud_graphics(enabled: bool = True):
                     margin-top: 2px;
                     padding-right: 1px;
                     text-align: right;
-                    font-size: 7px;
+                    font-size: 7.5px;
                     font-weight: 700;
                     color: #93C5FD;
                     white-space: nowrap;
@@ -404,7 +626,7 @@ def inject_scroll_hud_graphics(enabled: bool = True):
             `;
             parentDoc.head.appendChild(style);
 
-            const PX_PER_UNIT = 38;
+            const PX_PER_UNIT = 40;
 
             const hudRoot = parentDoc.createElement("div");
             hudRoot.id = "mi-scroll-hud-root";
@@ -441,7 +663,6 @@ def inject_scroll_hud_graphics(enabled: bool = True):
             `;
             parentDoc.body.appendChild(hudRoot);
 
-            // 3. RE-BIND SCROLL EVENT LISTENER
             parentWin.__miActiveScroller = null;
             parentWin.__miScrollHandler = function(e) {{
                 const t = e.target;
@@ -515,7 +736,6 @@ def inject_scroll_hud_graphics(enabled: bool = True):
                 return Math.max(0, Math.min(100, pct));
             }}
 
-            // 4. RE-BIND ANIMATION LOOP
             parentWin.__miCurrentPct = parentWin.__miCurrentPct || 0;
 
             parentWin.__miHudStepFn = function() {{
@@ -616,15 +836,15 @@ DEFAULT_SHEET_URL = st.secrets.get(
     "https://docs.google.com/spreadsheets/d/13W04z-fdU3RhuVJ5vQFRpK4BBSQRJWfscPqpr7Oj2Y8/edit?gid=1055199869#gid=1055199869",
 )
 
-SCHEMA_VERSION = "v11_ce_overdue_dashboard"
-DISK_BACKUP_FILE = "/tmp/mi_overdue_shared_snapshot_v11.pkl"
+SCHEMA_VERSION = "v12_ce_flagship_dashboard"
+DISK_BACKUP_FILE = "/tmp/mi_overdue_shared_snapshot_v12.pkl"
 
 
 # -----------------------------------------------------------------------------
 # SHARED SERVER MEMORY & LOCK
 # -----------------------------------------------------------------------------
 @st.cache_resource
-def get_shared_state_v11() -> dict:
+def get_shared_state_v12() -> dict:
     state = {
         "version": SCHEMA_VERSION,
         "lock": threading.Lock(),
@@ -790,9 +1010,9 @@ def download_xlsx_bytes(sheet_url: str) -> bytes:
     ]
     headers = {
         "User-Agent": (
-            "Mozilla/5.0 (Linux; Android 14; Pixel 8) "
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
             "AppleWebKit/537.36 (KHTML, like Gecko) "
-            "Chrome/128.0.0.0 Mobile Safari/537.36"
+            "Chrome/128.0.0.0 Safari/537.36"
         ),
     }
 
@@ -1071,12 +1291,10 @@ def map_officer_or_unassigned(name: str) -> str:
     return name
 
 
-def shorten_mobile_label(name: str, max_len: int = 15) -> str:
-    """Shorten Y-axis officer names on portrait phones so bars have maximum width."""
+def shorten_label(name: str, max_len: int = 28) -> str:
     if name == UNASSIGNED_LABEL:
-        return "⚠️ Unassigned"
-    clean = re.sub(r"^(ಶ್ರೀ|ಶ್ರೀಮತಿ|ಕುಮಾರಿ)\.?\s*", "", name).strip()
-    return clean if len(clean) <= max_len else clean[: max_len - 1] + "…"
+        return "⚠️ Unassigned (Empty)"
+    return name if len(name) <= max_len else name[: max_len - 1] + "…"
 
 
 def display_clean_cell(val: str) -> str:
@@ -1105,7 +1323,15 @@ def render_ce_overdue_html_table(df_display: pd.DataFrame) -> str:
                 )
             elif col in ["Target Date", "Overdue By"]:
                 cells_html.append(
-                    f'<td class="ce-date-overdue">{escaped_text}</td>'
+                    f'<td class="ce-date-overdue">'
+                    f'<span class="ce-overdue-pill">{escaped_text}</span>'
+                    f"</td>"
+                )
+            elif col == "H.O.A.":
+                cells_html.append(
+                    f'<td class="ce-compact-cell">'
+                    f'<span class="ce-hoa-pill">{escaped_text}</span>'
+                    f"</td>"
                 )
             else:
                 cells_html.append(
@@ -1152,7 +1378,7 @@ def parse_xlsx_workbook(workbook_bytes: bytes):
     for idx_sheet, target in enumerate(TARGET_SHEETS, start=1):
         progress.progress(
             idx_sheet / total_targets,
-            text=f"Reading {idx_sheet}/{total_targets}: {target}...",
+            text=f"Processing worksheet {idx_sheet}/{total_targets}: {target}...",
         )
 
         norm_target = normalize_text(target).lower()
@@ -1162,7 +1388,7 @@ def parse_xlsx_workbook(workbook_bytes: bytes):
             sheet_diagnostics.append(
                 {
                     "Sheet": target,
-                    "Status": "Missing",
+                    "Status": "Missing in Workbook",
                     "Sub-division Col": "N/A",
                     "EE / TA / AS Cols": "N/A",
                     "Rows Loaded": 0,
@@ -1175,6 +1401,17 @@ def parse_xlsx_workbook(workbook_bytes: bytes):
         try:
             raw_df = read_sheet_safely(excel_file, workbook_bytes, actual_sheet_name)
             if raw_df.empty:
+                sheet_diagnostics.append(
+                    {
+                        "Sheet": target,
+                        "Status": "Empty Sheet",
+                        "Sub-division Col": "N/A",
+                        "EE / TA / AS Cols": "N/A",
+                        "Rows Loaded": 0,
+                        "Overdue ('P')": 0,
+                        "ETS": 0,
+                    }
+                )
                 continue
 
             header_idx = None
@@ -1191,6 +1428,17 @@ def parse_xlsx_workbook(workbook_bytes: bytes):
                     break
 
             if header_idx is None:
+                sheet_diagnostics.append(
+                    {
+                        "Sheet": target,
+                        "Status": "Header Row Not Found",
+                        "Sub-division Col": "N/A",
+                        "EE / TA / AS Cols": "N/A",
+                        "Rows Loaded": 0,
+                        "Overdue ('P')": 0,
+                        "ETS": 0,
+                    }
+                )
                 continue
 
             raw_headers = [
@@ -1243,7 +1491,23 @@ def parse_xlsx_workbook(workbook_bytes: bytes):
                     if k not in col_idx_map:
                         col_idx_map[k] = v
 
-            if required_keys - set(col_idx_map.keys()):
+            missing_keys = required_keys - set(col_idx_map.keys())
+            if missing_keys:
+                sheet_diagnostics.append(
+                    {
+                        "Sheet": target,
+                        "Status": f"Missing Columns: {', '.join(sorted(missing_keys))}",
+                        "Sub-division Col": "Found" if "subdivision" in col_idx_map else "Missing",
+                        "EE / TA / AS Cols": (
+                            f"EE:{'Y' if 'ee' in col_idx_map else 'N'} "
+                            f"TA:{'Y' if 'ta' in col_idx_map else 'N'} "
+                            f"AS:{'Y' if 'as_off' in col_idx_map else 'N'}"
+                        ),
+                        "Rows Loaded": 0,
+                        "Overdue ('P')": 0,
+                        "ETS": 0,
+                    }
+                )
                 continue
 
             df = raw_df.iloc[header_idx + 1 :].reset_index(drop=True).copy()
@@ -1385,8 +1649,8 @@ def parse_xlsx_workbook(workbook_bytes: bytes):
                     "Status": "Loaded",
                     "Sub-division Col": "Found" if "subdivision" in col_idx_map else "Missing",
                     "EE / TA / AS Cols": (
-                        f"EE:{'Y' if 'ee' in col_idx_map else 'N'} | "
-                        f"TA:{'Y' if 'ta' in col_idx_map else 'N'} | "
+                        f"EE:{'Y' if 'ee' in col_idx_map else 'N'} "
+                        f"TA:{'Y' if 'ta' in col_idx_map else 'N'} "
                         f"AS:{'Y' if 'as_off' in col_idx_map else 'N'}"
                     ),
                     "Rows Loaded": len(sub),
@@ -1465,11 +1729,13 @@ st.sidebar.header("⚙️ Dashboard Controls")
 sheet_url_input = st.sidebar.text_input(
     "Google Spreadsheet Link",
     value=DEFAULT_SHEET_URL,
+    help="Ensure the Google Sheet is set to 'Anyone with the link can view'.",
 )
 
 uploaded_xlsx = st.sidebar.file_uploader(
     "Or Upload Workbook (.xlsx) Directly",
     type=["xlsx"],
+    help="Optional: Upload a downloaded .xlsx copy to update all screens immediately.",
 )
 
 sync_clicked = st.sidebar.button(
@@ -1487,9 +1753,21 @@ denominator_mode = st.sidebar.radio(
     index=0,
 )
 
+chart_style = st.sidebar.radio(
+    "Bar Width Mode:",
+    options=[
+        "Overlay (Overdue + ETS + Rest of Works)",
+        "Scale by Overdue Works (Full-Width Bars)",
+        "Scale by Overdue Percentage (%)",
+    ],
+    index=0,
+    help="Choose how the horizontal bars are scaled across the page.",
+)
+
 shrink_outliers = st.sidebar.checkbox(
     f"Shrink long bars above {BAR_SHRINK_THRESHOLD} works",
     value=True,
+    help=f"Compresses bars above {BAR_SHRINK_THRESHOLD} works so all other bars look long and readable.",
 )
 
 hide_zero_overdue = st.sidebar.checkbox(
@@ -1500,22 +1778,34 @@ hide_zero_overdue = st.sidebar.checkbox(
 show_unassigned_bar = st.sidebar.checkbox(
     "Include Empty / Unassigned Officer bar at the bottom",
     value=True,
+    help="Groups all works where the officer name is blank into a single bar pinned at the bottom.",
 )
 
 show_scroll_hud = st.sidebar.checkbox(
     "Show Right-Edge Scroll HUD Ruler",
     value=True,
+    help="Displays the ultra-slim 14px transparent scrolling ruler on the right edge.",
 )
 
 # -----------------------------------------------------------------------------
-# MOBILE HEADER & DATA LOAD
+# THREAD-SAFE DATA LOADING (WITH SELF-HEALING CACHE CHECK)
 # -----------------------------------------------------------------------------
-st.markdown(
-    '<div class="mobile-title">📊 Minor Irrigation — Overdue Works Dashboard</div>',
-    unsafe_allow_html=True,
+shared_state = get_shared_state_v12()
+
+needs_fresh_load = (
+    shared_state["data"] is None
+    or shared_state.get("version") != SCHEMA_VERSION
+    or sync_clicked
 )
 
-shared_state = get_shared_state_v11()
+# Self-healing check if an older cached dataframe lacks the new columns
+if not needs_fresh_load and shared_state["data"] is not None:
+    _, cached_od_df, _, _ = shared_state["data"]
+    if not cached_od_df.empty and (
+        "Overdue By" not in cached_od_df.columns
+        or COL_WORK_NAME_KN not in cached_od_df.columns
+    ):
+        needs_fresh_load = True
 
 if uploaded_xlsx is not None:
     file_id = f"{uploaded_xlsx.name}_{uploaded_xlsx.size}_{SCHEMA_VERSION}"
@@ -1527,117 +1817,135 @@ if uploaded_xlsx is not None:
             )
             st.session_state["_last_uploaded_id"] = file_id
 
-elif (
-    shared_state["data"] is None
-    or shared_state.get("version") != SCHEMA_VERSION
-    or sync_clicked
-):
+elif needs_fresh_load:
     with shared_state["lock"]:
-        if (
-            shared_state["data"] is None
-            or shared_state.get("version") != SCHEMA_VERSION
-            or sync_clicked
+        with st.spinner(
+            "Downloading workbook snapshot from Google Sheets (takes ~15-20s)..."
         ):
-            with st.spinner("Loading 23 worksheets from Google Sheets..."):
-                try:
-                    xlsx_bytes = download_xlsx_bytes(sheet_url_input)
-                    parsed = parse_xlsx_workbook(xlsx_bytes)
-                    save_shared_state(
-                        shared_state, parsed, "Google Sheets Live Snapshot"
+            try:
+                xlsx_bytes = download_xlsx_bytes(sheet_url_input)
+                parsed = parse_xlsx_workbook(xlsx_bytes)
+                save_shared_state(
+                    shared_state, parsed, "Google Sheets Live Snapshot"
+                )
+            except Exception as e:
+                if shared_state["data"] is not None:
+                    st.warning(
+                        f"Google Sheets is busy right now ({e}). Showing last synced snapshot from {shared_state['last_synced']}."
                     )
-                except Exception as e:
-                    if shared_state["data"] is not None:
-                        st.warning(
-                            f"Google Sheets is busy ({e}). Showing snapshot from {shared_state['last_synced']}."
-                        )
-                    else:
-                        st.error(f"Unable to load data right now. ({e})")
-                        st.stop()
+                else:
+                    st.error(
+                        f"Could not download from Google Sheets right now.\n\n"
+                        f"**Tip:** Wait 10 seconds and click **Sync Latest Data**, or upload the `.xlsx` file in the sidebar.\n\n"
+                        f"Details: {e}"
+                    )
+                    st.stop()
 
 master_df, overdue_full_df, diag_df, today_str = shared_state["data"]
 
+# -----------------------------------------------------------------------------
+# EXECUTIVE COMMAND HEADER BANNER
+# -----------------------------------------------------------------------------
 st.markdown(
     f"""
-    <div class="mi-status-bar">
-        <span class="mi-status-pill">⚡ {shared_state['source_label']}</span>
-        <span>📅 <b>Today:</b> {today_str}</span>
-        <span>🕒 <b>Synced:</b> {shared_state['last_synced']} IST</span>
+    <div class="exec-header-card">
+        <div class="exec-title-block">
+            <div class="exec-icon-box">📊</div>
+            <div>
+                <div class="exec-kicker">Minor Irrigation Department • Executive Monitor</div>
+                <h1 class="exec-main-title">Minor Irrigation — Overdue Works Dashboard</h1>
+            </div>
+        </div>
+        <div class="exec-meta-cluster">
+            <span class="exec-live-pill">
+                <span class="pulse-dot"></span>
+                ⚡ {shared_state['source_label']}
+            </span>
+            <span class="exec-meta-tag">🕒 <b>Last Synced:</b> {shared_state['last_synced']} IST</span>
+            <span class="exec-meta-tag">📌 <b>Row Rule:</b> Valid text in <b>Division</b> column (empty <b>Sub-division</b> included)</span>
+        </div>
     </div>
     """,
     unsafe_allow_html=True,
 )
 
 if master_df.empty:
-    st.warning("No matching data rows found.")
+    st.warning("No matching data rows were found across the target worksheets.")
+    st.dataframe(diag_df, use_container_width=True)
     st.stop()
 
 # -----------------------------------------------------------------------------
-# TOUCH-FRIENDLY TOP FILTER CARDS (5 CASCADING DROPDOWNS + VIEW & SORT)
+# TOP CONTROLS ROW 1: 5 CASCADING DROPDOWNS (Division, Sub-division, EE, TA, AS)
 # -----------------------------------------------------------------------------
+f_col1, f_col2, f_col3, f_col4, f_col5 = st.columns(5, gap="small")
+
 unique_divisions = sorted(
     [d for d in master_df["division_name"].dropna().unique().tolist() if d != ""]
 )
 division_options = [ALL_OPTION] + unique_divisions
 
-with st.container(border=True):
-    d_col1, d_col2 = st.columns(2, gap="small")
-    with d_col1:
+with f_col1:
+    with st.container(border=True):
         selected_division = st.selectbox(
             f"🏛️ Select {LABEL_DIV_EN}:",
             options=division_options,
             index=0,
         )
 
-    df_step1 = (
-        master_df[master_df["division_name"] == selected_division].copy()
-        if selected_division != ALL_OPTION
-        else master_df.copy()
-    )
+df_step1 = (
+    master_df[master_df["division_name"] == selected_division].copy()
+    if selected_division != ALL_OPTION
+    else master_df.copy()
+)
 
-    subdivision_options = build_dropdown_options(df_step1, "subdivision_name")
-    with d_col2:
+subdivision_options = build_dropdown_options(df_step1, "subdivision_name")
+with f_col2:
+    with st.container(border=True):
         selected_subdivision = st.selectbox(
             f"🏢 Select {LABEL_SUBDIV_EN}:",
             options=subdivision_options,
             index=0,
         )
 
-    df_step2 = (
-        df_step1[df_step1["subdivision_name"] == selected_subdivision].copy()
-        if selected_subdivision != ALL_OPTION
-        else df_step1.copy()
-    )
+df_step2 = (
+    df_step1[df_step1["subdivision_name"] == selected_subdivision].copy()
+    if selected_subdivision != ALL_OPTION
+    else df_step1.copy()
+)
 
-    ee_options = build_dropdown_options(df_step2, "ee_name")
-    selected_ee = st.selectbox(
-        f"👔 Select {LABEL_EE_EN}:",
-        options=ee_options,
-        index=0,
-    )
+ee_options = build_dropdown_options(df_step2, "ee_name")
+with f_col3:
+    with st.container(border=True):
+        selected_ee = st.selectbox(
+            f"👔 Select {LABEL_EE_EN}:",
+            options=ee_options,
+            index=0,
+        )
 
-    df_step3 = (
-        df_step2[df_step2["ee_name"] == selected_ee].copy()
-        if selected_ee != ALL_OPTION
-        else df_step2.copy()
-    )
+df_step3 = (
+    df_step2[df_step2["ee_name"] == selected_ee].copy()
+    if selected_ee != ALL_OPTION
+    else df_step2.copy()
+)
 
-    o_col1, o_col2 = st.columns(2, gap="small")
-    ta_options = build_dropdown_options(df_step3, "ta_name")
-    with o_col1:
+ta_options = build_dropdown_options(df_step3, "ta_name")
+with f_col4:
+    with st.container(border=True):
         selected_ta = st.selectbox(
             f"🛠️ Select {LABEL_TA_EN}:",
             options=ta_options,
             index=0,
         )
 
-    df_step4 = (
-        df_step3[df_step3["ta_name"] == selected_ta].copy()
-        if selected_ta != ALL_OPTION
-        else df_step3.copy()
-    )
+df_step4 = (
+    df_step3[df_step3["ta_name"] == selected_ta].copy()
+    if selected_ta != ALL_OPTION
+    else df_step3.copy()
+)
 
-    as_options = build_dropdown_options(df_step4, "as_name")
-    with o_col2:
+as_options = build_dropdown_options(df_step4, "as_name")
+with f_col5:
+    with st.container(border=True):
         selected_as = st.selectbox(
             f"📑 Select {LABEL_AS_EN}:",
             options=as_options,
@@ -1650,22 +1958,31 @@ filtered_master_df = (
     else df_step4.copy()
 )
 
-# Card 2: Officer View & Sort Order
-with st.container(border=True):
-    view_choice = st.radio(
-        "👤 Select Officer View:",
-        options=[LABEL_AE_EN, LABEL_AEE_EN],
-        horizontal=True,
-    )
+# -----------------------------------------------------------------------------
+# TOP CONTROLS ROW 2: OFFICER VIEW & SORT ORDER
+# -----------------------------------------------------------------------------
+r_col1, r_col2 = st.columns(2, gap="medium")
 
-    sort_choice = st.radio(
-        "⬇️ Sort Chart & Table By:",
-        options=[
-            "Highest Overdue Count at Top",
-            "Highest Overdue Percentage (%) at Top",
-        ],
-        horizontal=True,
-    )
+with r_col1:
+    with st.container(border=True):
+        view_choice = st.radio(
+            "👤 Select Officer View:",
+            options=[LABEL_AE_EN, LABEL_AEE_EN],
+            horizontal=True,
+        )
+
+with r_col2:
+    with st.container(border=True):
+        sort_choice = st.radio(
+            "⬇️ Sort Chart & Table By:",
+            options=[
+                "Highest Overdue Count at Top",
+                "Highest Overdue Percentage (%) at Top",
+            ],
+            horizontal=True,
+        )
+
+st.markdown("<div style='margin-top: 0.45rem;'></div>", unsafe_allow_html=True)
 
 group_col = "so_name" if view_choice == LABEL_AE_EN else "aee_name"
 full_filter_col = "_so_name" if view_choice == LABEL_AE_EN else "_aee_name"
@@ -1718,7 +2035,7 @@ else:
     ).reset_index(drop=True)
 
 # -----------------------------------------------------------------------------
-# 2x2 MOBILE PORTRAIT KPI GRID (RED/GREEN TINTS & DYNAMIC OFFICER COUNT)
+# KPI SUMMARY METRIC CARDS (5 COLUMNS WITH CUSTOM ACCENTS & RED/GREEN GLOWS)
 # -----------------------------------------------------------------------------
 total_assigned_all = int(summary_df["total_works"].sum())
 total_overdue_all = int(summary_df["overdue_works"].sum())
@@ -1730,6 +2047,10 @@ if hide_zero_overdue:
     )
 else:
     named_officers_count = int((~summary_df["_is_unassigned"]).sum())
+
+unassigned_works_count = int(
+    summary_df.loc[summary_df["_is_unassigned"], "total_works"].sum()
+)
 
 overall_overdue_pct = (
     round((total_overdue_all / total_assigned_all) * 100, 1)
@@ -1748,34 +2069,41 @@ if selected_as != ALL_OPTION:
     active_scope_parts.append(f"AS: {selected_as}")
 filter_scope_label = " | ".join(active_scope_parts)
 
+k1, k2, k3, k4, k5 = st.columns([1.1, 1.0, 1.05, 1.35, 1.0], gap="medium")
+k1.metric("📅 Date (Today)", today_str)
+
+officer_help_text = (
+    f"Officers with >0 Overdue works (plus {unassigned_works_count:,} unassigned works)."
+    if hide_zero_overdue
+    else f"All named {view_choice}s (plus {unassigned_works_count:,} unassigned works)."
+)
+
+k2.metric(
+    f"👥 {view_choice}s",
+    f"{named_officers_count:,}",
+    help=officer_help_text,
+)
+k3.metric("📋 Total Works", f"{total_assigned_all:,}")
+k4.metric(
+    "🔴 Overdue Works ('Progress')",
+    f"{total_overdue_all:,} ({overall_overdue_pct}%)",
+)
+k5.metric("🟢 'ETS' Works", f"{total_ets_all:,}")
+
+st.divider()
+
+# =============================================================================
+# SECTION 1: HORIZONTAL BAR CHART
+# =============================================================================
 st.markdown(
     f"""
-    <div class="kpi-grid">
-        <div class="kpi-card-red">
-            <div class="kpi-label">🔴 Overdue Works ('P')</div>
-            <div class="kpi-val">{total_overdue_all:,} ({overall_overdue_pct}%)</div>
-        </div>
-        <div class="kpi-card-green">
-            <div class="kpi-label">🟢 'ETS' Works</div>
-            <div class="kpi-val">{total_ets_all:,}</div>
-        </div>
-        <div class="kpi-card">
-            <div class="kpi-label">📋 Total Works</div>
-            <div class="kpi-val">{total_assigned_all:,}</div>
-        </div>
-        <div class="kpi-card">
-            <div class="kpi-label">👥 {view_choice}s</div>
-            <div class="kpi-val">{named_officers_count:,}</div>
-        </div>
+    <div class="exec-section-banner">
+        <div class="exec-section-title">📈 Overdue & ETS Works by {view_choice} ({sort_choice})</div>
+        <div class="exec-scope-badge">{html.escape(filter_scope_label)}</div>
     </div>
     """,
     unsafe_allow_html=True,
 )
-
-# =============================================================================
-# SECTION 1 (FIRST): MOBILE PORTRAIT HORIZONTAL BAR CHART
-# =============================================================================
-st.markdown(f"##### 📈 Overdue & ETS Works by {view_choice}")
 
 if hide_zero_overdue:
     chart_source_df = summary_df[
@@ -1784,167 +2112,243 @@ if hide_zero_overdue:
 else:
     chart_source_df = summary_df.copy()
 
-st.markdown(
-    """
-    <div class="legend-bar">
-        <span><span class="dot-red">■</span> Overdue ('P')</span>
-        <span><span class="dot-green">■</span> ETS Works</span>
-        <span><span class="dot-grey">■</span> Rest of Works</span>
-    </div>
-    """,
-    unsafe_allow_html=True,
-)
-
 if chart_source_df.empty:
     st.info(
         "No officers match the current filter (try unchecking 'Show only officers with Overdue > 0' in the sidebar)."
     )
 else:
     plot_df = chart_source_df.iloc[::-1].copy()
-    plot_df["y_short"] = plot_df[view_choice].map(lambda s: shorten_mobile_label(s, 14))
-    plot_df["overdue_plus_ets"] = plot_df["overdue_works"] + plot_df["ets_works"]
+    plot_df["y_short"] = plot_df[view_choice].map(lambda s: shorten_label(s, 28))
     plot_df["is_shrunk"] = shrink_outliers & (
         plot_df["total_works"] > BAR_SHRINK_THRESHOLD
     )
 
-    if shrink_outliers:
-        plot_df["vis_total"] = plot_df["total_works"].map(compress_bar_length)
-        plot_df["vis_overdue_plus_ets"] = plot_df["overdue_plus_ets"].map(
-            compress_bar_length
-        )
-        plot_df["vis_overdue"] = plot_df["overdue_works"].map(compress_bar_length)
-    else:
-        plot_df["vis_total"] = plot_df["total_works"].astype(float)
-        plot_df["vis_overdue_plus_ets"] = plot_df["overdue_plus_ets"].astype(float)
-        plot_df["vis_overdue"] = plot_df["overdue_works"].astype(float)
-
-    def _build_mobile_bar_label(r) -> str:
+    def _build_bar_label(r) -> str:
         shrink_tag = (
-            f" <span style='color:#FBBF24'>[>{BAR_SHRINK_THRESHOLD}]</span>"
+            f" <span style='color:#FBBF24'>[>{BAR_SHRINK_THRESHOLD} Shrunk]</span>"
             if r["is_shrunk"]
+            and chart_style == "Overlay (Overdue + ETS + Rest of Works)"
             else ""
         )
         if sort_choice == "Highest Overdue Percentage (%) at Top":
             return (
-                f" <b>{r['overdue_pct']:.1f}%</b> "
-                f"({int(r['overdue_works'])} OD | "
+                f"  <b>{r['overdue_pct']:.1f}% Overdue</b> "
+                f"({int(r['overdue_works'])} Overdue | "
                 f"<span style='color:#4ADE80'>{int(r['ets_works'])} ETS</span> / "
-                f"{int(r['total_works'])}){shrink_tag}"
+                f"{int(r['total_works'])} Total){shrink_tag}"
             )
         return (
-            f" <b>{int(r['overdue_works'])} OD</b> | "
+            f"  <b>{int(r['overdue_works'])} Overdue</b> | "
             f"<span style='color:#4ADE80'>{int(r['ets_works'])} ETS</span> / "
-            f"{int(r['total_works'])} ({r['overdue_pct']:.1f}%){shrink_tag}"
+            f"{int(r['total_works'])} Total ({r['overdue_pct']:.1f}%){shrink_tag}"
         )
 
-    plot_df["bar_label"] = plot_df.apply(_build_mobile_bar_label, axis=1)
+    plot_df["bar_label"] = plot_df.apply(_build_bar_label, axis=1)
 
     fig = go.Figure()
 
-    fig.add_trace(
-        go.Bar(
-            y=plot_df[view_choice],
-            x=plot_df["vis_total"],
-            name="Rest of Works",
-            orientation="h",
-            marker=dict(
-                color="rgba(148, 163, 184, 0.28)",
-                line=dict(color="#64748B", width=1),
-            ),
-            text=plot_df["bar_label"],
-            textposition="outside",
-            textfont=dict(size=10.5),
-            cliponaxis=False,
-            customdata=plot_df[
-                [
-                    view_choice,
-                    "total_works",
-                    "overdue_works",
-                    "ets_works",
-                    "rest_works",
-                    "overdue_pct",
-                ]
-            ],
-            hovertemplate=(
-                "<b>%{customdata[0]}</b><br>"
-                "🔴 Overdue ('P'): <b>%{customdata[2]}</b> (%{customdata[5]:.1f}%)<br>"
-                "🟢 ETS Works: <b>%{customdata[3]}</b><br>"
-                "⚪ Rest of Works: <b>%{customdata[4]}</b><br>"
-                "📋 Total Works: <b>%{customdata[1]}</b><extra></extra>"
-            ),
+    if chart_style == "Scale by Overdue Works (Full-Width Bars)":
+        fig.add_trace(
+            go.Bar(
+                y=plot_df[view_choice],
+                x=plot_df["overdue_works"],
+                name="Overdue Works ('P')",
+                orientation="h",
+                marker=dict(
+                    color="#EF4444",
+                    line=dict(color="#DC2626", width=1),
+                ),
+                text=plot_df["bar_label"],
+                textposition="outside",
+                textfont=dict(size=13, color="#F8FAFC"),
+                cliponaxis=False,
+                customdata=plot_df[
+                    [
+                        view_choice,
+                        "total_works",
+                        "ongoing_p_works",
+                        "ets_works",
+                        "rest_works",
+                        "overdue_pct",
+                    ]
+                ],
+                hovertemplate=(
+                    f"<b>{view_choice}:</b> %{{customdata[0]}}<br>"
+                    "<b>Overdue Works ('P'):</b> %{x}<br>"
+                    "<b>ETS Works ('ETS'):</b> %{customdata[3]}<br>"
+                    "<b>Rest of Works:</b> %{customdata[4]}<br>"
+                    "<b>Total Works Assigned:</b> %{customdata[1]}<br>"
+                    "<b>Overdue Percentage:</b> %{customdata[5]:.1f}%<extra></extra>"
+                ),
+            )
         )
-    )
+        max_x = max(int(plot_df["overdue_works"].max()), 1)
+        x_range_max = max_x * 1.25
+        x_axis_title = "Number of Overdue Works"
 
-    fig.add_trace(
-        go.Bar(
-            y=plot_df[view_choice],
-            x=plot_df["vis_overdue_plus_ets"],
-            name="ETS Works",
-            orientation="h",
-            marker=dict(color="#4ADE80"),
-            customdata=plot_df[
-                [
-                    view_choice,
-                    "total_works",
-                    "overdue_works",
-                    "ets_works",
-                    "rest_works",
-                    "overdue_pct",
-                ]
-            ],
-            hovertemplate=(
-                "<b>%{customdata[0]}</b><br>"
-                "🟢 ETS Works: <b>%{customdata[3]}</b><br>"
-                "🔴 Overdue ('P'): <b>%{customdata[2]}</b> (%{customdata[5]:.1f}%)<br>"
-                "📋 Total Works: <b>%{customdata[1]}</b><extra></extra>"
-            ),
+    elif chart_style == "Scale by Overdue Percentage (%)":
+        fig.add_trace(
+            go.Bar(
+                y=plot_df[view_choice],
+                x=plot_df["overdue_pct"],
+                name="Overdue %",
+                orientation="h",
+                marker=dict(
+                    color="#EF4444",
+                    line=dict(color="#DC2626", width=1),
+                ),
+                text=plot_df["bar_label"],
+                textposition="outside",
+                textfont=dict(size=13, color="#F8FAFC"),
+                cliponaxis=False,
+                customdata=plot_df[
+                    [
+                        view_choice,
+                        "total_works",
+                        "ongoing_p_works",
+                        "overdue_works",
+                        "ets_works",
+                        "rest_works",
+                    ]
+                ],
+                hovertemplate=(
+                    f"<b>{view_choice}:</b> %{{customdata[0]}}<br>"
+                    "<b>Overdue Percentage:</b> %{x:.1f}%<br>"
+                    "<b>Overdue Works ('P'):</b> %{customdata[3]}<br>"
+                    "<b>ETS Works ('ETS'):</b> %{customdata[4]}<br>"
+                    "<b>Rest of Works:</b> %{customdata[5]}<br>"
+                    "<b>Total Works Assigned:</b> %{customdata[1]}<extra></extra>"
+                ),
+            )
         )
-    )
+        max_x = max(float(plot_df["overdue_pct"].max()), 1.0)
+        x_range_max = max_x * 1.25
+        x_axis_title = "Overdue Percentage (%)"
 
-    fig.add_trace(
-        go.Bar(
-            y=plot_df[view_choice],
-            x=plot_df["vis_overdue"],
-            name="Overdue Works ('P')",
-            orientation="h",
-            marker=dict(color="#EF4444"),
-            customdata=plot_df[
-                [
-                    view_choice,
-                    "total_works",
-                    "overdue_works",
-                    "ets_works",
-                    "rest_works",
-                    "overdue_pct",
-                ]
-            ],
-            hovertemplate=(
-                "<b>%{customdata[0]}</b><br>"
-                "🔴 Overdue ('P'): <b>%{customdata[2]}</b> (%{customdata[5]:.1f}%)<br>"
-                "🟢 ETS Works: <b>%{customdata[3]}</b><br>"
-                "📋 Total Works: <b>%{customdata[1]}</b><extra></extra>"
-            ),
+    else:
+        plot_df["overdue_plus_ets"] = plot_df["overdue_works"] + plot_df["ets_works"]
+
+        if shrink_outliers:
+            plot_df["vis_total"] = plot_df["total_works"].map(compress_bar_length)
+            plot_df["vis_overdue_plus_ets"] = plot_df["overdue_plus_ets"].map(
+                compress_bar_length
+            )
+            plot_df["vis_overdue"] = plot_df["overdue_works"].map(compress_bar_length)
+        else:
+            plot_df["vis_total"] = plot_df["total_works"].astype(float)
+            plot_df["vis_overdue_plus_ets"] = plot_df["overdue_plus_ets"].astype(float)
+            plot_df["vis_overdue"] = plot_df["overdue_works"].astype(float)
+
+        fig.add_trace(
+            go.Bar(
+                y=plot_df[view_choice],
+                x=plot_df["vis_total"],
+                name="Rest of Works (Other Statuses)",
+                orientation="h",
+                marker=dict(
+                    color="rgba(148, 163, 184, 0.28)",
+                    line=dict(color="rgba(148, 163, 184, 0.55)", width=1),
+                ),
+                text=plot_df["bar_label"],
+                textposition="outside",
+                textfont=dict(size=13, color="#F8FAFC"),
+                cliponaxis=False,
+                customdata=plot_df[
+                    [
+                        view_choice,
+                        "total_works",
+                        "overdue_works",
+                        "ets_works",
+                        "rest_works",
+                        "overdue_pct",
+                    ]
+                ],
+                hovertemplate=(
+                    f"<b>{view_choice}:</b> %{{customdata[0]}}<br>"
+                    "<b>Total Works Assigned (Actual):</b> %{customdata[1]}<br>"
+                    "<b>Overdue Works ('P'):</b> %{customdata[2]}<br>"
+                    "<b>ETS Works ('ETS'):</b> %{customdata[3]}<br>"
+                    "<b>Rest of Works:</b> %{customdata[4]}<br>"
+                    "<b>Overdue Percentage:</b> %{customdata[5]:.1f}%<extra></extra>"
+                ),
+            )
         )
-    )
 
-    max_x = max(float(plot_df["vis_total"].max()), 1.0)
-    x_range_max = max_x * 1.58
-    chart_height = max(360, len(plot_df) * 32 + 50)
+        fig.add_trace(
+            go.Bar(
+                y=plot_df[view_choice],
+                x=plot_df["vis_overdue_plus_ets"],
+                name="ETS Works ('ETS')",
+                orientation="h",
+                marker=dict(color="#10B981"),
+                customdata=plot_df[
+                    [
+                        view_choice,
+                        "total_works",
+                        "overdue_works",
+                        "ets_works",
+                        "rest_works",
+                        "overdue_pct",
+                    ]
+                ],
+                hovertemplate=(
+                    f"<b>{view_choice}:</b> %{{customdata[0]}}<br>"
+                    "<b>ETS Works ('ETS'):</b> %{customdata[3]}<br>"
+                    "<b>Overdue Works ('P'):</b> %{customdata[2]}<br>"
+                    "<b>Rest of Works:</b> %{customdata[4]}<br>"
+                    "<b>Total Works Assigned (Actual):</b> %{customdata[1]}<br>"
+                    "<b>Overdue Percentage:</b> %{customdata[5]:.1f}%<extra></extra>"
+                ),
+            )
+        )
+
+        fig.add_trace(
+            go.Bar(
+                y=plot_df[view_choice],
+                x=plot_df["vis_overdue"],
+                name="Overdue Works ('P')",
+                orientation="h",
+                marker=dict(color="#EF4444"),
+                customdata=plot_df[
+                    [
+                        view_choice,
+                        "total_works",
+                        "ongoing_p_works",
+                        "overdue_pct",
+                        "ets_works",
+                        "rest_works",
+                        "overdue_works",
+                    ]
+                ],
+                hovertemplate=(
+                    f"<b>{view_choice}:</b> %{{customdata[0]}}<br>"
+                    "<b>Overdue Works ('P'):</b> %{customdata[6]}<br>"
+                    "<b>ETS Works ('ETS'):</b> %{customdata[4]}<br>"
+                    "<b>Rest of Works:</b> %{customdata[5]}<br>"
+                    "<b>Total Works Assigned (Actual):</b> %{customdata[1]}<br>"
+                    "<b>Overdue Percentage:</b> %{customdata[3]:.1f}%<extra></extra>"
+                ),
+            )
+        )
+
+        max_x = max(float(plot_df["vis_total"].max()), 1.0)
+        x_range_max = max_x * 1.24
+        x_axis_title = "Number of Works"
+
+    chart_height = max(480, len(plot_df) * 36 + 90)
 
     fig.update_layout(
         barmode="overlay",
         height=chart_height,
-        bargap=0.24,
-        showlegend=False,
+        bargap=0.22,
         paper_bgcolor="rgba(0,0,0,0)",
-        plot_bgcolor="rgba(15, 23, 42, 0.35)",
+        plot_bgcolor="rgba(15, 23, 42, 0.42)",
         xaxis=dict(
-            title="",
+            title=x_axis_title,
             range=[0, x_range_max],
-            gridcolor="rgba(148, 163, 184, 0.14)",
+            gridcolor="rgba(148, 163, 184, 0.12)",
             zeroline=True,
-            fixedrange=True,
-            showticklabels=False,
+            zerolinecolor="rgba(148, 163, 184, 0.28)",
         ),
         yaxis=dict(
             title="",
@@ -1952,24 +2356,36 @@ else:
             tickmode="array",
             tickvals=plot_df[view_choice],
             ticktext=plot_df["y_short"],
-            tickfont=dict(size=11),
-            fixedrange=True,
+            tickfont=dict(size=13, color="#E2E8F0"),
         ),
-        margin=dict(l=108, r=14, t=8, b=16),
+        legend=dict(
+            orientation="h",
+            yanchor="bottom",
+            y=1.01,
+            xanchor="left",
+            x=0,
+            traceorder="reversed",
+            font=dict(size=12, color="#CBD5E1"),
+        ),
+        margin=dict(l=210, r=14, t=35, b=40),
     )
 
-    st.plotly_chart(
-        fig,
-        use_container_width=True,
-        config={"displayModeBar": False, "scrollZoom": False},
-    )
+    st.plotly_chart(fig, use_container_width=True)
 
 st.divider()
 
 # =============================================================================
-# SECTION 2 (SECOND): COMBINED OVERDUE WORKS TABLE (ENGLISH HEADERS + OVERDUE BY)
+# SECTION 2: COMBINED OVERDUE WORKS TABLE (ENGLISH HEADERS + STATUS BADGES)
 # =============================================================================
-st.markdown(f"##### 📂 Combined Overdue Works by {view_choice}")
+st.markdown(
+    f"""
+    <div class="exec-section-banner">
+        <div class="exec-section-title">📂 Combined Overdue Works by {view_choice}</div>
+        <div class="exec-scope-badge">{html.escape(filter_scope_label)}</div>
+    </div>
+    """,
+    unsafe_allow_html=True,
+)
 
 officer_options = (
     chart_source_df[view_choice].tolist()
@@ -1988,13 +2404,13 @@ officer_stats_map = {
 }
 
 selected_officer = st.selectbox(
-    f"Tap to select {view_choice}:",
+    f"Select {view_choice} to view and download their Overdue Works:",
     options=officer_options,
     index=0 if officer_options else None,
     format_func=lambda name: (
-        f"{name} ({officer_stats_map[name][0]} OD | "
-        f"{officer_stats_map[name][1]} ETS / {officer_stats_map[name][2]} Total — "
-        f"{officer_stats_map[name][3]:.1f}%)"
+        f"{name}  —  ({officer_stats_map[name][0]} Overdue | "
+        f"{officer_stats_map[name][1]} ETS / "
+        f"{officer_stats_map[name][2]} Total | {officer_stats_map[name][3]:.1f}%)"
     ),
 )
 
@@ -2064,6 +2480,7 @@ if selected_officer:
             COL_HOA_KN: "H.O.A.",
         }
         officer_overdue_df.rename(columns=rename_map, inplace=True)
+
         officer_overdue_df.insert(0, "Sl. No.", range(1, len(officer_overdue_df) + 1))
 
         if officer_overdue_df.empty:
@@ -2072,39 +2489,45 @@ if selected_officer:
             )
         else:
             hoa_involved = officer_overdue_df["H.O.A."].unique().tolist()
-            st.caption(
-                f"**Selected {view_choice}:** `{selected_officer}` &nbsp;|&nbsp; "
-                f"**Overdue Works:** `{len(officer_overdue_df)}` &nbsp;|&nbsp; "
-                f"**H.O.A.:** `{', '.join(hoa_involved)}`"
+            st.markdown(
+                f"""
+                <div class="officer-summary-strip">
+                    <span>👤 <b>Selected {html.escape(view_choice)}:</b> <span class="strip-badge-officer">{html.escape(selected_officer)}</span></span>
+                    <span>🔴 <b>Total Overdue Works:</b> <span class="strip-badge-overdue">{len(officer_overdue_df)}</span></span>
+                    <span>📑 <b>Account Heads (H.O.A.):</b> <span class="strip-badge-hoa">{html.escape(', '.join(hoa_involved))}</span></span>
+                </div>
+                """,
+                unsafe_allow_html=True,
             )
 
             safe_name = (
                 re.sub(r"[^\w\-]+", "_", selected_officer).strip("_") or "Unassigned"
             )
             safe_div = (
-                re.sub(r"[^\w\-]+", "_", selected_division).strip("_") or "All_Div"
+                re.sub(r"[^\w\-]+", "_", selected_division).strip("_") or "All_Divisions"
             )
             excel_bytes = convert_df_to_excel_bytes(officer_overdue_df)
             csv_bytes = officer_overdue_df.to_csv(index=False).encode("utf-8-sig")
 
-            dl1, dl2 = st.columns(2)
-            with dl1:
+            dl_col1, dl_col2, _ = st.columns([1.5, 1.5, 5])
+            with dl_col1:
                 st.download_button(
-                    label="📥 Excel (.xlsx)",
+                    label="📥 Download Excel (.xlsx)",
                     data=excel_bytes,
                     file_name=f"Overdue_Works_{safe_div}_{safe_name}_{today_str}.xlsx",
                     mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
                     use_container_width=True,
                 )
-            with dl2:
+            with dl_col2:
                 st.download_button(
-                    label="📥 CSV (.csv)",
+                    label="📥 Download CSV (.csv)",
                     data=csv_bytes,
                     file_name=f"Overdue_Works_{safe_div}_{safe_name}_{today_str}.csv",
                     mime="text/csv",
                     use_container_width=True,
                 )
 
+            # Render the Flagship CE HTML table
             st.markdown(
                 render_ce_overdue_html_table(officer_overdue_df),
                 unsafe_allow_html=True,
@@ -2113,9 +2536,17 @@ if selected_officer:
 st.divider()
 
 # =============================================================================
-# SECTION 3 (THIRD): OFFICER-WISE SUMMARY TABLE (ENGLISH)
+# SECTION 3: OFFICER-WISE SUMMARY TABLE (ENGLISH)
 # =============================================================================
-st.markdown(f"##### 📋 Officer-Wise Summary Table — [{filter_scope_label}]")
+st.markdown(
+    f"""
+    <div class="exec-section-banner">
+        <div class="exec-section-title">📋 Officer-Wise Summary Table</div>
+        <div class="exec-scope-badge">{html.escape(filter_scope_label)}</div>
+    </div>
+    """,
+    unsafe_allow_html=True,
+)
 
 display_table = summary_df[
     [
@@ -2144,21 +2575,7 @@ st.dataframe(
     use_container_width=True,
 )
 
-with st.expander("🔍 Inspect Worksheet Loading Status & Quick Sync (23 Target Sheets)"):
-    if st.button(
-        "🔄 Sync Latest Data Now",
-        use_container_width=True,
-        type="primary",
-        key="mobile_bottom_sync",
-    ):
-        with shared_state["lock"]:
-            with st.spinner("Syncing latest changes from Google Sheets..."):
-                xlsx_bytes = download_xlsx_bytes(sheet_url_input)
-                parsed = parse_xlsx_workbook(xlsx_bytes)
-                save_shared_state(
-                    shared_state, parsed, "Google Sheets Live Snapshot"
-                )
-                st.rerun()
+with st.expander("🔍 Inspect Worksheet Loading Status (23 Target Sheets)"):
     st.dataframe(diag_df, use_container_width=True)
 
 # Mount the ultra-slim 14px, writing-free right-edge scrolling HUD overlay
