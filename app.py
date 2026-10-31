@@ -2294,7 +2294,7 @@ if st.session_state["pc_active_page"] == "analytics":
         )
 
         st.markdown(
-            f"<h4 style='color:#F8FAFC; margin-bottom:0.5rem;'>🔍 {audit_role} Wise Analytics & Live Fact-Checker</h4>",
+            f"<h4 style='color:#F8FAFC; margin-bottom:0.5rem;'>🔍 {audit_role} Wise Analytics</h4>",
             unsafe_allow_html=True
         )
 
