@@ -2282,6 +2282,9 @@ if st.session_state["pc_active_page"] == "analytics":
     # =========================================================================
     # ANALYTICS SECTION 1: CE TRUTH DETECTOR (OVERDUE 'P' VS. CLAIMED 'ETS')
     # =========================================================================
+    # =========================================================================
+    # ANALYTICS SECTION 1: CE TRUTH DETECTOR & AGEING TREE
+    # =========================================================================
     with st.container(border=True):
         audit_role = st.radio(
             "👤 Select Officer Cadre:",
@@ -2289,9 +2292,7 @@ if st.session_state["pc_active_page"] == "analytics":
             horizontal=True,
             key="an_truth_role_radio",
         )
-        active_audit_df = (
-            ae_stats_df if audit_role == LABEL_AE_EN else aee_stats_df
-        )
+        active_audit_df = ae_stats_df if audit_role == LABEL_AE_EN else aee_stats_df
 
         st.markdown(
             f"<h4 style='color:#F8FAFC; margin-bottom:0.5rem;'>🔍 {audit_role} Wise Analytics</h4>",
@@ -2310,9 +2311,7 @@ if st.session_state["pc_active_page"] == "analytics":
                 key="an_fact_check_select",
             )
 
-            off_row = active_audit_df[
-                active_audit_df[audit_role] == picked_off
-            ].iloc[0]
+            off_row = active_audit_df[active_audit_df[audit_role] == picked_off].iloc[0]
             o_tot = int(off_row["total_works"])
             o_od = int(off_row["overdue_works"])
             o_ets = int(off_row["ets_works"])
@@ -2324,37 +2323,23 @@ if st.session_state["pc_active_page"] == "analytics":
             if o_od == 0 and o_ets == 0:
                 verdict_color = "#10B981"
                 verdict_title = "✅ CLEAN RECORD (0 Overdue, 0 ETS)"
-                verdict_msg = (
-                    f"<b>{html.escape(picked_off)}</b> has zero overdue works and "
-                    f"zero ETS works across <b>{o_tot}</b> assigned works."
-                )
+                verdict_msg = f"<b>{html.escape(picked_off)}</b> has zero overdue works and zero ETS works across <b>{o_tot}</b> assigned works."
             elif o_od > 0 and o_ets == 0:
                 verdict_color = "#EF4444"
                 verdict_title = "🚨 100% UNEXCUSED OVERDUE (ZERO ETS!)"
-                verdict_msg = (
-                    f"If <b>{html.escape(picked_off)}</b> claims their delayed works are in ETS, "
-                    f"<b>that is false</b>: <b>{o_od} work(s)</b> are sitting in Overdue ('P') and <b>0 works</b> are in ETS."
-                )
+                verdict_msg = f"If <b>{html.escape(picked_off)}</b> claims their delayed works are in ETS, <b>that is false</b>: <b>{o_od} work(s)</b> are sitting in Overdue ('P') and <b>0 works</b> are in ETS."
             elif o_od > o_ets:
                 verdict_color = "#F97316"
-                verdict_title = (
-                    f"⚠️ MORE OVERDUE THAN ETS ({o_unexcused_pct:.1f}% Unexcused)"
-                )
-                verdict_msg = (
-                    f"Out of <b>{o_od + o_ets}</b> delayed works under <b>{html.escape(picked_off)}</b>, "
-                    f"only <b>{o_ets}</b> are in ETS while <b>{o_od} works ({o_unexcused_pct:.1f}%)</b> are sitting in Overdue ('P')."
-                )
+                verdict_title = f"⚠️ MORE OVERDUE THAN ETS ({o_unexcused_pct:.1f}% Unexcused)"
+                verdict_msg = f"Out of <b>{o_od + o_ets}</b> delayed works under <b>{html.escape(picked_off)}</b>, only <b>{o_ets}</b> are in ETS while <b>{o_od} works ({o_unexcused_pct:.1f}%)</b> are sitting in Overdue ('P')."
             else:
                 verdict_color = "#F59E0B"
                 verdict_title = f"📌 ETS HEAVY ({o_ets} in ETS vs. {o_od} Overdue)"
-                verdict_msg = (
-                    f"<b>{html.escape(picked_off)}</b> has placed <b>{o_ets}</b> works in ETS, "
-                    f"and still has <b>{o_od}</b> active Overdue ('P') work(s) ({o_od_pct:.1f}% of total)."
-                )
+                verdict_msg = f"<b>{html.escape(picked_off)}</b> has placed <b>{o_ets}</b> works in ETS, and still has <b>{o_od}</b> active Overdue ('P') work(s) ({o_od_pct:.1f}% of total)."
 
             st.markdown(
                 f"""
-                <div class="truth-audit-box" style="border-left-color: {verdict_color};">
+                <div class="truth-audit-box" style="border-left-color: {verdict_color}; margin-bottom: 20px;">
                     <div style="font-size:0.95rem;font-weight:800;color:{verdict_color};margin-bottom:6px;">
                         {verdict_title}
                     </div>
@@ -2384,89 +2369,33 @@ if st.session_state["pc_active_page"] == "analytics":
                 unsafe_allow_html=True,
             )
 
-            fc_col1, fc_col2 = st.columns([1, 1], gap="medium")
-            with fc_col1:
-                # 1. Calculate Overdue Buckets for this specific officer
-                target_col = "so_name" if audit_role == LABEL_AE_EN else "aee_name"
-                off_od_df = od_rows_in_scope[od_rows_in_scope[target_col] == picked_off]
-                
-                od_u6 = len(off_od_df[off_od_df["age_bucket"] == "1. < 6 Months"])
-                od_6_12 = len(off_od_df[off_od_df["age_bucket"] == "2. 6 – 12 Months"])
-                od_1_2 = len(off_od_df[off_od_df["age_bucket"] == "3. 1 – 2 Years"])
-                od_2_plus = len(off_od_df[off_od_df["age_bucket"].isin(["4. 2 – 5 Years", "5. > 5 Years (Chronic)"])])
-
-                # 2. Build Dynamic Donut Pieces
-                d_labels = []
-                d_vals = []
-                d_colors = []
-                d_pulls = []
-
-                # --- Red Overdue Segments (Pulled out like a 3D brick with identical red color) ---
-                if od_u6 > 0:
-                    d_labels.append("< 6 Mos OD")
-                    d_vals.append(od_u6)
-                    d_colors.append("#EF4444")
-                    d_pulls.append(0.08) # Pulls the slice outward
-                if od_6_12 > 0:
-                    d_labels.append("6-12 Mos OD")
-                    d_vals.append(od_6_12)
-                    d_colors.append("#EF4444")
-                    d_pulls.append(0.08)
-                if od_1_2 > 0:
-                    d_labels.append("1-2 Yrs OD")
-                    d_vals.append(od_1_2)
-                    d_colors.append("#EF4444")
-                    d_pulls.append(0.08)
-                if od_2_plus > 0:
-                    d_labels.append("2+ Yrs OD")
-                    d_vals.append(od_2_plus)
-                    d_colors.append("#EF4444")
-                    d_pulls.append(0.08)
-
-                # --- Non-Overdue Segments (Flush / Not Pulled) ---
-                if o_ets > 0:
-                    d_labels.append("Claimed 'ETS'")
-                    d_vals.append(o_ets)
-                    d_colors.append("#10B981")
-                    d_pulls.append(0)
-                if o_ontrack > 0:
-                    d_labels.append("On-Track ('P')")
-                    d_vals.append(o_ontrack)
-                    d_colors.append("#3B82F6")
-                    d_pulls.append(0)
-                if o_rest > 0:
-                    d_labels.append("Completed / Rest")
-                    d_vals.append(o_rest)
-                    d_colors.append("#475569")
-                    d_pulls.append(0)
-
-                # Fallback if empty
-                if sum(d_vals) == 0:
-                    d_labels = ["No Works"]
-                    d_vals = [1]
-                    d_colors = ["#1E293B"]
-                    d_pulls = [0]
-
-                # 3. Render 3D-Style Pulled Donut
+            # Two-Column Layout for Donut & Tree Chart under the full-width banner
+            fc_c1, fc_c2 = st.columns([1, 1], gap="large")
+            
+            with fc_c1:
+                # Hover-Growth Solid Donut (Overdue combined into one slice)
                 fig_off_donut = go.Figure(
                     data=[
                         go.Pie(
-                            labels=d_labels,
-                            values=d_vals,
-                            hole=0.55,
-                            pull=d_pulls,
+                            labels=["Overdue ('P')", "Claimed 'ETS'", "On-Track ('P')", "Completed / Rest"],
+                            values=[o_od, o_ets, o_ontrack, o_rest],
+                            hole=0.6,
+                            hoverinfo="label+percent+value",
                             marker=dict(
-                                colors=d_colors, 
-                                line=dict(color="#0F172A", width=2) # Thick dark line gives the 3D brick separation
+                                colors=["#EF4444", "#10B981", "#3B82F6", "#475569"],
+                                line=dict(color="#0F172A", width=2)
                             ),
                             textinfo="label+value",
                             textfont=dict(size=12, color="#F8FAFC"),
-                            rotation=90,
                         )
                     ]
                 )
+                fig_off_donut.update_traces(
+                    hoverlabel=dict(bgcolor="#1E293B", font_size=13, font_color="#F8FAFC"),
+                    pull=[0.0, 0, 0, 0] # No permanent pull, it will natively grow on mouse hover
+                )
                 fig_off_donut.update_layout(
-                    height=290,
+                    height=300,
                     margin=dict(l=10, r=10, t=10, b=10),
                     paper_bgcolor="rgba(0,0,0,0)",
                     showlegend=False,
@@ -2483,75 +2412,85 @@ if st.session_state["pc_active_page"] == "analytics":
                 )
                 st.plotly_chart(fig_off_donut, use_container_width=True)
 
-            with fc_col2:
-                # Instant proof list of this officer's actual Overdue ('P') works
-                off_od_col = "_so_name" if audit_role == LABEL_AE_EN else "_aee_name"
-                if not overdue_full_df.empty:
-                    proof_df = overdue_full_df[
-                        overdue_full_df[off_od_col] == picked_off
-                    ].copy()
-                    if an_div != ALL_OPTION:
-                        proof_df = proof_df[proof_df["_division_name"] == an_div]
-                    if an_subdiv != ALL_OPTION:
-                        proof_df = proof_df[proof_df["_subdivision_name"] == an_subdiv]
-                    if an_ee != ALL_OPTION:
-                        proof_df = proof_df[proof_df["_ee_name"] == an_ee]
+            with fc_c2:
+                # Overdue Ageing Tree Chart
+                target_col = "so_name" if audit_role == LABEL_AE_EN else "aee_name"
+                off_od_df = od_rows_in_scope[od_rows_in_scope[target_col] == picked_off]
+                
+                if not off_od_df.empty:
+                    # Calculate Custom Ageing Buckets for the Tree
+                    def _custom_age_bucket(target_str):
+                        parsed = parse_indian_date_list(pd.Series([target_str]))
+                        t_dt = parsed[0] if parsed else None
+                        if not isinstance(t_dt, date) or t_dt >= today_ist_obj: return "Unknown"
+                        days = (today_ist_obj - t_dt).days
+                        if days <= 180: return "Under 6 Months"
+                        if days <= 365: return "6 Months to 1 Year"
+                        if days <= 730: return "1 - 2 Years"
+                        if days <= 1095: return "2 - 3 Years"
+                        if days <= 1460: return "3 - 4 Years"
+                        return "4+ Years"
+
+                    off_od_df["tree_bucket"] = off_od_df["target_date_raw"].map(_custom_age_bucket)
+                    tree_counts = off_od_df["tree_bucket"].value_counts()
                     
-                    if not proof_df.empty:
-                        st.markdown(f"**📂 View {len(proof_df)} Actual Overdue Work(s) of {html.escape(picked_off)}**")
-                        st.dataframe(
-                            proof_df[
-                                [
-                                    COL_WORK_NAME_KN,
-                                    COL_TARGET_DATE_KN,
-                                    "Overdue By",
-                                ]
-                            ].rename(
-                                columns={
-                                    COL_WORK_NAME_KN: "Work Name",
-                                    COL_TARGET_DATE_KN: "Target Date",
-                                }
-                            ),
-                            use_container_width=True,
-                            hide_index=True,
-                            height=250
-                        )
-                    else:
-                        st.info("No overdue works found in the database for this filter.")
-                # Instant proof list of this officer's actual Overdue ('P') works
-                off_od_col = "_so_name" if audit_role == LABEL_AE_EN else "_aee_name"
-                if not overdue_full_df.empty:
-                    proof_df = overdue_full_df[
-                        overdue_full_df[off_od_col] == picked_off
-                    ].copy()
-                    if an_div != ALL_OPTION:
-                        proof_df = proof_df[proof_df["_division_name"] == an_div]
-                    if an_subdiv != ALL_OPTION:
-                        proof_df = proof_df[proof_df["_subdivision_name"] == an_subdiv]
-                    if an_ee != ALL_OPTION:
-                        proof_df = proof_df[proof_df["_ee_name"] == an_ee]
+                    labels = ["Overdue Works"]
+                    parents = [""]
+                    values = [o_od]
                     
-                    if not proof_df.empty:
-                        st.markdown(f"**📂 View {len(proof_df)} Actual Overdue Work(s) of {html.escape(picked_off)}**")
-                        st.dataframe(
-                            proof_df[
-                                [
-                                    COL_WORK_NAME_KN,
-                                    COL_TARGET_DATE_KN,
-                                    "Overdue By",
-                                ]
-                            ].rename(
-                                columns={
-                                    COL_WORK_NAME_KN: "Work Name",
-                                    COL_TARGET_DATE_KN: "Target Date",
-                                }
-                            ),
-                            use_container_width=True,
-                            hide_index=True,
-                            height=240
-                        )
-                    else:
-                        st.info("No overdue works found in the database for this filter.")
+                    ordered_buckets = [
+                        "Under 6 Months", "6 Months to 1 Year", 
+                        "1 - 2 Years", "2 - 3 Years", "3 - 4 Years", "4+ Years"
+                    ]
+                    
+                    for bkt in ordered_buckets:
+                        if bkt in tree_counts:
+                            labels.append(f"{bkt} ({tree_counts[bkt]})")
+                            parents.append("Overdue Works")
+                            values.append(tree_counts[bkt])
+
+                    fig_tree = go.Figure(go.Treemap(
+                        labels=labels,
+                        parents=parents,
+                        values=values,
+                        textinfo="label+value",
+                        marker=dict(
+                            colors=values,
+                            colorscale='Reds',
+                            showscale=False
+                        ),
+                        pathbar=dict(visible=False)
+                    ))
+                    fig_tree.update_layout(
+                        title=dict(text="🌳 Overdue Ageing Tree", font=dict(size=14, color="#F8FAFC")),
+                        margin=dict(t=30, l=10, r=10, b=10),
+                        height=300,
+                        paper_bgcolor="rgba(0,0,0,0)",
+                    )
+                    st.plotly_chart(fig_tree, use_container_width=True)
+                else:
+                    st.info(f"{picked_off} has 0 Overdue Works. No tree chart needed.")
+
+            # Single Table at the bottom (Merged the redundant second table)
+            if not off_od_df.empty:
+                st.markdown(f"**📂 View {len(off_od_df)} Actual Overdue Work(s) of {html.escape(picked_off)}**")
+                st.dataframe(
+                    off_od_df[
+                        [
+                            COL_WORK_NAME_KN,
+                            COL_TARGET_DATE_KN,
+                            "Overdue By",
+                        ]
+                    ].rename(
+                        columns={
+                            COL_WORK_NAME_KN: "Work Name",
+                            COL_TARGET_DATE_KN: "Target Date",
+                        }
+                    ),
+                    use_container_width=True,
+                    hide_index=True,
+                    height=240
+                )
     # =========================================================================
     # ANALYTICS SECTION 2: ALL 8 TOP-5 LEADERBOARDS (AE & AEE)
     # =========================================================================
