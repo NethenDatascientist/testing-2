@@ -2282,195 +2282,110 @@ if st.session_state["pc_active_page"] == "analytics":
     # =========================================================================
     # ANALYTICS SECTION 1: CE TRUTH DETECTOR (OVERDUE 'P' VS. CLAIMED 'ETS')
     # =========================================================================
-    st.markdown(
-        f"""
-        <div class="exec-section-banner">
-            <div class="exec-section-title">🕵️ CE Truth Detector: Actual Overdue ('P') vs. Claimed 'ETS' Verification</div>
-            <div class="exec-scope-badge">{html.escape(an_scope_label)}</div>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
-
     with st.container(border=True):
-        td_left, td_right = st.columns([0.58, 0.42], gap="medium")
+        audit_role = st.radio(
+            "👤 Select Officer Cadre:",
+            options=[LABEL_AE_EN, LABEL_AEE_EN],
+            horizontal=True,
+            key="an_truth_role_radio",
+        )
+        active_audit_df = (
+            ae_stats_df if audit_role == LABEL_AE_EN else aee_stats_df
+        )
 
-        with td_left:
-            audit_role = st.radio(
-                "Select Officer Cadre for ETS vs. Overdue Reality Audit:",
-                options=[LABEL_AE_EN, LABEL_AEE_EN],
-                horizontal=True,
-                key="an_truth_role_radio",
+        st.markdown(
+            f"<h4 style='color:#F8FAFC; margin-bottom:0.5rem;'>🔍 {audit_role} Wise Analytics & Live Fact-Checker</h4>",
+            unsafe_allow_html=True
+        )
+
+        if not active_audit_df.empty:
+            audit_sorted_opts = active_audit_df.sort_values(
+                by=["overdue_works", "ets_works"], ascending=[False, False]
+            )[audit_role].tolist()
+
+            picked_off = st.selectbox(
+                f"Select {audit_role} to verify their ETS claim:",
+                options=audit_sorted_opts,
+                index=0,
+                key="an_fact_check_select",
             )
-            active_audit_df = (
-                ae_stats_df if audit_role == LABEL_AE_EN else aee_stats_df
-            )
 
-            if not active_audit_df.empty:
-                top_delayed_15 = (
-                    active_audit_df[active_audit_df["delayed_exposure"] > 0]
-                    .sort_values(
-                        by=["overdue_works", "ets_works", "total_works"],
-                        ascending=[False, False, False],
-                    )
-                    .head(15)
-                    .iloc[::-1]
+            off_row = active_audit_df[
+                active_audit_df[audit_role] == picked_off
+            ].iloc[0]
+            o_tot = int(off_row["total_works"])
+            o_od = int(off_row["overdue_works"])
+            o_ets = int(off_row["ets_works"])
+            o_ontrack = int(off_row["on_track_p"])
+            o_rest = int(off_row["rest_works"])
+            o_od_pct = float(off_row["overdue_pct"])
+            o_unexcused_pct = float(off_row["unexcused_ratio_pct"])
+
+            if o_od == 0 and o_ets == 0:
+                verdict_color = "#10B981"
+                verdict_title = "✅ CLEAN RECORD (0 Overdue, 0 ETS)"
+                verdict_msg = (
+                    f"<b>{html.escape(picked_off)}</b> has zero overdue works and "
+                    f"zero ETS works across <b>{o_tot}</b> assigned works."
+                )
+            elif o_od > 0 and o_ets == 0:
+                verdict_color = "#EF4444"
+                verdict_title = "🚨 100% UNEXCUSED OVERDUE (ZERO ETS!)"
+                verdict_msg = (
+                    f"If <b>{html.escape(picked_off)}</b> claims their delayed works are in ETS, "
+                    f"<b>that is false</b>: <b>{o_od} work(s)</b> are sitting in Overdue ('P') and <b>0 works</b> are in ETS."
+                )
+            elif o_od > o_ets:
+                verdict_color = "#F97316"
+                verdict_title = (
+                    f"⚠️ MORE OVERDUE THAN ETS ({o_unexcused_pct:.1f}% Unexcused)"
+                )
+                verdict_msg = (
+                    f"Out of <b>{o_od + o_ets}</b> delayed works under <b>{html.escape(picked_off)}</b>, "
+                    f"only <b>{o_ets}</b> are in ETS while <b>{o_od} works ({o_unexcused_pct:.1f}%)</b> are sitting in Overdue ('P')."
+                )
+            else:
+                verdict_color = "#F59E0B"
+                verdict_title = f"📌 ETS HEAVY ({o_ets} in ETS vs. {o_od} Overdue)"
+                verdict_msg = (
+                    f"<b>{html.escape(picked_off)}</b> has placed <b>{o_ets}</b> works in ETS, "
+                    f"and still has <b>{o_od}</b> active Overdue ('P') work(s) ({o_od_pct:.1f}% of total)."
                 )
 
-                fig_truth = go.Figure()
-                fig_truth.add_trace(
-                    go.Bar(
-                        y=top_delayed_15[audit_role],
-                        x=top_delayed_15["overdue_works"],
-                        name="🔴 Actual Overdue ('P' — Not in ETS)",
-                        orientation="h",
-                        marker_color="#EF4444",
-                        text=[
-                            f"{int(od)} Overdue ({unex:.0f}% Unexcused)"
-                            if od > 0
-                            else ""
-                            for od, unex in zip(
-                                top_delayed_15["overdue_works"],
-                                top_delayed_15["unexcused_ratio_pct"],
-                            )
-                        ],
-                        textposition="inside",
-                        insidetextanchor="middle",
-                        textfont=dict(color="#FFFFFF", size=11),
-                    )
-                )
-                fig_truth.add_trace(
-                    go.Bar(
-                        y=top_delayed_15[audit_role],
-                        x=top_delayed_15["ets_works"],
-                        name="🟢 Claimed in 'ETS'",
-                        orientation="h",
-                        marker_color="#10B981",
-                        text=[
-                            f"  {int(ets)} ETS" if ets > 0 else ""
-                            for ets in top_delayed_15["ets_works"]
-                        ],
-                        textposition="outside",
-                        cliponaxis=False,
-                        textfont=dict(color="#6EE7B7", size=11),
-                    )
-                )
-                fig_truth.update_layout(
-                    barmode="stack",
-                    title=dict(
-                        text=f"Top 15 {audit_role}s: Actual Overdue ('P') vs. Claimed 'ETS'",
-                        font=dict(size=14, color="#F8FAFC"),
-                    ),
-                    paper_bgcolor="rgba(0,0,0,0)",
-                    plot_bgcolor="rgba(15,23,42,0.45)",
-                    font=dict(color="#E2E8F0", size=12),
-                    height=470,
-                    margin=dict(l=10, r=60, t=42, b=20),
-                    legend=dict(
-                        orientation="h",
-                        yanchor="bottom",
-                        y=1.01,
-                        xanchor="left",
-                        x=0,
-                    ),
-                    xaxis=dict(
-                        title="Delayed Works Count (Overdue 'P' + 'ETS')",
-                        gridcolor="rgba(148,163,184,0.12)",
-                    ),
-                    yaxis=dict(title=""),
-                )
-                st.plotly_chart(fig_truth, use_container_width=True)
-
-        with td_right:
             st.markdown(
-                f"##### 🔍 Live Meeting Fact-Checker ({audit_role})"
-            )
-            if not active_audit_df.empty:
-                audit_sorted_opts = active_audit_df.sort_values(
-                    by=["overdue_works", "ets_works"], ascending=[False, False]
-                )[audit_role].tolist()
-
-                picked_off = st.selectbox(
-                    f"Select {audit_role} to verify their ETS claim:",
-                    options=audit_sorted_opts,
-                    index=0,
-                    key="an_fact_check_select",
-                )
-
-                off_row = active_audit_df[
-                    active_audit_df[audit_role] == picked_off
-                ].iloc[0]
-                o_tot = int(off_row["total_works"])
-                o_od = int(off_row["overdue_works"])
-                o_ets = int(off_row["ets_works"])
-                o_ontrack = int(off_row["on_track_p"])
-                o_rest = int(off_row["rest_works"])
-                o_od_pct = float(off_row["overdue_pct"])
-                o_unexcused_pct = float(off_row["unexcused_ratio_pct"])
-
-                if o_od == 0 and o_ets == 0:
-                    verdict_color = "#10B981"
-                    verdict_title = "✅ CLEAN RECORD (0 Overdue, 0 ETS)"
-                    verdict_msg = (
-                        f"<b>{html.escape(picked_off)}</b> has zero overdue works and "
-                        f"zero ETS works across <b>{o_tot}</b> assigned works."
-                    )
-                elif o_od > 0 and o_ets == 0:
-                    verdict_color = "#EF4444"
-                    verdict_title = "🚨 100% UNEXCUSED OVERDUE (ZERO ETS!)"
-                    verdict_msg = (
-                        f"If <b>{html.escape(picked_off)}</b> claims their delayed works are in ETS, "
-                        f"<b>that is false</b>: <b>{o_od} work(s)</b> are sitting in Overdue ('P') and <b>0 works</b> are in ETS."
-                    )
-                elif o_od > o_ets:
-                    verdict_color = "#F97316"
-                    verdict_title = (
-                        f"⚠️ MORE OVERDUE THAN ETS ({o_unexcused_pct:.1f}% Unexcused)"
-                    )
-                    verdict_msg = (
-                        f"Out of <b>{o_od + o_ets}</b> delayed works under <b>{html.escape(picked_off)}</b>, "
-                        f"only <b>{o_ets}</b> are in ETS while <b>{o_od} works ({o_unexcused_pct:.1f}%)</b> are sitting in Overdue ('P')."
-                    )
-                else:
-                    verdict_color = "#F59E0B"
-                    verdict_title = f"📌 ETS HEAVY ({o_ets} in ETS vs. {o_od} Overdue)"
-                    verdict_msg = (
-                        f"<b>{html.escape(picked_off)}</b> has placed <b>{o_ets}</b> works in ETS, "
-                        f"and still has <b>{o_od}</b> active Overdue ('P') work(s) ({o_od_pct:.1f}% of total)."
-                    )
-
-                st.markdown(
-                    f"""
-                    <div class="truth-audit-box" style="border-left-color: {verdict_color};">
-                        <div style="font-size:0.86rem;font-weight:800;color:{verdict_color};margin-bottom:5px;">
-                            {verdict_title}
+                f"""
+                <div class="truth-audit-box" style="border-left-color: {verdict_color};">
+                    <div style="font-size:0.95rem;font-weight:800;color:{verdict_color};margin-bottom:6px;">
+                        {verdict_title}
+                    </div>
+                    <div style="font-size:0.86rem;color:#E2E8F0;line-height:1.45;margin-bottom:12px;">
+                        {verdict_msg}
+                    </div>
+                    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;text-align:center;">
+                        <div style="background:rgba(239,68,68,0.16);border:1px solid rgba(239,68,68,0.4);border-radius:8px;padding:10px;">
+                            <div style="font-size:0.75rem;color:#FCA5A5;text-transform:uppercase;font-weight:700;letter-spacing:0.5px;">Overdue ('P')</div>
+                            <div style="font-size:1.4rem;font-weight:800;color:#FCA5A5;">{o_od}</div>
                         </div>
-                        <div style="font-size:0.81rem;color:#E2E8F0;line-height:1.45;margin-bottom:10px;">
-                            {verdict_msg}
+                        <div style="background:rgba(16,185,129,0.16);border:1px solid rgba(16,185,129,0.4);border-radius:8px;padding:10px;">
+                            <div style="font-size:0.75rem;color:#6EE7B7;text-transform:uppercase;font-weight:700;letter-spacing:0.5px;">In 'ETS'</div>
+                            <div style="font-size:1.4rem;font-weight:800;color:#6EE7B7;">{o_ets}</div>
                         </div>
-                        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;text-align:center;">
-                            <div style="background:rgba(239,68,68,0.16);border:1px solid rgba(239,68,68,0.4);border-radius:8px;padding:6px;">
-                                <div style="font-size:0.64rem;color:#FCA5A5;">OVERDUE ('P')</div>
-                                <div style="font-size:1.1rem;font-weight:800;color:#FCA5A5;">{o_od}</div>
-                            </div>
-                            <div style="background:rgba(16,185,129,0.16);border:1px solid rgba(16,185,129,0.4);border-radius:8px;padding:6px;">
-                                <div style="font-size:0.64rem;color:#6EE7B7;">IN 'ETS'</div>
-                                <div style="font-size:1.1rem;font-weight:800;color:#6EE7B7;">{o_ets}</div>
-                            </div>
-                            <div style="background:rgba(59,130,246,0.16);border:1px solid rgba(59,130,246,0.4);border-radius:8px;padding:6px;">
-                                <div style="font-size:0.64rem;color:#93C5FD;">ON-TRACK ('P')</div>
-                                <div style="font-size:1.1rem;font-weight:800;color:#93C5FD;">{o_ontrack}</div>
-                            </div>
-                            <div style="background:rgba(148,163,184,0.16);border:1px solid rgba(148,163,184,0.3);border-radius:8px;padding:6px;">
-                                <div style="font-size:0.64rem;color:#CBD5E1;">TOTAL WORKS</div>
-                                <div style="font-size:1.1rem;font-weight:800;color:#F8FAFC;">{o_tot}</div>
-                            </div>
+                        <div style="background:rgba(59,130,246,0.16);border:1px solid rgba(59,130,246,0.4);border-radius:8px;padding:10px;">
+                            <div style="font-size:0.75rem;color:#93C5FD;text-transform:uppercase;font-weight:700;letter-spacing:0.5px;">On-Track ('P')</div>
+                            <div style="font-size:1.4rem;font-weight:800;color:#93C5FD;">{o_ontrack}</div>
+                        </div>
+                        <div style="background:rgba(148,163,184,0.16);border:1px solid rgba(148,163,184,0.3);border-radius:8px;padding:10px;">
+                            <div style="font-size:0.75rem;color:#CBD5E1;text-transform:uppercase;font-weight:700;letter-spacing:0.5px;">Total Works</div>
+                            <div style="font-size:1.4rem;font-weight:800;color:#F8FAFC;">{o_tot}</div>
                         </div>
                     </div>
-                    """,
-                    unsafe_allow_html=True,
-                )
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
 
+            fc_col1, fc_col2 = st.columns([1, 1], gap="medium")
+            with fc_col1:
                 fig_off_donut = go.Figure(
                     data=[
                         go.Pie(
@@ -2486,13 +2401,13 @@ if st.session_state["pc_active_page"] == "analytics":
                                 colors=["#EF4444", "#10B981", "#3B82F6", "#475569"]
                             ),
                             textinfo="label+value",
-                            textfont=dict(size=11, color="#F8FAFC"),
+                            textfont=dict(size=12, color="#F8FAFC"),
                         )
                     ]
                 )
                 fig_off_donut.update_layout(
-                    height=210,
-                    margin=dict(l=10, r=10, t=6, b=6),
+                    height=280,
+                    margin=dict(l=10, r=10, t=10, b=10),
                     paper_bgcolor="rgba(0,0,0,0)",
                     showlegend=False,
                     annotations=[
@@ -2500,7 +2415,7 @@ if st.session_state["pc_active_page"] == "analytics":
                             text=f"<b>{o_tot}</b><br>Works",
                             x=0.5,
                             y=0.5,
-                            font_size=13,
+                            font_size=15,
                             font_color="#F8FAFC",
                             showarrow=False,
                         )
@@ -2508,6 +2423,7 @@ if st.session_state["pc_active_page"] == "analytics":
                 )
                 st.plotly_chart(fig_off_donut, use_container_width=True)
 
+            with fc_col2:
                 # Instant proof list of this officer's actual Overdue ('P') works
                 off_od_col = "_so_name" if audit_role == LABEL_AE_EN else "_aee_name"
                 if not overdue_full_df.empty:
@@ -2520,29 +2436,28 @@ if st.session_state["pc_active_page"] == "analytics":
                         proof_df = proof_df[proof_df["_subdivision_name"] == an_subdiv]
                     if an_ee != ALL_OPTION:
                         proof_df = proof_df[proof_df["_ee_name"] == an_ee]
+                    
                     if not proof_df.empty:
-                        with st.expander(
-                            f"📂 View {len(proof_df)} Actual Overdue Work(s) of {picked_off}"
-                        ):
-                            st.dataframe(
-                                proof_df[
-                                    [
-                                        COL_WORK_NAME_KN,
-                                        COL_TARGET_DATE_KN,
-                                        "Overdue By",
-                                        COL_HOA_KN,
-                                    ]
-                                ].rename(
-                                    columns={
-                                        COL_WORK_NAME_KN: "Work Name",
-                                        COL_TARGET_DATE_KN: "Target Date",
-                                        COL_HOA_KN: "H.O.A.",
-                                    }
-                                ),
-                                use_container_width=True,
-                                hide_index=True,
-                            )
-
+                        st.markdown(f"**📂 View {len(proof_df)} Actual Overdue Work(s) of {html.escape(picked_off)}**")
+                        st.dataframe(
+                            proof_df[
+                                [
+                                    COL_WORK_NAME_KN,
+                                    COL_TARGET_DATE_KN,
+                                    "Overdue By",
+                                ]
+                            ].rename(
+                                columns={
+                                    COL_WORK_NAME_KN: "Work Name",
+                                    COL_TARGET_DATE_KN: "Target Date",
+                                }
+                            ),
+                            use_container_width=True,
+                            hide_index=True,
+                            height=240
+                        )
+                    else:
+                        st.info("No overdue works found in the database for this filter.")
     # =========================================================================
     # ANALYTICS SECTION 2: ALL 8 TOP-5 LEADERBOARDS (AE & AEE)
     # =========================================================================
