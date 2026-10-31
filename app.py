@@ -2282,9 +2282,6 @@ if st.session_state["pc_active_page"] == "analytics":
     # =========================================================================
     # ANALYTICS SECTION 1: CE TRUTH DETECTOR (OVERDUE 'P' VS. CLAIMED 'ETS')
     # =========================================================================
-    # =========================================================================
-    # ANALYTICS SECTION 1: CE TRUTH DETECTOR & AGEING TREE
-    # =========================================================================
     with st.container(border=True):
         audit_role = st.radio(
             "👤 Select Officer Cadre:",
@@ -2294,8 +2291,9 @@ if st.session_state["pc_active_page"] == "analytics":
         )
         active_audit_df = ae_stats_df if audit_role == LABEL_AE_EN else aee_stats_df
 
+        # Updated dynamic heading per your request
         st.markdown(
-            f"<h4 style='color:#F8FAFC; margin-bottom:0.5rem;'>🔍 {audit_role} Wise Analytics</h4>",
+            f"<h4 style='color:#F8FAFC; margin-bottom:0.5rem; margin-top:0.2rem;'>🔍 {audit_role} Wise Analytics</h4>",
             unsafe_allow_html=True
         )
 
@@ -2337,53 +2335,144 @@ if st.session_state["pc_active_page"] == "analytics":
                 verdict_title = f"📌 ETS HEAVY ({o_ets} in ETS vs. {o_od} Overdue)"
                 verdict_msg = f"<b>{html.escape(picked_off)}</b> has placed <b>{o_ets}</b> works in ETS, and still has <b>{o_od}</b> active Overdue ('P') work(s) ({o_od_pct:.1f}% of total)."
 
+            # 1. Calculate Ageing for the Tree
+            target_col = "so_name" if audit_role == LABEL_AE_EN else "aee_name"
+            off_od_df = od_rows_in_scope[od_rows_in_scope[target_col] == picked_off].copy()
+            
+            od_u6 = od_6_12 = od_1_2 = od_2_3 = od_3_4 = od_4_plus = 0
+            if not off_od_df.empty:
+                def _custom_age_bucket(target_str):
+                    parsed = parse_indian_date_list(pd.Series([target_str]))
+                    t_dt = parsed[0] if parsed else None
+                    if not isinstance(t_dt, date) or t_dt >= today_ist_obj: return "Unknown"
+                    days = (today_ist_obj - t_dt).days
+                    if days <= 180: return "Under 6 Months"
+                    if days <= 365: return "6 Months to 1 Year"
+                    if days <= 730: return "1-2 Years"
+                    if days <= 1095: return "2-3 Years"
+                    if days <= 1460: return "3-4 Years"
+                    return "4+ Years"
+
+                off_od_df["tree_bucket"] = off_od_df["target_date_raw"].map(_custom_age_bucket)
+                tree_counts = off_od_df["tree_bucket"].value_counts()
+                
+                od_u6 = tree_counts.get("Under 6 Months", 0)
+                od_6_12 = tree_counts.get("6 Months to 1 Year", 0)
+                od_1_2 = tree_counts.get("1-2 Years", 0)
+                od_2_3 = tree_counts.get("2-3 Years", 0)
+                od_3_4 = tree_counts.get("3-4 Years", 0)
+                od_4_plus = tree_counts.get("4+ Years", 0)
+
+            # 2. Build the visual flowchart tree in HTML exactly as drawn
+            tree_html = ""
+            if o_od > 0:
+                tree_html = f"""
+                <div style="position:relative; width:100%; margin-top:0px; padding-top:24px; z-index:1;">
+                    <!-- Vertical drop line from Overdue Box (Center of 1st box out of 4 = ~12.5%) -->
+                    <div style="position:absolute; top:0; left:12.5%; width:2px; height:12px; background:#EF4444;"></div>
+                    
+                    <!-- Horizontal spine spanning across 6 boxes -->
+                    <div style="position:absolute; top:12px; left:8.33%; right:8.33%; height:2px; background:#EF4444;"></div>
+                    
+                    <!-- 6 Age Bucket Flowchart Cards -->
+                    <div style="display:flex; justify-content:space-between; width:100%;">
+                        <div style="width:15%; text-align:center; position:relative;">
+                            <div style="position:absolute; top:-12px; left:50%; width:2px; height:12px; background:#EF4444;"></div>
+                            <div style="background:rgba(239,68,68,0.12); border:1px dashed rgba(239,68,68,0.5); border-radius:6px; padding:8px 4px; box-shadow: 0 4px 6px rgba(0,0,0,0.2);">
+                                <div style="font-size:0.60rem; color:#FCA5A5; font-weight:700; text-transform:uppercase;">Under 6 Mos</div>
+                                <div style="font-size:1.15rem; font-weight:800; color:#FCA5A5;">{od_u6}</div>
+                            </div>
+                        </div>
+                        <div style="width:15%; text-align:center; position:relative;">
+                            <div style="position:absolute; top:-12px; left:50%; width:2px; height:12px; background:#EF4444;"></div>
+                            <div style="background:rgba(239,68,68,0.12); border:1px dashed rgba(239,68,68,0.5); border-radius:6px; padding:8px 4px; box-shadow: 0 4px 6px rgba(0,0,0,0.2);">
+                                <div style="font-size:0.60rem; color:#FCA5A5; font-weight:700; text-transform:uppercase;">6 Mos - 1 Yr</div>
+                                <div style="font-size:1.15rem; font-weight:800; color:#FCA5A5;">{od_6_12}</div>
+                            </div>
+                        </div>
+                        <div style="width:15%; text-align:center; position:relative;">
+                            <div style="position:absolute; top:-12px; left:50%; width:2px; height:12px; background:#EF4444;"></div>
+                            <div style="background:rgba(239,68,68,0.12); border:1px dashed rgba(239,68,68,0.5); border-radius:6px; padding:8px 4px; box-shadow: 0 4px 6px rgba(0,0,0,0.2);">
+                                <div style="font-size:0.60rem; color:#FCA5A5; font-weight:700; text-transform:uppercase;">1 - 2 Yrs</div>
+                                <div style="font-size:1.15rem; font-weight:800; color:#FCA5A5;">{od_1_2}</div>
+                            </div>
+                        </div>
+                        <div style="width:15%; text-align:center; position:relative;">
+                            <div style="position:absolute; top:-12px; left:50%; width:2px; height:12px; background:#EF4444;"></div>
+                            <div style="background:rgba(239,68,68,0.12); border:1px dashed rgba(239,68,68,0.5); border-radius:6px; padding:8px 4px; box-shadow: 0 4px 6px rgba(0,0,0,0.2);">
+                                <div style="font-size:0.60rem; color:#FCA5A5; font-weight:700; text-transform:uppercase;">2 - 3 Yrs</div>
+                                <div style="font-size:1.15rem; font-weight:800; color:#FCA5A5;">{od_2_3}</div>
+                            </div>
+                        </div>
+                        <div style="width:15%; text-align:center; position:relative;">
+                            <div style="position:absolute; top:-12px; left:50%; width:2px; height:12px; background:#EF4444;"></div>
+                            <div style="background:rgba(239,68,68,0.12); border:1px dashed rgba(239,68,68,0.5); border-radius:6px; padding:8px 4px; box-shadow: 0 4px 6px rgba(0,0,0,0.2);">
+                                <div style="font-size:0.60rem; color:#FCA5A5; font-weight:700; text-transform:uppercase;">3 - 4 Yrs</div>
+                                <div style="font-size:1.15rem; font-weight:800; color:#FCA5A5;">{od_3_4}</div>
+                            </div>
+                        </div>
+                        <div style="width:15%; text-align:center; position:relative;">
+                            <div style="position:absolute; top:-12px; left:50%; width:2px; height:12px; background:#EF4444;"></div>
+                            <div style="background:rgba(239,68,68,0.12); border:1px dashed rgba(239,68,68,0.5); border-radius:6px; padding:8px 4px; box-shadow: 0 4px 6px rgba(0,0,0,0.2);">
+                                <div style="font-size:0.60rem; color:#FCA5A5; font-weight:700; text-transform:uppercase;">4+ Yrs</div>
+                                <div style="font-size:1.15rem; font-weight:800; color:#FCA5A5;">{od_4_plus}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                """
+
             st.markdown(
                 f"""
                 <div class="truth-audit-box" style="border-left-color: {verdict_color}; margin-bottom: 20px;">
                     <div style="font-size:0.95rem;font-weight:800;color:{verdict_color};margin-bottom:6px;">
                         {verdict_title}
                     </div>
-                    <div style="font-size:0.86rem;color:#E2E8F0;line-height:1.45;margin-bottom:12px;">
+                    <div style="font-size:0.86rem;color:#E2E8F0;line-height:1.45;margin-bottom:14px;">
                         {verdict_msg}
                     </div>
-                    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;text-align:center;">
-                        <div style="background:rgba(239,68,68,0.16);border:1px solid rgba(239,68,68,0.4);border-radius:8px;padding:10px;">
+                    
+                    <!-- 4 KPI Metrics -->
+                    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;text-align:center;position:relative;z-index:2;">
+                        <div style="background:rgba(239,68,68,0.16);border:1px solid rgba(239,68,68,0.45);border-radius:8px;padding:12px;box-shadow: 0 4px 8px rgba(0,0,0,0.2);">
                             <div style="font-size:0.75rem;color:#FCA5A5;text-transform:uppercase;font-weight:700;letter-spacing:0.5px;">Overdue ('P')</div>
-                            <div style="font-size:1.4rem;font-weight:800;color:#FCA5A5;">{o_od}</div>
+                            <div style="font-size:1.55rem;font-weight:800;color:#FCA5A5;">{o_od}</div>
                         </div>
-                        <div style="background:rgba(16,185,129,0.16);border:1px solid rgba(16,185,129,0.4);border-radius:8px;padding:10px;">
+                        <div style="background:rgba(16,185,129,0.16);border:1px solid rgba(16,185,129,0.4);border-radius:8px;padding:12px;box-shadow: 0 4px 8px rgba(0,0,0,0.2);">
                             <div style="font-size:0.75rem;color:#6EE7B7;text-transform:uppercase;font-weight:700;letter-spacing:0.5px;">In 'ETS'</div>
-                            <div style="font-size:1.4rem;font-weight:800;color:#6EE7B7;">{o_ets}</div>
+                            <div style="font-size:1.55rem;font-weight:800;color:#6EE7B7;">{o_ets}</div>
                         </div>
-                        <div style="background:rgba(59,130,246,0.16);border:1px solid rgba(59,130,246,0.4);border-radius:8px;padding:10px;">
+                        <div style="background:rgba(59,130,246,0.16);border:1px solid rgba(59,130,246,0.4);border-radius:8px;padding:12px;box-shadow: 0 4px 8px rgba(0,0,0,0.2);">
                             <div style="font-size:0.75rem;color:#93C5FD;text-transform:uppercase;font-weight:700;letter-spacing:0.5px;">On-Track ('P')</div>
-                            <div style="font-size:1.4rem;font-weight:800;color:#93C5FD;">{o_ontrack}</div>
+                            <div style="font-size:1.55rem;font-weight:800;color:#93C5FD;">{o_ontrack}</div>
                         </div>
-                        <div style="background:rgba(148,163,184,0.16);border:1px solid rgba(148,163,184,0.3);border-radius:8px;padding:10px;">
+                        <div style="background:rgba(148,163,184,0.16);border:1px solid rgba(148,163,184,0.3);border-radius:8px;padding:12px;box-shadow: 0 4px 8px rgba(0,0,0,0.2);">
                             <div style="font-size:0.75rem;color:#CBD5E1;text-transform:uppercase;font-weight:700;letter-spacing:0.5px;">Total Works</div>
-                            <div style="font-size:1.4rem;font-weight:800;color:#F8FAFC;">{o_tot}</div>
+                            <div style="font-size:1.55rem;font-weight:800;color:#F8FAFC;">{o_tot}</div>
                         </div>
                     </div>
+                    {tree_html}
                 </div>
                 """,
                 unsafe_allow_html=True,
             )
 
-            # Two-Column Layout for Donut & Tree Chart under the full-width banner
-            fc_c1, fc_c2 = st.columns([1, 1], gap="large")
+            # --- Below the Box: 3D Donut & Exact Data Table ---
+            fc_c1, fc_c2 = st.columns([1.1, 1.4], gap="large")
             
             with fc_c1:
-                # Hover-Growth Solid Donut (Overdue combined into one slice)
+                # 3D Thick-Bordered Combined Donut Chart (grows heavily on hover)
                 fig_off_donut = go.Figure(
                     data=[
                         go.Pie(
                             labels=["Overdue ('P')", "Claimed 'ETS'", "On-Track ('P')", "Completed / Rest"],
                             values=[o_od, o_ets, o_ontrack, o_rest],
-                            hole=0.6,
+                            hole=0.55,
                             hoverinfo="label+percent+value",
+                            pull=[0.05, 0, 0, 0], # Pulls only the Overdue slice slightly out for a 3D effect
                             marker=dict(
                                 colors=["#EF4444", "#10B981", "#3B82F6", "#475569"],
-                                line=dict(color="#0F172A", width=2)
+                                line=dict(color="#0F172A", width=3) # Heavy border mimics Power BI 3D edges
                             ),
                             textinfo="label+value",
                             textfont=dict(size=12, color="#F8FAFC"),
@@ -2392,10 +2481,9 @@ if st.session_state["pc_active_page"] == "analytics":
                 )
                 fig_off_donut.update_traces(
                     hoverlabel=dict(bgcolor="#1E293B", font_size=13, font_color="#F8FAFC"),
-                    pull=[0.0, 0, 0, 0] # No permanent pull, it will natively grow on mouse hover
                 )
                 fig_off_donut.update_layout(
-                    height=300,
+                    height=290,
                     margin=dict(l=10, r=10, t=10, b=10),
                     paper_bgcolor="rgba(0,0,0,0)",
                     showlegend=False,
@@ -2404,7 +2492,7 @@ if st.session_state["pc_active_page"] == "analytics":
                             text=f"<b>{o_tot}</b><br>Works",
                             x=0.5,
                             y=0.5,
-                            font_size=15,
+                            font_size=16,
                             font_color="#F8FAFC",
                             showarrow=False,
                         )
@@ -2413,84 +2501,27 @@ if st.session_state["pc_active_page"] == "analytics":
                 st.plotly_chart(fig_off_donut, use_container_width=True)
 
             with fc_c2:
-                # Overdue Ageing Tree Chart
-                target_col = "so_name" if audit_role == LABEL_AE_EN else "aee_name"
-                off_od_df = od_rows_in_scope[od_rows_in_scope[target_col] == picked_off]
-                
                 if not off_od_df.empty:
-                    # Calculate Custom Ageing Buckets for the Tree
-                    def _custom_age_bucket(target_str):
-                        parsed = parse_indian_date_list(pd.Series([target_str]))
-                        t_dt = parsed[0] if parsed else None
-                        if not isinstance(t_dt, date) or t_dt >= today_ist_obj: return "Unknown"
-                        days = (today_ist_obj - t_dt).days
-                        if days <= 180: return "Under 6 Months"
-                        if days <= 365: return "6 Months to 1 Year"
-                        if days <= 730: return "1 - 2 Years"
-                        if days <= 1095: return "2 - 3 Years"
-                        if days <= 1460: return "3 - 4 Years"
-                        return "4+ Years"
-
-                    off_od_df["tree_bucket"] = off_od_df["target_date_raw"].map(_custom_age_bucket)
-                    tree_counts = off_od_df["tree_bucket"].value_counts()
-                    
-                    labels = ["Overdue Works"]
-                    parents = [""]
-                    values = [o_od]
-                    
-                    ordered_buckets = [
-                        "Under 6 Months", "6 Months to 1 Year", 
-                        "1 - 2 Years", "2 - 3 Years", "3 - 4 Years", "4+ Years"
-                    ]
-                    
-                    for bkt in ordered_buckets:
-                        if bkt in tree_counts:
-                            labels.append(f"{bkt} ({tree_counts[bkt]})")
-                            parents.append("Overdue Works")
-                            values.append(tree_counts[bkt])
-
-                    fig_tree = go.Figure(go.Treemap(
-                        labels=labels,
-                        parents=parents,
-                        values=values,
-                        textinfo="label+value",
-                        marker=dict(
-                            colors=values,
-                            colorscale='Reds',
-                            showscale=False
+                    st.markdown(f"**📂 View {len(off_od_df)} Actual Overdue Work(s) of {html.escape(picked_off)}**")
+                    st.dataframe(
+                        off_od_df[
+                            [
+                                COL_WORK_NAME_KN,
+                                COL_TARGET_DATE_KN,
+                                "Overdue By",
+                            ]
+                        ].rename(
+                            columns={
+                                COL_WORK_NAME_KN: "Work Name",
+                                COL_TARGET_DATE_KN: "Target Date",
+                            }
                         ),
-                        pathbar=dict(visible=False)
-                    ))
-                    fig_tree.update_layout(
-                        title=dict(text="🌳 Overdue Ageing Tree", font=dict(size=14, color="#F8FAFC")),
-                        margin=dict(t=30, l=10, r=10, b=10),
-                        height=300,
-                        paper_bgcolor="rgba(0,0,0,0)",
+                        use_container_width=True,
+                        hide_index=True,
+                        height=260
                     )
-                    st.plotly_chart(fig_tree, use_container_width=True)
                 else:
-                    st.info(f"{picked_off} has 0 Overdue Works. No tree chart needed.")
-
-            # Single Table at the bottom (Merged the redundant second table)
-            if not off_od_df.empty:
-                st.markdown(f"**📂 View {len(off_od_df)} Actual Overdue Work(s) of {html.escape(picked_off)}**")
-                st.dataframe(
-                    off_od_df[
-                        [
-                            COL_WORK_NAME_KN,
-                            COL_TARGET_DATE_KN,
-                            "Overdue By",
-                        ]
-                    ].rename(
-                        columns={
-                            COL_WORK_NAME_KN: "Work Name",
-                            COL_TARGET_DATE_KN: "Target Date",
-                        }
-                    ),
-                    use_container_width=True,
-                    hide_index=True,
-                    height=240
-                )
+                    st.info(f"{picked_off} has no raw Overdue ('P') works to list.")
     # =========================================================================
     # ANALYTICS SECTION 2: ALL 8 TOP-5 LEADERBOARDS (AE & AEE)
     # =========================================================================
