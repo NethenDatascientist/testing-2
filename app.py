@@ -2386,27 +2386,87 @@ if st.session_state["pc_active_page"] == "analytics":
 
             fc_col1, fc_col2 = st.columns([1, 1], gap="medium")
             with fc_col1:
+                # 1. Calculate Overdue Buckets for this specific officer
+                target_col = "so_name" if audit_role == LABEL_AE_EN else "aee_name"
+                off_od_df = od_rows_in_scope[od_rows_in_scope[target_col] == picked_off]
+                
+                od_u6 = len(off_od_df[off_od_df["age_bucket"] == "1. < 6 Months"])
+                od_6_12 = len(off_od_df[off_od_df["age_bucket"] == "2. 6 – 12 Months"])
+                od_1_2 = len(off_od_df[off_od_df["age_bucket"] == "3. 1 – 2 Years"])
+                od_2_plus = len(off_od_df[off_od_df["age_bucket"].isin(["4. 2 – 5 Years", "5. > 5 Years (Chronic)"])])
+
+                # 2. Build Dynamic Donut Pieces
+                d_labels = []
+                d_vals = []
+                d_colors = []
+                d_pulls = []
+
+                # --- Red Overdue Segments (Pulled out like a 3D brick with identical red color) ---
+                if od_u6 > 0:
+                    d_labels.append("< 6 Mos OD")
+                    d_vals.append(od_u6)
+                    d_colors.append("#EF4444")
+                    d_pulls.append(0.08) # Pulls the slice outward
+                if od_6_12 > 0:
+                    d_labels.append("6-12 Mos OD")
+                    d_vals.append(od_6_12)
+                    d_colors.append("#EF4444")
+                    d_pulls.append(0.08)
+                if od_1_2 > 0:
+                    d_labels.append("1-2 Yrs OD")
+                    d_vals.append(od_1_2)
+                    d_colors.append("#EF4444")
+                    d_pulls.append(0.08)
+                if od_2_plus > 0:
+                    d_labels.append("2+ Yrs OD")
+                    d_vals.append(od_2_plus)
+                    d_colors.append("#EF4444")
+                    d_pulls.append(0.08)
+
+                # --- Non-Overdue Segments (Flush / Not Pulled) ---
+                if o_ets > 0:
+                    d_labels.append("Claimed 'ETS'")
+                    d_vals.append(o_ets)
+                    d_colors.append("#10B981")
+                    d_pulls.append(0)
+                if o_ontrack > 0:
+                    d_labels.append("On-Track ('P')")
+                    d_vals.append(o_ontrack)
+                    d_colors.append("#3B82F6")
+                    d_pulls.append(0)
+                if o_rest > 0:
+                    d_labels.append("Completed / Rest")
+                    d_vals.append(o_rest)
+                    d_colors.append("#475569")
+                    d_pulls.append(0)
+
+                # Fallback if empty
+                if sum(d_vals) == 0:
+                    d_labels = ["No Works"]
+                    d_vals = [1]
+                    d_colors = ["#1E293B"]
+                    d_pulls = [0]
+
+                # 3. Render 3D-Style Pulled Donut
                 fig_off_donut = go.Figure(
                     data=[
                         go.Pie(
-                            labels=[
-                                "Overdue ('P')",
-                                "Claimed 'ETS'",
-                                "On-Track ('P')",
-                                "Completed / Rest",
-                            ],
-                            values=[o_od, o_ets, o_ontrack, o_rest],
-                            hole=0.62,
+                            labels=d_labels,
+                            values=d_vals,
+                            hole=0.55,
+                            pull=d_pulls,
                             marker=dict(
-                                colors=["#EF4444", "#10B981", "#3B82F6", "#475569"]
+                                colors=d_colors, 
+                                line=dict(color="#0F172A", width=2) # Thick dark line gives the 3D brick separation
                             ),
                             textinfo="label+value",
                             textfont=dict(size=12, color="#F8FAFC"),
+                            rotation=90,
                         )
                     ]
                 )
                 fig_off_donut.update_layout(
-                    height=280,
+                    height=290,
                     margin=dict(l=10, r=10, t=10, b=10),
                     paper_bgcolor="rgba(0,0,0,0)",
                     showlegend=False,
@@ -2424,6 +2484,40 @@ if st.session_state["pc_active_page"] == "analytics":
                 st.plotly_chart(fig_off_donut, use_container_width=True)
 
             with fc_col2:
+                # Instant proof list of this officer's actual Overdue ('P') works
+                off_od_col = "_so_name" if audit_role == LABEL_AE_EN else "_aee_name"
+                if not overdue_full_df.empty:
+                    proof_df = overdue_full_df[
+                        overdue_full_df[off_od_col] == picked_off
+                    ].copy()
+                    if an_div != ALL_OPTION:
+                        proof_df = proof_df[proof_df["_division_name"] == an_div]
+                    if an_subdiv != ALL_OPTION:
+                        proof_df = proof_df[proof_df["_subdivision_name"] == an_subdiv]
+                    if an_ee != ALL_OPTION:
+                        proof_df = proof_df[proof_df["_ee_name"] == an_ee]
+                    
+                    if not proof_df.empty:
+                        st.markdown(f"**📂 View {len(proof_df)} Actual Overdue Work(s) of {html.escape(picked_off)}**")
+                        st.dataframe(
+                            proof_df[
+                                [
+                                    COL_WORK_NAME_KN,
+                                    COL_TARGET_DATE_KN,
+                                    "Overdue By",
+                                ]
+                            ].rename(
+                                columns={
+                                    COL_WORK_NAME_KN: "Work Name",
+                                    COL_TARGET_DATE_KN: "Target Date",
+                                }
+                            ),
+                            use_container_width=True,
+                            hide_index=True,
+                            height=250
+                        )
+                    else:
+                        st.info("No overdue works found in the database for this filter.")
                 # Instant proof list of this officer's actual Overdue ('P') works
                 off_od_col = "_so_name" if audit_role == LABEL_AE_EN else "_aee_name"
                 if not overdue_full_df.empty:
