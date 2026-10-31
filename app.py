@@ -860,15 +860,15 @@ DEFAULT_SHEET_URL = st.secrets.get(
     "https://docs.google.com/spreadsheets/d/13W04z-fdU3RhuVJ5vQFRpK4BBSQRJWfscPqpr7Oj2Y8/edit?gid=1055199869#gid=1055199869",
 )
 
-SCHEMA_VERSION = "v12_ce_overdue_analytics"
-DISK_BACKUP_FILE = "/tmp/mi_overdue_shared_snapshot_v12.pkl"
+SCHEMA_VERSION = "v13_ce_overdue_analytics_clean"
+DISK_BACKUP_FILE = "/tmp/mi_overdue_shared_snapshot_v13.pkl"
 
 
 # -----------------------------------------------------------------------------
 # SHARED SERVER MEMORY & LOCK
 # -----------------------------------------------------------------------------
 @st.cache_resource
-def get_shared_state_v12() -> dict:
+def get_shared_state_v13() -> dict:
     state = {
         "version": SCHEMA_VERSION,
         "lock": threading.Lock(),
@@ -1857,7 +1857,7 @@ with hdr_col_right:
 # -----------------------------------------------------------------------------
 # THREAD-SAFE DATA LOADING
 # -----------------------------------------------------------------------------
-shared_state = get_shared_state_v12()
+shared_state = get_shared_state_v13()
 
 if uploaded_xlsx is not None:
     file_id = f"{uploaded_xlsx.name}_{uploaded_xlsx.size}_{SCHEMA_VERSION}"
@@ -2175,11 +2175,6 @@ if st.session_state["pc_active_page"] == "analytics":
         inject_scroll_hud_graphics(enabled=show_scroll_hud)
         st.stop()
 
-    an_scope_label = (
-        f"Division: {an_div} | Sub-division: {an_subdiv} | "
-        f"EE: {an_ee} | TA: {an_ta} | AS: {an_as}"
-    )
-
     ae_stats_df = build_officer_analytics_df(an_scope_df, "so_name", LABEL_AE_EN)
     aee_stats_df = build_officer_analytics_df(an_scope_df, "aee_name", LABEL_AEE_EN)
 
@@ -2451,7 +2446,7 @@ if st.session_state["pc_active_page"] == "analytics":
                 unsafe_allow_html=True,
             )
 
-            # --- Below the Tree: 3D Hover-Grow Donut (Overdue Combined) & Single Table ---
+            # --- Below the Tree: 3D Hover-Grow Donut & Single Table ---
             fc_c1, fc_c2 = st.columns([1.05, 1.45], gap="large")
 
             with fc_c1:
@@ -2728,13 +2723,13 @@ if st.session_state["pc_active_page"] == "analytics":
             )
 
     # =========================================================================
-    # ANALYTICS SECTION 3: POWER BI DONUT CHARTS, AGEING & DIVISION BREAKDOWN
+    # ANALYTICS SECTION 3: 2 DONUT CHARTS + H.O.A. DELAY BOTTLENECK BUBBLE CHART
     # =========================================================================
     st.markdown(
         clean_html(
             """
             <div class="exec-section-banner">
-                <div class="exec-section-title">📊 Portfolio Visuals: Work Status Donut, Delay Ageing Donut &amp; Division Comparison</div>
+                <div class="exec-section-title">📊 Portfolio Visuals: Work Status Donut, Delay Ageing Donut &amp; Scheme (H.O.A.) Bubble Chart</div>
                 <div class="exec-scope-badge">Power BI Interactive Breakdown</div>
             </div>
             """
@@ -2742,7 +2737,7 @@ if st.session_state["pc_active_page"] == "analytics":
         unsafe_allow_html=True,
     )
 
-    pbi_c1, pbi_c2, pbi_c3 = st.columns([1, 1, 1.35], gap="small")
+    pbi_c1, pbi_c2 = st.columns(2, gap="medium")
 
     with pbi_c1:
         with st.container(border=True):
@@ -2768,32 +2763,32 @@ if st.session_state["pc_active_page"] == "analytics":
                             line=dict(color="#0F172A", width=2.5),
                         ),
                         textinfo="percent+value",
-                        textfont=dict(size=11, color="#F8FAFC"),
+                        textfont=dict(size=12, color="#F8FAFC"),
                     )
                 ]
             )
             fig_status_donut.update_layout(
                 title=dict(
                     text="🍩 Overall Works Status Breakdown",
-                    font=dict(size=14, color="#F8FAFC"),
+                    font=dict(size=15, color="#F8FAFC"),
                 ),
-                height=350,
-                margin=dict(l=10, r=10, t=40, b=10),
+                height=360,
+                margin=dict(l=10, r=10, t=42, b=10),
                 paper_bgcolor="rgba(0,0,0,0)",
                 legend=dict(
                     orientation="h",
                     yanchor="bottom",
-                    y=-0.18,
+                    y=-0.16,
                     xanchor="center",
                     x=0.5,
-                    font=dict(color="#CBD5E1", size=10),
+                    font=dict(color="#CBD5E1", size=11),
                 ),
                 annotations=[
                     dict(
                         text=f"<b>{tot_works_an:,}</b><br>Total",
                         x=0.5,
                         y=0.5,
-                        font_size=14,
+                        font_size=15,
                         font_color="#F8FAFC",
                         showarrow=False,
                     )
@@ -2837,32 +2832,32 @@ if st.session_state["pc_active_page"] == "analytics":
                                 line=dict(color="#0F172A", width=2.5),
                             ),
                             textinfo="percent+value",
-                            textfont=dict(size=11, color="#F8FAFC"),
+                            textfont=dict(size=12, color="#F8FAFC"),
                         )
                     ]
                 )
                 fig_age_donut.update_layout(
                     title=dict(
                         text="⏳ Overdue Works by Delay Duration",
-                        font=dict(size=14, color="#F8FAFC"),
+                        font=dict(size=15, color="#F8FAFC"),
                     ),
-                    height=350,
-                    margin=dict(l=10, r=10, t=40, b=10),
+                    height=360,
+                    margin=dict(l=10, r=10, t=42, b=10),
                     paper_bgcolor="rgba(0,0,0,0)",
                     legend=dict(
                         orientation="h",
                         yanchor="bottom",
-                        y=-0.22,
+                        y=-0.18,
                         xanchor="center",
                         x=0.5,
-                        font=dict(color="#CBD5E1", size=10),
+                        font=dict(color="#CBD5E1", size=11),
                     ),
                     annotations=[
                         dict(
                             text=f"<b>{tot_od_an:,}</b><br>Overdue",
                             x=0.5,
                             y=0.5,
-                            font_size=14,
+                            font_size=15,
                             font_color="#FCA5A5",
                             showarrow=False,
                         )
@@ -2870,188 +2865,156 @@ if st.session_state["pc_active_page"] == "analytics":
                 )
                 st.plotly_chart(fig_age_donut, use_container_width=True)
 
-    with pbi_c3:
-        with st.container(border=True):
-            div_grp = (
-                an_scope_df.groupby("division_name", as_index=False)
-                .agg(
-                    total_works=("is_overdue", "count"),
-                    overdue_works=("is_overdue", "sum"),
-                    ets_works=("is_status_ets", "sum"),
-                )
-                .sort_values(by="overdue_works", ascending=True)
+    # --- Full-Width Scheme / Worksheet (H.O.A.) Delay Bottlenecks Bubble Chart ---
+    with st.container(border=True):
+        hoa_grp = (
+            an_scope_df.groupby("sheet_name", as_index=False)
+            .agg(
+                total_works=("is_overdue", "count"),
+                overdue_works=("is_overdue", "sum"),
+                ets_works=("is_status_ets", "sum"),
             )
-            fig_div_bar = go.Figure()
-            fig_div_bar.add_trace(
-                go.Bar(
-                    y=div_grp["division_name"],
-                    x=div_grp["overdue_works"],
-                    name="Overdue ('P')",
-                    orientation="h",
-                    marker_color="#EF4444",
-                    text=div_grp["overdue_works"],
-                    textposition="outside",
-                )
-            )
-            fig_div_bar.add_trace(
-                go.Bar(
-                    y=div_grp["division_name"],
-                    x=div_grp["ets_works"],
-                    name="Claimed 'ETS'",
-                    orientation="h",
-                    marker_color="#10B981",
-                    text=div_grp["ets_works"],
-                    textposition="outside",
-                )
-            )
-            fig_div_bar.update_layout(
-                barmode="group",
-                title=dict(
-                    text="🏛️ Division-Wise Overdue ('P') vs. Claimed 'ETS'",
-                    font=dict(size=14, color="#F8FAFC"),
-                ),
-                height=350,
-                margin=dict(l=10, r=35, t=40, b=10),
-                paper_bgcolor="rgba(0,0,0,0)",
-                plot_bgcolor="rgba(15,23,42,0.45)",
-                font=dict(color="#E2E8F0", size=11),
-                legend=dict(orientation="h", y=1.02, x=0),
-                xaxis=dict(gridcolor="rgba(148,163,184,0.12)"),
-            )
-            st.plotly_chart(fig_div_bar, use_container_width=True)
+        )
+        hoa_grp["delayed_works"] = (
+            hoa_grp["overdue_works"] + hoa_grp["ets_works"]
+        )
+        hoa_grp["overdue_pct"] = (
+            (hoa_grp["overdue_works"] / hoa_grp["total_works"].replace(0, pd.NA))
+            * 100
+        ).fillna(0.0).round(1)
 
-    # --- Row 2 of Visuals: Scheme (H.O.A.) Bottlenecks & Officer Risk Matrix ---
-    pbi_r2_c1, pbi_r2_c2 = st.columns([1, 1.15], gap="small")
+        hoa_active = hoa_grp[hoa_grp["delayed_works"] > 0].sort_values(
+            by=["overdue_works", "ets_works", "total_works"],
+            ascending=[False, False, False],
+        ).reset_index(drop=True)
 
-    with pbi_r2_c1:
-        with st.container(border=True):
-            hoa_grp = (
-                an_scope_df.groupby("sheet_name", as_index=False)
-                .agg(
-                    total_works=("is_overdue", "count"),
-                    overdue_works=("is_overdue", "sum"),
-                    ets_works=("is_status_ets", "sum"),
-                )
-            )
-            hoa_grp = hoa_grp[
-                (hoa_grp["overdue_works"] > 0) | (hoa_grp["ets_works"] > 0)
-            ].sort_values(by="overdue_works", ascending=True)
+        if hoa_active.empty:
+            st.info("No delayed or overdue works across any scheme in this filter scope.")
+        else:
+            max_delay_val = max(int(hoa_active["delayed_works"].max()), 1)
+            od_bubble_sizes = [
+                max(18, min(68, 16 + (int(v) / max_delay_val) * 52))
+                if int(v) > 0
+                else 0
+                for v in hoa_active["overdue_works"]
+            ]
+            ets_bubble_sizes = [
+                max(16, min(60, 14 + (int(v) / max_delay_val) * 46))
+                if int(v) > 0
+                else 0
+                for v in hoa_active["ets_works"]
+            ]
 
-            fig_hoa = go.Figure()
-            fig_hoa.add_trace(
-                go.Bar(
-                    y=hoa_grp["sheet_name"],
-                    x=hoa_grp["overdue_works"],
-                    name="Overdue ('P')",
-                    orientation="h",
-                    marker_color="#EF4444",
-                )
-            )
-            fig_hoa.add_trace(
-                go.Bar(
-                    y=hoa_grp["sheet_name"],
-                    x=hoa_grp["ets_works"],
-                    name="Claimed 'ETS'",
-                    orientation="h",
-                    marker_color="#10B981",
-                )
-            )
-            fig_hoa.update_layout(
-                barmode="stack",
-                title=dict(
-                    text="📑 Scheme / Worksheet (H.O.A.) Delay Bottlenecks",
-                    font=dict(size=14, color="#F8FAFC"),
-                ),
-                height=420,
-                margin=dict(l=10, r=25, t=40, b=20),
-                paper_bgcolor="rgba(0,0,0,0)",
-                plot_bgcolor="rgba(15,23,42,0.45)",
-                font=dict(color="#E2E8F0", size=11),
-                legend=dict(orientation="h", y=1.02, x=0),
-                xaxis=dict(
-                    title="Delayed Works Count",
-                    gridcolor="rgba(148,163,184,0.12)",
-                ),
-            )
-            st.plotly_chart(fig_hoa, use_container_width=True)
+            fig_hoa_bubble = go.Figure()
 
-    with pbi_r2_c2:
-        with st.container(border=True):
-            scatter_df = ae_qual.copy()
-            if not scatter_df.empty:
-                med_x = float(scatter_df["total_works"].median())
-                med_y = float(scatter_df["overdue_pct"].median())
-                top6_cut = (
-                    scatter_df["overdue_works"].nlargest(6).min()
-                    if len(scatter_df) >= 6
-                    else 0
-                )
-
-                fig_quad = go.Figure()
-                fig_quad.add_trace(
-                    go.Scatter(
-                        x=scatter_df["total_works"],
-                        y=scatter_df["overdue_pct"],
-                        mode="markers+text",
-                        text=[
-                            r[LABEL_AE_EN]
-                            if r["overdue_works"] >= top6_cut
-                            and r["overdue_works"] > 0
-                            else ""
-                            for _, r in scatter_df.iterrows()
+            fig_hoa_bubble.add_trace(
+                go.Scatter(
+                    x=hoa_active["sheet_name"],
+                    y=hoa_active["overdue_works"],
+                    name="🔴 Actual Overdue ('P')",
+                    mode="markers+text",
+                    text=[
+                        str(int(v)) if int(v) > 0 else ""
+                        for v in hoa_active["overdue_works"]
+                    ],
+                    textposition="middle center",
+                    textfont=dict(color="#FFFFFF", size=11, weight="bold"),
+                    marker=dict(
+                        size=od_bubble_sizes,
+                        color=hoa_active["overdue_pct"],
+                        colorscale=[
+                            [0.0, "#F97316"],
+                            [0.5, "#EF4444"],
+                            [1.0, "#991B1B"],
                         ],
-                        textposition="top center",
-                        textfont=dict(size=10, color="#FCA5A5"),
-                        marker=dict(
-                            size=scatter_df["overdue_works"].clip(lower=4) * 1.4 + 6,
-                            color=scatter_df["overdue_works"],
-                            colorscale="YlOrRd",
-                            showscale=True,
-                            colorbar=dict(title="Overdue"),
-                            line=dict(width=1, color="#F8FAFC"),
+                        showscale=True,
+                        colorbar=dict(
+                            title="Overdue %",
+                            thickness=14,
+                            len=0.75,
                         ),
-                        customdata=scatter_df[
-                            [LABEL_AE_EN, "overdue_works", "ets_works", "primary_div"]
-                        ].values,
-                        hovertemplate=(
-                            "<b>%{customdata[0]}</b> (%{customdata[3]})<br>"
-                            "Total Works: %{x}<br>"
-                            "Overdue %: %{y:.1f}%<br>"
-                            "Overdue Count: %{customdata[1]}<br>"
-                            "ETS Count: %{customdata[2]}<extra></extra>"
-                        ),
-                    )
-                )
-                fig_quad.add_vline(
-                    x=med_x,
-                    line_dash="dash",
-                    line_color="rgba(148,163,184,0.45)",
-                )
-                fig_quad.add_hline(
-                    y=med_y,
-                    line_dash="dash",
-                    line_color="rgba(148,163,184,0.45)",
-                )
-                fig_quad.update_layout(
-                    title=dict(
-                        text="🎯 AE Risk Matrix: Total Workload vs. Overdue % (Bubble Size = Overdue Count)",
-                        font=dict(size=14, color="#F8FAFC"),
+                        opacity=0.92,
+                        line=dict(color="#FCA5A5", width=2),
                     ),
-                    height=420,
-                    margin=dict(l=10, r=10, t=40, b=20),
-                    paper_bgcolor="rgba(0,0,0,0)",
-                    plot_bgcolor="rgba(15,23,42,0.45)",
-                    font=dict(color="#E2E8F0", size=11),
-                    xaxis=dict(
-                        title="Total Works Assigned",
-                        gridcolor="rgba(148,163,184,0.12)",
-                    ),
-                    yaxis=dict(
-                        title="Overdue Percentage (%)",
-                        gridcolor="rgba(148,163,184,0.12)",
+                    customdata=hoa_active[
+                        ["total_works", "overdue_works", "ets_works", "overdue_pct"]
+                    ].values,
+                    hovertemplate=(
+                        "<b>Scheme (H.O.A.): %{x}</b><br>"
+                        "🔴 Actual Overdue ('P'): <b>%{customdata[1]}</b> (%{customdata[3]:.1f}%)<br>"
+                        "🟢 Claimed 'ETS': <b>%{customdata[2]}</b><br>"
+                        "📋 Total Scheme Works: <b>%{customdata[0]}</b><extra></extra>"
                     ),
                 )
-                st.plotly_chart(fig_quad, use_container_width=True)
+            )
+
+            fig_hoa_bubble.add_trace(
+                go.Scatter(
+                    x=hoa_active["sheet_name"],
+                    y=hoa_active["ets_works"],
+                    name="🟢 Claimed 'ETS' Works",
+                    mode="markers+text",
+                    text=[
+                        str(int(v)) if int(v) > 0 else ""
+                        for v in hoa_active["ets_works"]
+                    ],
+                    textposition="middle center",
+                    textfont=dict(color="#064E3B", size=10, weight="bold"),
+                    marker=dict(
+                        size=ets_bubble_sizes,
+                        color="#10B981",
+                        opacity=0.85,
+                        line=dict(color="#6EE7B7", width=2),
+                    ),
+                    customdata=hoa_active[
+                        ["total_works", "overdue_works", "ets_works", "overdue_pct"]
+                    ].values,
+                    hovertemplate=(
+                        "<b>Scheme (H.O.A.): %{x}</b><br>"
+                        "🟢 Claimed 'ETS': <b>%{customdata[2]}</b><br>"
+                        "🔴 Actual Overdue ('P'): <b>%{customdata[1]}</b><br>"
+                        "📋 Total Scheme Works: <b>%{customdata[0]}</b><extra></extra>"
+                    ),
+                )
+            )
+
+            y_max_bubble = max(
+                int(hoa_active["overdue_works"].max()),
+                int(hoa_active["ets_works"].max()),
+                5,
+            )
+
+            fig_hoa_bubble.update_layout(
+                title=dict(
+                    text="🫧 Scheme / Worksheet (H.O.A.) Delay Bottlenecks — Bubble Chart (Bubble Size = Works Count, Color = Overdue %)",
+                    font=dict(size=15, color="#F8FAFC"),
+                ),
+                height=440,
+                margin=dict(l=20, r=20, t=52, b=70),
+                paper_bgcolor="rgba(0,0,0,0)",
+                plot_bgcolor="rgba(15, 23, 42, 0.45)",
+                font=dict(color="#E2E8F0", size=12),
+                legend=dict(
+                    orientation="h",
+                    yanchor="bottom",
+                    y=1.01,
+                    xanchor="left",
+                    x=0,
+                ),
+                xaxis=dict(
+                    title="Scheme / Worksheet (H.O.A.)",
+                    tickangle=-28,
+                    gridcolor="rgba(148, 163, 184, 0.12)",
+                ),
+                yaxis=dict(
+                    title="Number of Delayed Works",
+                    range=[-max(2, y_max_bubble * 0.12), y_max_bubble * 1.25],
+                    gridcolor="rgba(148, 163, 184, 0.14)",
+                    zeroline=True,
+                    zerolinecolor="rgba(148, 163, 184, 0.25)",
+                ),
+            )
+            st.plotly_chart(fig_hoa_bubble, use_container_width=True)
 
     # =========================================================================
     # ANALYTICS SECTION 4: COMPLETE OFFICER TRUTH AUDIT TABLE & EXCEL DOWNLOAD
