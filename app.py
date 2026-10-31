@@ -29,560 +29,574 @@ st.set_page_config(
 if "pc_active_page" not in st.session_state:
     st.session_state["pc_active_page"] = "dashboard"
 
+
+def clean_html(raw_html: str) -> str:
+    """Strips leading line indentation so Markdown never renders HTML as a code block."""
+    return "\n".join(
+        line.strip() for line in raw_html.splitlines() if line.strip()
+    )
+
+
 st.markdown(
-    """
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Montserrat:wght@700;800&display=swap');
+    clean_html(
+        """
+        <style>
+            @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Montserrat:wght@700;800&display=swap');
 
-        /* Full-width layout */
-        .block-container {
-            max-width: 100% !important;
-            padding-left: 1.1rem !important;
-            padding-right: 1.2rem !important;
-            padding-top: 2.3rem !important;
-            padding-bottom: 2rem !important;
-        }
-        [data-testid="stPlotlyChart"] {
-            width: 100% !important;
-        }
+            .block-container {
+                max-width: 100% !important;
+                padding-left: 1.1rem !important;
+                padding-right: 1.2rem !important;
+                padding-top: 2.3rem !important;
+                padding-bottom: 2rem !important;
+            }
+            [data-testid="stPlotlyChart"] {
+                width: 100% !important;
+            }
 
-        /* 1. Narrower, Sleek Left Sidebar (200px) */
-        section[data-testid="stSidebar"][aria-expanded="true"] {
-            width: 200px !important;
-            min-width: 200px !important;
-            max-width: 200px !important;
-            background: linear-gradient(180deg, rgba(15, 23, 42, 0.98) 0%, rgba(15, 23, 42, 0.92) 100%) !important;
-            border-right: 1px solid rgba(148, 163, 184, 0.14) !important;
-        }
-        section[data-testid="stSidebar"] > div:first-child {
-            padding-top: 0.85rem !important;
-            padding-left: 0.55rem !important;
-            padding-right: 0.55rem !important;
-        }
-        section[data-testid="stSidebar"] .stMarkdown p,
-        section[data-testid="stSidebar"] label {
-            font-size: 0.79rem !important;
-        }
+            /* 3D Depth & Hover Growth on Plotly Donut Slices */
+            .js-plotly-plot .pie path.surface {
+                transition: transform 0.24s cubic-bezier(0.22, 1, 0.36, 1), filter 0.24s ease !important;
+                transform-box: fill-box !important;
+                transform-origin: center center !important;
+                filter: drop-shadow(0px 6px 6px rgba(0, 0, 0, 0.55));
+            }
+            .js-plotly-plot .pie g.slice:hover path.surface {
+                transform: scale(1.055) translateY(-4px) !important;
+                filter: drop-shadow(0px 12px 14px rgba(0, 0, 0, 0.78)) brightness(1.08) !important;
+            }
 
-        /* 2. Always-Visible Sidebar Collapse (<<) & Expand (>>) Button */
-        [data-testid="stSidebarCollapseButton"],
-        [data-testid="collapsedControl"],
-        [data-testid="stExpandSidebarButton"] {
-            opacity: 1 !important;
-            visibility: visible !important;
-            display: flex !important;
-            z-index: 999995 !important;
-        }
-        [data-testid="stSidebarCollapseButton"] button,
-        [data-testid="collapsedControl"] button,
-        [data-testid="stExpandSidebarButton"] {
-            opacity: 1 !important;
-            visibility: visible !important;
-            background: linear-gradient(135deg, rgba(30, 41, 59, 0.95), rgba(15, 23, 42, 0.98)) !important;
-            border: 1.5px solid rgba(59, 130, 246, 0.75) !important;
-            border-radius: 10px !important;
-            color: #93C5FD !important;
-            box-shadow: 0 0 12px rgba(59, 130, 246, 0.35), 0 2px 6px rgba(0, 0, 0, 0.5) !important;
-            width: 34px !important;
-            height: 34px !important;
-            min-height: 34px !important;
-            transition: all 0.2s ease-in-out !important;
-        }
-        [data-testid="stSidebarCollapseButton"] button:hover,
-        [data-testid="collapsedControl"] button:hover,
-        [data-testid="stExpandSidebarButton"]:hover {
-            background: linear-gradient(135deg, #2563EB, #1D4ED8) !important;
-            border-color: #BFDBFE !important;
-            color: #FFFFFF !important;
-            box-shadow: 0 0 18px rgba(59, 130, 246, 0.85) !important;
-            transform: scale(1.06) !important;
-        }
-        [data-testid="stSidebarCollapseButton"] svg,
-        [data-testid="collapsedControl"] svg,
-        [data-testid="stExpandSidebarButton"] svg {
-            fill: currentColor !important;
-            color: inherit !important;
-            width: 1.2rem !important;
-            height: 1.2rem !important;
-        }
+            /* 1. Narrower, Sleek Left Sidebar (200px) */
+            section[data-testid="stSidebar"][aria-expanded="true"] {
+                width: 200px !important;
+                min-width: 200px !important;
+                max-width: 200px !important;
+                background: linear-gradient(180deg, rgba(15, 23, 42, 0.98) 0%, rgba(15, 23, 42, 0.92) 100%) !important;
+                border-right: 1px solid rgba(148, 163, 184, 0.14) !important;
+            }
+            section[data-testid="stSidebar"] > div:first-child {
+                padding-top: 0.85rem !important;
+                padding-left: 0.55rem !important;
+                padding-right: 0.55rem !important;
+            }
+            section[data-testid="stSidebar"] .stMarkdown p,
+            section[data-testid="stSidebar"] label {
+                font-size: 0.79rem !important;
+            }
 
-        /* 3. Top Filter Control Cards */
-        div[data-testid="stVerticalBlockBorderWrapper"] {
-            border-radius: 12px !important;
-            padding: 0.4rem 0.6rem !important;
-            background: linear-gradient(145deg, rgba(30, 41, 59, 0.48), rgba(15, 23, 42, 0.68)) !important;
-            border: 1px solid rgba(148, 163, 184, 0.18) !important;
-            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.22) !important;
-        }
-        div[role="radiogroup"] {
-            gap: 0.8rem !important;
-            padding-top: 0.15rem !important;
-        }
+            /* 2. Always-Visible Sidebar Collapse (<<) & Expand (>>) Button */
+            [data-testid="stSidebarCollapseButton"],
+            [data-testid="collapsedControl"],
+            [data-testid="stExpandSidebarButton"] {
+                opacity: 1 !important;
+                visibility: visible !important;
+                display: flex !important;
+                z-index: 999995 !important;
+            }
+            [data-testid="stSidebarCollapseButton"] button,
+            [data-testid="collapsedControl"] button,
+            [data-testid="stExpandSidebarButton"] {
+                opacity: 1 !important;
+                visibility: visible !important;
+                background: #1E293B !important;
+                border: 1px solid rgba(148, 163, 184, 0.45) !important;
+                border-radius: 10px !important;
+                color: #E2E8F0 !important;
+                box-shadow: none !important;
+                width: 34px !important;
+                height: 34px !important;
+                min-height: 34px !important;
+                transition: all 0.18s ease-in-out !important;
+            }
+            [data-testid="stSidebarCollapseButton"] button:hover,
+            [data-testid="collapsedControl"] button:hover,
+            [data-testid="stExpandSidebarButton"]:hover {
+                background: #334155 !important;
+                border-color: #94A3B8 !important;
+                color: #FFFFFF !important;
+                box-shadow: none !important;
+            }
+            [data-testid="stSidebarCollapseButton"] svg,
+            [data-testid="collapsedControl"] svg,
+            [data-testid="stExpandSidebarButton"] svg {
+                fill: currentColor !important;
+                color: inherit !important;
+                width: 1.2rem !important;
+                height: 1.2rem !important;
+            }
 
-        /* 4. KPI Metric Cards (With Smooth Hover Growth & 5 Distinct Color Layers) */
-        div[data-testid="stMetric"] {
-            border: 1px solid rgba(148, 163, 184, 0.18) !important;
-            border-radius: 12px !important;
-            padding: 0.6rem 0.85rem !important;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.22) !important;
-            transition: transform 0.22s cubic-bezier(0.22, 1, 0.36, 1),
-                        box-shadow 0.22s ease,
-                        border-color 0.22s ease !important;
-            cursor: pointer;
-        }
-        div[data-testid="stMetric"]:hover {
-            transform: translateY(-3px) scale(1.03) !important;
-            box-shadow: 0 10px 24px rgba(0, 0, 0, 0.42) !important;
-        }
+            /* 3. Top Filter Control Cards */
+            div[data-testid="stVerticalBlockBorderWrapper"] {
+                border-radius: 12px !important;
+                padding: 0.4rem 0.6rem !important;
+                background: linear-gradient(145deg, rgba(30, 41, 59, 0.48), rgba(15, 23, 42, 0.68)) !important;
+                border: 1px solid rgba(148, 163, 184, 0.18) !important;
+                box-shadow: 0 4px 14px rgba(0, 0, 0, 0.22) !important;
+            }
+            div[role="radiogroup"] {
+                gap: 0.8rem !important;
+                padding-top: 0.15rem !important;
+            }
 
-        /* 1st Card: Royal Blue Tint for Date (Today) */
-        div[data-testid="stHorizontalBlock"] > div:nth-child(1) div[data-testid="stMetric"],
-        div[data-testid="column"]:nth-child(1) div[data-testid="stMetric"] {
-            border-top: 3px solid #3B82F6 !important;
-            background: linear-gradient(145deg, rgba(30, 58, 138, 0.40), rgba(15, 23, 42, 0.85)) !important;
-        }
-        div[data-testid="stHorizontalBlock"] > div:nth-child(1) div[data-testid="stMetric"]:hover,
-        div[data-testid="column"]:nth-child(1) div[data-testid="stMetric"]:hover {
-            border-color: rgba(59, 130, 246, 0.55) !important;
-            box-shadow: 0 10px 24px rgba(59, 130, 246, 0.22) !important;
-        }
+            /* 4. KPI Metric Cards */
+            div[data-testid="stMetric"] {
+                border: 1px solid rgba(148, 163, 184, 0.18) !important;
+                border-radius: 12px !important;
+                padding: 0.6rem 0.85rem !important;
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.22) !important;
+                transition: transform 0.22s cubic-bezier(0.22, 1, 0.36, 1),
+                            box-shadow 0.22s ease,
+                            border-color 0.22s ease !important;
+                cursor: pointer;
+            }
+            div[data-testid="stMetric"]:hover {
+                transform: translateY(-3px) scale(1.02) !important;
+                box-shadow: 0 8px 20px rgba(0, 0, 0, 0.35) !important;
+            }
 
-        /* 2nd Card: Violet / Purple Tint for Officers */
-        div[data-testid="stHorizontalBlock"] > div:nth-child(2) div[data-testid="stMetric"],
-        div[data-testid="column"]:nth-child(2) div[data-testid="stMetric"] {
-            border-top: 3px solid #8B5CF6 !important;
-            background: linear-gradient(145deg, rgba(88, 28, 135, 0.38), rgba(15, 23, 42, 0.85)) !important;
-        }
-        div[data-testid="stHorizontalBlock"] > div:nth-child(2) div[data-testid="stMetric"]:hover,
-        div[data-testid="column"]:nth-child(2) div[data-testid="stMetric"]:hover {
-            border-color: rgba(139, 92, 246, 0.55) !important;
-            box-shadow: 0 10px 24px rgba(139, 92, 246, 0.22) !important;
-        }
+            div[data-testid="stHorizontalBlock"] > div:nth-child(1) div[data-testid="stMetric"],
+            div[data-testid="column"]:nth-child(1) div[data-testid="stMetric"] {
+                border-top: 3px solid #3B82F6 !important;
+                background: linear-gradient(145deg, rgba(30, 58, 138, 0.40), rgba(15, 23, 42, 0.85)) !important;
+            }
+            div[data-testid="stHorizontalBlock"] > div:nth-child(2) div[data-testid="stMetric"],
+            div[data-testid="column"]:nth-child(2) div[data-testid="stMetric"] {
+                border-top: 3px solid #8B5CF6 !important;
+                background: linear-gradient(145deg, rgba(88, 28, 135, 0.38), rgba(15, 23, 42, 0.85)) !important;
+            }
+            div[data-testid="stHorizontalBlock"] > div:nth-child(3) div[data-testid="stMetric"],
+            div[data-testid="column"]:nth-child(3) div[data-testid="stMetric"] {
+                border-top: 3px solid #06B6D4 !important;
+                background: linear-gradient(145deg, rgba(22, 78, 99, 0.42), rgba(15, 23, 42, 0.85)) !important;
+            }
+            div[data-testid="stHorizontalBlock"] > div:nth-child(4) div[data-testid="stMetric"],
+            div[data-testid="column"]:nth-child(4) div[data-testid="stMetric"] {
+                border-top: 3px solid #EF4444 !important;
+                background: linear-gradient(145deg, rgba(127, 29, 29, 0.38), rgba(15, 23, 42, 0.85)) !important;
+            }
+            div[data-testid="stHorizontalBlock"] > div:nth-child(5) div[data-testid="stMetric"],
+            div[data-testid="column"]:nth-child(5) div[data-testid="stMetric"] {
+                border-top: 3px solid #4ADE80 !important;
+                background: linear-gradient(145deg, rgba(6, 78, 59, 0.38), rgba(15, 23, 42, 0.85)) !important;
+            }
 
-        /* 3rd Card: Cyan / Teal Tint for Total Works */
-        div[data-testid="stHorizontalBlock"] > div:nth-child(3) div[data-testid="stMetric"],
-        div[data-testid="column"]:nth-child(3) div[data-testid="stMetric"] {
-            border-top: 3px solid #06B6D4 !important;
-            background: linear-gradient(145deg, rgba(22, 78, 99, 0.42), rgba(15, 23, 42, 0.85)) !important;
-        }
-        div[data-testid="stHorizontalBlock"] > div:nth-child(3) div[data-testid="stMetric"]:hover,
-        div[data-testid="column"]:nth-child(3) div[data-testid="stMetric"]:hover {
-            border-color: rgba(6, 182, 212, 0.55) !important;
-            box-shadow: 0 10px 24px rgba(6, 182, 212, 0.22) !important;
-        }
+            div[data-testid="stMetricValue"] {
+                font-size: 1.6rem !important;
+                font-weight: 700 !important;
+            }
+            div[data-testid="stMetricLabel"] {
+                font-size: 0.82rem !important;
+                color: #CBD5E1 !important;
+            }
 
-        /* 4th Card: Red Tint for Overdue Works */
-        div[data-testid="stHorizontalBlock"] > div:nth-child(4) div[data-testid="stMetric"],
-        div[data-testid="column"]:nth-child(4) div[data-testid="stMetric"] {
-            border-top: 3px solid #EF4444 !important;
-            background: linear-gradient(145deg, rgba(127, 29, 29, 0.38), rgba(15, 23, 42, 0.85)) !important;
-        }
-        div[data-testid="stHorizontalBlock"] > div:nth-child(4) div[data-testid="stMetric"]:hover,
-        div[data-testid="column"]:nth-child(4) div[data-testid="stMetric"]:hover {
-            border-color: rgba(239, 68, 68, 0.55) !important;
-            box-shadow: 0 10px 24px rgba(239, 68, 68, 0.25) !important;
-        }
+            /* Section Header Banners */
+            .exec-section-banner {
+                display: flex;
+                flex-wrap: wrap;
+                align-items: center;
+                justify-content: space-between;
+                gap: 0.5rem 1rem;
+                padding: 0.6rem 1rem;
+                margin-top: 0.25rem;
+                margin-bottom: 0.65rem;
+                border-radius: 10px;
+                background: rgba(15, 23, 42, 0.6);
+                border: 1px solid rgba(148, 163, 184, 0.16);
+                border-left: 4px solid #3B82F6;
+            }
+            .exec-section-title {
+                font-size: 1.35rem;
+                font-weight: 700;
+                color: #F8FAFC;
+            }
+            .exec-scope-badge {
+                font-size: 0.78rem;
+                font-weight: 600;
+                padding: 0.25rem 0.75rem;
+                border-radius: 999px;
+                background: rgba(59, 130, 246, 0.12);
+                border: 1px solid rgba(96, 165, 250, 0.3);
+                color: #93C5FD;
+            }
 
-        /* 5th Card: Green Tint for ETS Works */
-        div[data-testid="stHorizontalBlock"] > div:nth-child(5) div[data-testid="stMetric"],
-        div[data-testid="column"]:nth-child(5) div[data-testid="stMetric"] {
-            border-top: 3px solid #4ADE80 !important;
-            background: linear-gradient(145deg, rgba(6, 78, 59, 0.38), rgba(15, 23, 42, 0.85)) !important;
-        }
-        div[data-testid="stHorizontalBlock"] > div:nth-child(5) div[data-testid="stMetric"]:hover,
-        div[data-testid="column"]:nth-child(5) div[data-testid="stMetric"]:hover {
-            border-color: rgba(74, 222, 128, 0.55) !important;
-            box-shadow: 0 10px 24px rgba(74, 222, 128, 0.22) !important;
-        }
+            /* Main Header */
+            .premium-compact-header {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                gap: 0.5rem;
+                padding: 0.2rem 0;
+                margin-top: 0.15rem;
+                margin-bottom: 0.5rem;
+                background: transparent;
+                border: none;
+                width: 100%;
+                overflow: hidden;
+            }
+            .premium-compact-title {
+                font-family: 'Montserrat', sans-serif !important;
+                font-size: clamp(0.92rem, 4.2vw, 1.75rem) !important;
+                font-weight: 800 !important;
+                background: linear-gradient(90deg, #FFFFFF 0%, #CBD5E1 100%) !important;
+                -webkit-background-clip: text !important;
+                -webkit-text-fill-color: transparent !important;
+                margin: 0 !important;
+                line-height: 1.25 !important;
+                letter-spacing: -0.2px !important;
+                white-space: nowrap !important;
+                overflow: hidden !important;
+                text-overflow: ellipsis !important;
+            }
 
-        div[data-testid="stMetricValue"] {
-            font-size: 1.6rem !important;
-            font-weight: 700 !important;
-        }
-        div[data-testid="stMetricLabel"] {
-            font-size: 0.82rem !important;
-            color: #CBD5E1 !important;
-        }
+            /* Clean Matte-Glass Navigation Button (NO Outside Glow) */
+            div[data-testid="stHorizontalBlock"]:has(.clean-nav-marker) div[data-testid="stButton"] > button {
+                background: linear-gradient(180deg, rgba(30, 41, 59, 0.92) 0%, rgba(15, 23, 42, 0.98) 100%) !important;
+                backdrop-filter: blur(10px) !important;
+                -webkit-backdrop-filter: blur(10px) !important;
+                border: 1px solid rgba(148, 163, 184, 0.38) !important;
+                border-top: 1px solid rgba(226, 232, 240, 0.45) !important;
+                border-radius: 10px !important;
+                color: #F8FAFC !important;
+                font-family: 'Montserrat', sans-serif !important;
+                font-weight: 700 !important;
+                font-size: 0.90rem !important;
+                letter-spacing: 0.3px !important;
+                padding: 0.48rem 1.15rem !important;
+                min-height: 42px !important;
+                box-shadow: none !important;
+                transition: background 0.18s ease, border-color 0.18s ease, transform 0.15s ease !important;
+            }
+            div[data-testid="stHorizontalBlock"]:has(.clean-nav-marker) div[data-testid="stButton"] > button:hover {
+                background: linear-gradient(180deg, rgba(51, 65, 85, 0.95) 0%, rgba(30, 41, 59, 1) 100%) !important;
+                border-color: #93C5FD !important;
+                color: #FFFFFF !important;
+                box-shadow: none !important;
+                transform: translateY(-1px) !important;
+            }
+            div[data-testid="stHorizontalBlock"]:has(.clean-nav-marker) div[data-testid="stButton"] > button:active {
+                transform: translateY(0px) !important;
+                box-shadow: none !important;
+            }
 
-        /* Section Header Banners */
-        .exec-section-banner {
-            display: flex;
-            flex-wrap: wrap;
-            align-items: center;
-            justify-content: space-between;
-            gap: 0.5rem 1rem;
-            padding: 0.6rem 1rem;
-            margin-top: 0.25rem;
-            margin-bottom: 0.65rem;
-            border-radius: 10px;
-            background: rgba(15, 23, 42, 0.6);
-            border: 1px solid rgba(148, 163, 184, 0.16);
-            border-left: 4px solid #3B82F6;
-        }
-        .exec-section-title {
-            font-size: 1.50rem;
-            font-weight: 700;
-            color: #F8FAFC;
-        }
-        .exec-scope-badge {
-            font-size: 0.78rem;
-            font-weight: 600;
-            padding: 0.25rem 0.75rem;
-            border-radius: 999px;
-            background: rgba(59, 130, 246, 0.12);
-            border: 1px solid rgba(96, 165, 250, 0.3);
-            color: #93C5FD;
-        }
+            /* Status Bar Banner */
+            .mi-status-bar {
+                display: flex;
+                flex-wrap: wrap;
+                align-items: center;
+                gap: 0.6rem 1.1rem;
+                padding: 0.42rem 0.85rem;
+                margin-top: -0.35rem;
+                margin-bottom: 0.75rem;
+                border-radius: 10px;
+                background: rgba(30, 41, 59, 0.45);
+                border: 1px solid rgba(148, 163, 184, 0.14);
+                font-size: 0.81rem;
+                color: #CBD5E1;
+            }
+            .mi-status-pill {
+                display: inline-flex;
+                align-items: center;
+                gap: 0.35rem;
+                padding: 0.12rem 0.55rem;
+                border-radius: 999px;
+                background: rgba(59, 130, 246, 0.15);
+                border: 1px solid rgba(59, 130, 246, 0.35);
+                color: #93C5FD;
+                font-weight: 600;
+                font-size: 0.77rem;
+            }
 
-        /* Ultra-Compact Premium Main Header */
-        .premium-compact-header {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 0.5rem;
-            padding: 0.2rem 0;
-            margin-top: 0.15rem;
-            margin-bottom: 0.5rem;
-            background: transparent;
-            border: none;
-            width: 100%;
-            overflow: hidden;
-        }
-        .premium-icon-wrapper {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: rgba(59, 130, 246, 0.15);
-            border: 1px solid rgba(59, 130, 246, 0.35);
-            border-radius: 6px;
-            width: 32px;
-            height: 32px;
-            font-size: 1.15rem;
-            box-shadow: 0 0 10px rgba(59, 130, 246, 0.25);
-        }
-        .premium-compact-title {
-            font-family: 'Montserrat', sans-serif !important;
-            font-size: clamp(0.92rem, 4.2vw, 1.75rem) !important;
-            font-weight: 800 !important;
-            background: linear-gradient(90deg, #FFFFFF 0%, #CBD5E1 100%) !important;
-            -webkit-background-clip: text !important;
-            -webkit-text-fill-color: transparent !important;
-            margin: 0 !important;
-            line-height: 1.25 !important;
-            letter-spacing: -0.2px !important;
-            white-space: nowrap !important;
-            overflow: hidden !important;
-            text-overflow: ellipsis !important;
-        }
+            /* 5. CE-Friendly Combined Overdue Works Table */
+            .ce-table-wrapper {
+                max-height: 580px;
+                overflow-y: auto;
+                overflow-x: auto;
+                border: 1px solid rgba(148, 163, 184, 0.22);
+                border-radius: 12px;
+                background: rgba(15, 23, 42, 0.75);
+                box-shadow: 0 6px 20px rgba(0, 0, 0, 0.28);
+                margin-top: 0.4rem;
+                margin-bottom: 0.8rem;
+            }
+            table.ce-overdue-table {
+                width: 100%;
+                border-collapse: collapse;
+                font-size: 0.84rem;
+                color: #E2E8F0;
+            }
+            table.ce-overdue-table thead th {
+                position: sticky;
+                top: 0;
+                z-index: 10;
+                background: #273346;
+                color: #F1F5F9;
+                font-weight: 700;
+                text-align: left;
+                padding: 11px 10px;
+                border-bottom: 2px solid #3B82F6;
+                white-space: nowrap;
+                font-size: 0.82rem;
+            }
+            table.ce-overdue-table tbody tr {
+                border-bottom: 1px solid rgba(148, 163, 184, 0.12);
+            }
+            table.ce-overdue-table tbody tr:nth-child(even) {
+                background: rgba(30, 41, 59, 0.32);
+            }
+            table.ce-overdue-table tbody tr:hover {
+                background: rgba(59, 130, 246, 0.14);
+            }
+            table.ce-overdue-table td {
+                padding: 8px 10px;
+                vertical-align: middle;
+                line-height: 1.35;
+            }
+            .ce-work-name-cell {
+                width: 25%;
+                min-width: 285px;
+                max-width: 375px;
+                white-space: normal;
+            }
+            .ce-work-name-clamp {
+                display: -webkit-box;
+                -webkit-line-clamp: 4;
+                -webkit-box-orient: vertical;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                line-height: 1.35;
+                max-height: 5.4em;
+                font-weight: 600;
+                color: #F8FAFC;
+            }
+            .ce-compact-cell {
+                white-space: nowrap;
+                font-size: 0.82rem;
+            }
+            .ce-date-overdue {
+                color: #FCA5A5;
+                font-weight: 700;
+                white-space: nowrap;
+            }
+            .ce-sl-cell {
+                text-align: center;
+                font-weight: 600;
+                color: #94A3B8;
+                width: 44px;
+            }
 
-        /* Liquid Glass Theme for Top-Right Analytics Navigation Button */
-        div[data-testid="stHorizontalBlock"]:has(.liquid-glass-nav-marker) div[data-testid="stButton"] > button {
-            background: linear-gradient(
-                135deg,
-                rgba(255, 255, 255, 0.22) 0%,
-                rgba(59, 130, 246, 0.32) 45%,
-                rgba(14, 165, 233, 0.20) 100%
-            ) !important;
-            backdrop-filter: blur(18px) saturate(190%) !important;
-            -webkit-backdrop-filter: blur(18px) saturate(190%) !important;
-            border: 1px solid rgba(255, 255, 255, 0.38) !important;
-            border-top: 1.5px solid rgba(255, 255, 255, 0.65) !important;
-            border-left: 1px solid rgba(255, 255, 255, 0.50) !important;
-            border-radius: 14px !important;
-            color: #F8FAFC !important;
-            font-family: 'Montserrat', sans-serif !important;
-            font-weight: 800 !important;
-            font-size: 0.95rem !important;
-            letter-spacing: 0.4px !important;
-            padding: 0.52rem 1.25rem !important;
-            min-height: 44px !important;
-            box-shadow:
-                0 8px 26px rgba(2, 132, 199, 0.35),
-                inset 0 1px 2px rgba(255, 255, 255, 0.55),
-                inset 0 -2px 6px rgba(15, 23, 42, 0.45) !important;
-            transition: all 0.24s cubic-bezier(0.22, 1, 0.36, 1) !important;
-        }
-        div[data-testid="stHorizontalBlock"]:has(.liquid-glass-nav-marker) div[data-testid="stButton"] > button:hover {
-            transform: translateY(-2px) scale(1.03) !important;
-            background: linear-gradient(
-                135deg,
-                rgba(255, 255, 255, 0.34) 0%,
-                rgba(59, 130, 246, 0.48) 50%,
-                rgba(56, 189, 248, 0.34) 100%
-            ) !important;
-            border-color: rgba(255, 255, 255, 0.78) !important;
-            box-shadow:
-                0 12px 32px rgba(56, 189, 248, 0.52),
-                0 0 18px rgba(59, 130, 246, 0.60),
-                inset 0 1px 3px rgba(255, 255, 255, 0.75) !important;
-            color: #FFFFFF !important;
-        }
-        div[data-testid="stHorizontalBlock"]:has(.liquid-glass-nav-marker) div[data-testid="stButton"] > button:active {
-            transform: translateY(0px) scale(0.99) !important;
-        }
+            /* 6. Power BI Executive Analytics Page Styling */
+            .pbi-kpi-grid {
+                display: grid;
+                grid-template-columns: repeat(6, 1fr);
+                gap: 12px;
+                margin-top: 6px;
+                margin-bottom: 16px;
+            }
+            .pbi-kpi-card {
+                background: linear-gradient(145deg, rgba(30, 41, 59, 0.72), rgba(15, 23, 42, 0.92));
+                border: 1px solid rgba(148, 163, 184, 0.18);
+                border-radius: 12px;
+                padding: 12px 14px;
+                box-shadow: 0 6px 18px rgba(0, 0, 0, 0.28);
+            }
+            .pbi-kpi-label {
+                font-size: 0.73rem;
+                font-weight: 700;
+                color: #94A3B8;
+                text-transform: uppercase;
+                letter-spacing: 0.4px;
+                margin-bottom: 4px;
+            }
+            .pbi-kpi-value {
+                font-size: 1.45rem;
+                font-weight: 800;
+                color: #F8FAFC;
+                line-height: 1.15;
+            }
+            .pbi-kpi-sub {
+                font-size: 0.72rem;
+                font-weight: 600;
+                margin-top: 4px;
+                color: #CBD5E1;
+            }
 
-        /* Status Bar Banner */
-        .mi-status-bar {
-            display: flex;
-            flex-wrap: wrap;
-            align-items: center;
-            gap: 0.6rem 1.1rem;
-            padding: 0.42rem 0.85rem;
-            margin-top: -0.35rem;
-            margin-bottom: 0.75rem;
-            border-radius: 10px;
-            background: rgba(30, 41, 59, 0.45);
-            border: 1px solid rgba(148, 163, 184, 0.14);
-            font-size: 0.81rem;
-            color: #CBD5E1;
-        }
-        .mi-status-pill {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.35rem;
-            padding: 0.12rem 0.55rem;
-            border-radius: 999px;
-            background: rgba(59, 130, 246, 0.15);
-            border: 1px solid rgba(59, 130, 246, 0.35);
-            color: #93C5FD;
-            font-weight: 600;
-            font-size: 0.77rem;
-        }
+            .truth-audit-box {
+                background: linear-gradient(135deg, rgba(30, 41, 59, 0.78), rgba(15, 23, 42, 0.95));
+                border: 1px solid rgba(148, 163, 184, 0.25);
+                border-left: 5px solid #EF4444;
+                border-radius: 12px;
+                padding: 16px 18px;
+                margin-top: 6px;
+                margin-bottom: 14px;
+            }
 
-        /* 5. CE-Friendly Combined Overdue Works Table */
-        .ce-table-wrapper {
-            max-height: 580px;
-            overflow-y: auto;
-            overflow-x: auto;
-            border: 1px solid rgba(148, 163, 184, 0.22);
-            border-radius: 12px;
-            background: rgba(15, 23, 42, 0.75);
-            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.28);
-            margin-top: 0.4rem;
-            margin-bottom: 0.8rem;
-        }
-        table.ce-overdue-table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 0.84rem;
-            color: #E2E8F0;
-        }
-        table.ce-overdue-table thead th {
-            position: sticky;
-            top: 0;
-            z-index: 10;
-            background: #273346;
-            color: #F1F5F9;
-            font-weight: 700;
-            text-align: left;
-            padding: 11px 10px;
-            border-bottom: 2px solid #3B82F6;
-            white-space: nowrap;
-            font-size: 0.82rem;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.4);
-        }
-        table.ce-overdue-table tbody tr {
-            border-bottom: 1px solid rgba(148, 163, 184, 0.12);
-            transition: background-color 0.15s ease;
-        }
-        table.ce-overdue-table tbody tr:nth-child(even) {
-            background: rgba(30, 41, 59, 0.32);
-        }
-        table.ce-overdue-table tbody tr:hover {
-            background: rgba(59, 130, 246, 0.14);
-        }
-        table.ce-overdue-table td {
-            padding: 8px 10px;
-            vertical-align: middle;
-            line-height: 1.35;
-        }
-        .ce-work-name-cell {
-            width: 25%;
-            min-width: 285px;
-            max-width: 375px;
-            white-space: normal;
-        }
-        .ce-work-name-clamp {
-            display: -webkit-box;
-            -webkit-line-clamp: 4;
-            -webkit-box-orient: vertical;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            line-height: 1.35;
-            max-height: 5.4em;
-            font-weight: 600;
-            color: #F8FAFC;
-        }
-        .ce-compact-cell {
-            white-space: nowrap;
-            font-size: 0.82rem;
-        }
-        .ce-date-overdue {
-            color: #FCA5A5;
-            font-weight: 700;
-            white-space: nowrap;
-        }
-        .ce-sl-cell {
-            text-align: center;
-            font-weight: 600;
-            color: #94A3B8;
-            width: 44px;
-        }
+            /* Redesigned Spacious Power BI Leaderboard Cards */
+            .exec-lb-panel {
+                background: linear-gradient(160deg, rgba(30, 41, 59, 0.62), rgba(15, 23, 42, 0.94));
+                border: 1px solid rgba(148, 163, 184, 0.20);
+                border-radius: 14px;
+                padding: 16px 18px;
+                margin-bottom: 14px;
+                box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
+            }
+            .exec-lb-panel-danger {
+                border-top: 4px solid #EF4444;
+            }
+            .exec-lb-panel-success {
+                border-top: 4px solid #10B981;
+            }
+            .exec-lb-header {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                margin-bottom: 12px;
+                padding-bottom: 8px;
+                border-bottom: 1px solid rgba(148, 163, 184, 0.16);
+            }
+            .exec-lb-title {
+                font-size: 1.0rem;
+                font-weight: 800;
+                color: #F8FAFC;
+            }
+            .exec-lb-sub {
+                font-size: 0.74rem;
+                font-weight: 600;
+                color: #94A3B8;
+                background: rgba(15, 23, 42, 0.7);
+                padding: 3px 9px;
+                border-radius: 999px;
+                border: 1px solid rgba(148, 163, 184, 0.2);
+            }
+            .exec-lb-row {
+                background: rgba(15, 23, 42, 0.65);
+                border: 1px solid rgba(148, 163, 184, 0.14);
+                border-radius: 10px;
+                padding: 10px 12px;
+                margin-bottom: 8px;
+                transition: background 0.15s ease, border-color 0.15s ease;
+            }
+            .exec-lb-row:hover {
+                background: rgba(30, 41, 59, 0.85);
+                border-color: rgba(148, 163, 184, 0.32);
+            }
+            .exec-lb-row-top {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                gap: 10px;
+                margin-bottom: 6px;
+            }
+            .exec-lb-officer-wrap {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                min-width: 0;
+            }
+            .exec-lb-rank {
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                min-width: 28px;
+                height: 24px;
+                border-radius: 6px;
+                font-size: 0.75rem;
+                font-weight: 800;
+                background: rgba(59, 130, 246, 0.18);
+                color: #93C5FD;
+                border: 1px solid rgba(59, 130, 246, 0.35);
+                flex-shrink: 0;
+            }
+            .exec-lb-name {
+                font-size: 0.90rem;
+                font-weight: 700;
+                color: #F8FAFC;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+            .exec-lb-div-tag {
+                font-size: 0.71rem;
+                font-weight: 600;
+                color: #94A3B8;
+                background: rgba(148, 163, 184, 0.12);
+                padding: 2px 7px;
+                border-radius: 6px;
+                white-space: nowrap;
+                flex-shrink: 0;
+            }
+            .exec-lb-badges {
+                display: flex;
+                align-items: center;
+                gap: 6px;
+                flex-shrink: 0;
+            }
+            .exec-pill-danger {
+                background: rgba(239, 68, 68, 0.18);
+                color: #FCA5A5;
+                border: 1px solid rgba(239, 68, 68, 0.42);
+                padding: 2px 9px;
+                border-radius: 999px;
+                font-weight: 800;
+                font-size: 0.76rem;
+                white-space: nowrap;
+            }
+            .exec-pill-success {
+                background: rgba(16, 185, 129, 0.18);
+                color: #6EE7B7;
+                border: 1px solid rgba(16, 185, 129, 0.42);
+                padding: 2px 9px;
+                border-radius: 999px;
+                font-weight: 800;
+                font-size: 0.76rem;
+                white-space: nowrap;
+            }
+            .exec-pill-ets {
+                background: rgba(245, 158, 11, 0.16);
+                color: #FCD34D;
+                border: 1px solid rgba(245, 158, 11, 0.35);
+                padding: 2px 8px;
+                border-radius: 999px;
+                font-weight: 700;
+                font-size: 0.73rem;
+                white-space: nowrap;
+            }
+            .exec-pill-total {
+                color: #38BDF8;
+                font-weight: 700;
+                font-size: 0.75rem;
+                white-space: nowrap;
+            }
+            .exec-lb-bar-bg {
+                width: 100%;
+                height: 6px;
+                background: rgba(148, 163, 184, 0.16);
+                border-radius: 999px;
+                overflow: hidden;
+                display: flex;
+            }
+            .exec-lb-bar-od {
+                background: linear-gradient(90deg, #EF4444, #F87171);
+                height: 100%;
+            }
+            .exec-lb-bar-ets {
+                background: linear-gradient(90deg, #10B981, #34D399);
+                height: 100%;
+            }
 
-        /* 6. Power BI Executive Analytics Page Styling */
-        .pbi-kpi-grid {
-            display: grid;
-            grid-template-columns: repeat(6, 1fr);
-            gap: 12px;
-            margin-top: 6px;
-            margin-bottom: 16px;
-        }
-        .pbi-kpi-card {
-            background: linear-gradient(145deg, rgba(30, 41, 59, 0.72), rgba(15, 23, 42, 0.92));
-            border: 1px solid rgba(148, 163, 184, 0.18);
-            border-radius: 12px;
-            padding: 12px 14px;
-            box-shadow: 0 6px 18px rgba(0, 0, 0, 0.28);
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
-        }
-        .pbi-kpi-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 24px rgba(0, 0, 0, 0.38);
-        }
-        .pbi-kpi-label {
-            font-size: 0.73rem;
-            font-weight: 700;
-            color: #94A3B8;
-            text-transform: uppercase;
-            letter-spacing: 0.4px;
-            margin-bottom: 4px;
-        }
-        .pbi-kpi-value {
-            font-size: 1.45rem;
-            font-weight: 800;
-            color: #F8FAFC;
-            line-height: 1.15;
-        }
-        .pbi-kpi-sub {
-            font-size: 0.72rem;
-            font-weight: 600;
-            margin-top: 4px;
-            color: #CBD5E1;
-        }
-
-        /* Top-5 Leaderboard Cards */
-        .pbi-lb-card {
-            background: linear-gradient(160deg, rgba(30, 41, 59, 0.60), rgba(15, 23, 42, 0.92));
-            border: 1px solid rgba(148, 163, 184, 0.20);
-            border-radius: 12px;
-            padding: 12px 14px;
-            margin-bottom: 12px;
-            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.26);
-            height: 100%;
-        }
-        .pbi-lb-card-danger {
-            border-top: 3.5px solid #EF4444;
-        }
-        .pbi-lb-card-success {
-            border-top: 3.5px solid #10B981;
-        }
-        .pbi-lb-title {
-            font-size: 0.88rem;
-            font-weight: 800;
-            color: #F8FAFC;
-            margin-bottom: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 6px;
-        }
-        table.pbi-mini-table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 0.79rem;
-            color: #E2E8F0;
-        }
-        table.pbi-mini-table th {
-            text-align: left;
-            padding: 6px 7px;
-            font-size: 0.69rem;
-            text-transform: uppercase;
-            letter-spacing: 0.3px;
-            color: #94A3B8;
-            border-bottom: 1px solid rgba(148, 163, 184, 0.22);
-            white-space: nowrap;
-        }
-        table.pbi-mini-table td {
-            padding: 7px 7px;
-            border-bottom: 1px solid rgba(148, 163, 184, 0.10);
-            vertical-align: middle;
-        }
-        table.pbi-mini-table tr:last-child td {
-            border-bottom: none;
-        }
-        .pbi-rank-pill {
-            display: inline-block;
-            padding: 2px 6px;
-            border-radius: 6px;
-            font-weight: 800;
-            font-size: 0.70rem;
-            background: rgba(59, 130, 246, 0.18);
-            color: #93C5FD;
-            border: 1px solid rgba(59, 130, 246, 0.35);
-        }
-        .pbi-badge-red {
-            background: rgba(239, 68, 68, 0.18);
-            color: #FCA5A5;
-            border: 1px solid rgba(239, 68, 68, 0.42);
-            padding: 2px 8px;
-            border-radius: 999px;
-            font-weight: 800;
-            font-size: 0.74rem;
-            white-space: nowrap;
-        }
-        .pbi-badge-green {
-            background: rgba(16, 185, 129, 0.18);
-            color: #6EE7B7;
-            border: 1px solid rgba(16, 185, 129, 0.42);
-            padding: 2px 8px;
-            border-radius: 999px;
-            font-weight: 800;
-            font-size: 0.74rem;
-            white-space: nowrap;
-        }
-        .pbi-badge-amber {
-            background: rgba(245, 158, 11, 0.16);
-            color: #FCD34D;
-            border: 1px solid rgba(245, 158, 11, 0.38);
-            padding: 2px 7px;
-            border-radius: 999px;
-            font-weight: 700;
-            font-size: 0.72rem;
-            white-space: nowrap;
-        }
-        .truth-audit-box {
-            background: linear-gradient(135deg, rgba(30, 41, 59, 0.78), rgba(15, 23, 42, 0.95));
-            border: 1px solid rgba(148, 163, 184, 0.25);
-            border-left: 5px solid #EF4444;
-            border-radius: 12px;
-            padding: 14px 16px;
-            margin-top: 6px;
-            margin-bottom: 10px;
-        }
-
-        hr {
-            margin-top: 0.55rem !important;
-            margin-bottom: 0.65rem !important;
-            border-color: rgba(148, 163, 184, 0.15) !important;
-        }
-    </style>
-    """,
+            hr {
+                margin-top: 0.55rem !important;
+                margin-bottom: 0.65rem !important;
+                border-color: rgba(148, 163, 184, 0.15) !important;
+            }
+        </style>
+        """
+    ),
     unsafe_allow_html=True,
 )
 
 
 # -----------------------------------------------------------------------------
-# ULTRA-SLIM (14px), TEXT-FREE RIGHT-EDGE SCROLLER (WITH RELOAD FIX)
+# ULTRA-SLIM (14px), TEXT-FREE RIGHT-EDGE SCROLLER
 # -----------------------------------------------------------------------------
 def inject_scroll_hud_graphics(enabled: bool = True):
     components.html(
@@ -606,17 +620,11 @@ def inject_scroll_hud_graphics(enabled: bool = True):
             const oldStyle = parentDoc.getElementById("mi-scroll-hud-style");
             if (oldStyle) oldStyle.remove();
 
-            parentDoc.querySelectorAll(
-                "#mi-scroll-hud-active-topic, .mi-hud-section-Node, #mi-scroll-hud-crosshair"
-            ).forEach(el => el.remove());
-
             if (!isEnabled) return;
 
             const style = parentDoc.createElement("style");
             style.id = "mi-scroll-hud-style";
             style.innerHTML = `
-                @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Montserrat:wght@700;800&display=swap');
-
                 #mi-scroll-hud-root {{
                     position: fixed !important;
                     top: 0 !important;
@@ -626,13 +634,9 @@ def inject_scroll_hud_graphics(enabled: bool = True):
                     z-index: 999990 !important;
                     pointer-events: none !important;
                     user-select: none !important;
-                    overflow: visible !important;
                     background: transparent !important;
-                    border: none !important;
-                    box-shadow: none !important;
-                    font-family: 'JetBrains Mono', monospace !important;
+                    font-family: monospace !important;
                 }}
-
                 #mi-scroll-hud-track {{
                     position: absolute !important;
                     top: 0 !important;
@@ -640,10 +644,7 @@ def inject_scroll_hud_graphics(enabled: bool = True):
                     width: 14px !important;
                     height: 100vh !important;
                     overflow: hidden !important;
-                    pointer-events: none !important;
-                    background: transparent !important;
                 }}
-
                 #mi-scroll-hud-ticks-inner {{
                     position: absolute !important;
                     top: 0 !important;
@@ -651,7 +652,6 @@ def inject_scroll_hud_graphics(enabled: bool = True):
                     width: 100% !important;
                     will-change: transform;
                 }}
-
                 .mi-hud-tick {{
                     position: absolute;
                     right: 0;
@@ -660,45 +660,35 @@ def inject_scroll_hud_graphics(enabled: bool = True):
                     justify-content: flex-end;
                     transform: translateY(-50%);
                 }}
-
                 .mi-hud-tick-label {{
                     font-size: 7.5px;
                     font-weight: 600;
                     color: rgba(226, 232, 240, 0.42);
                     margin-right: 1.5px;
-                    letter-spacing: -0.2px;
-                    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.9);
                 }}
-
                 .mi-hud-tick-line-major {{
                     width: 4px;
                     height: 1.2px;
                     background: rgba(226, 232, 240, 0.50);
                 }}
-
                 .mi-hud-tick-line-mid {{
                     width: 2.5px;
                     height: 1px;
                     background: rgba(226, 232, 240, 0.24);
                 }}
-
                 #mi-scroll-hud-indicator {{
                     position: absolute;
                     right: 0;
                     width: 14px;
                     top: 50%;
                     transform: translateY(-1px);
-                    pointer-events: none;
                     z-index: 6;
                 }}
-
                 #mi-scroll-hud-blue-line {{
                     width: 14px;
                     height: 2px;
                     background: linear-gradient(90deg, rgba(59, 130, 246, 0.2) 0%, #3B82F6 45%, #93C5FD 100%);
-                    box-shadow: 0 0 6px rgba(59, 130, 246, 0.95);
                 }}
-
                 #mi-scroll-hud-pct {{
                     margin-top: 2px;
                     padding-right: 1px;
@@ -706,14 +696,11 @@ def inject_scroll_hud_graphics(enabled: bool = True):
                     font-size: 7.5px;
                     font-weight: 700;
                     color: #93C5FD;
-                    white-space: nowrap;
-                    text-shadow: 0 0 5px rgba(59, 130, 246, 0.95), 0 1px 2px rgba(0, 0, 0, 0.95);
                 }}
             `;
             parentDoc.head.appendChild(style);
 
             const PX_PER_UNIT = 40;
-
             const hudRoot = parentDoc.createElement("div");
             hudRoot.id = "mi-scroll-hud-root";
 
@@ -721,43 +708,23 @@ def inject_scroll_hud_graphics(enabled: bool = True):
             for (let step = -20; step <= 220; step++) {{
                 const unitVal = step * 0.5;
                 const yPos = unitVal * PX_PER_UNIT;
-
                 if (step % 10 === 0 && unitVal >= 0 && unitVal <= 100) {{
-                    ticksHtml += `
-                        <div class="mi-hud-tick" style="top: ${{yPos}}px;">
-                            <span class="mi-hud-tick-label">${{unitVal}}</span>
-                            <div class="mi-hud-tick-line-major"></div>
-                        </div>
-                    `;
+                    ticksHtml += `<div class="mi-hud-tick" style="top: ${{yPos}}px;"><span class="mi-hud-tick-label">${{unitVal}}</span><div class="mi-hud-tick-line-major"></div></div>`;
                 }} else if (step % 5 === 0) {{
-                    ticksHtml += `
-                        <div class="mi-hud-tick" style="top: ${{yPos}}px;">
-                            <div class="mi-hud-tick-line-mid"></div>
-                        </div>
-                    `;
+                    ticksHtml += `<div class="mi-hud-tick" style="top: ${{yPos}}px;"><div class="mi-hud-tick-line-mid"></div></div>`;
                 }}
             }}
 
             hudRoot.innerHTML = `
-                <div id="mi-scroll-hud-track">
-                    <div id="mi-scroll-hud-ticks-inner">${{ticksHtml}}</div>
-                </div>
-                <div id="mi-scroll-hud-indicator">
-                    <div id="mi-scroll-hud-blue-line"></div>
-                    <div id="mi-scroll-hud-pct">0%</div>
-                </div>
+                <div id="mi-scroll-hud-track"><div id="mi-scroll-hud-ticks-inner">${{ticksHtml}}</div></div>
+                <div id="mi-scroll-hud-indicator"><div id="mi-scroll-hud-blue-line"></div><div id="mi-scroll-hud-pct">0%</div></div>
             `;
             parentDoc.body.appendChild(hudRoot);
 
             parentWin.__miActiveScroller = null;
             parentWin.__miScrollHandler = function(e) {{
                 const t = e.target;
-                if (
-                    t &&
-                    t !== parentDoc &&
-                    t.scrollHeight > t.clientHeight + 20 &&
-                    t.clientHeight > parentWin.innerHeight * 0.45
-                ) {{
+                if (t && t !== parentDoc && t.scrollHeight > t.clientHeight + 20 && t.clientHeight > parentWin.innerHeight * 0.45) {{
                     parentWin.__miActiveScroller = t;
                 }}
             }};
@@ -765,25 +732,12 @@ def inject_scroll_hud_graphics(enabled: bool = True):
 
             function findScrollElement() {{
                 const activeScroller = parentWin.__miActiveScroller;
-                if (
-                    activeScroller &&
-                    parentDoc.body.contains(activeScroller) &&
-                    activeScroller.scrollHeight > activeScroller.clientHeight + 10
-                ) {{
+                if (activeScroller && parentDoc.body.contains(activeScroller) && activeScroller.scrollHeight > activeScroller.clientHeight + 10) {{
                     return activeScroller;
                 }}
-
-                const selectors = [
-                    '[data-testid="stMain"]',
-                    '[data-testid="stAppViewContainer"]',
-                    'section.main',
-                    '.main',
-                    '[data-testid="stApp"]'
-                ];
-
+                const selectors = ['[data-testid="stMain"]', '[data-testid="stAppViewContainer"]', 'section.main', '.main', '[data-testid="stApp"]'];
                 let bestCandidate = null;
                 let bestRange = 0;
-
                 for (const sel of selectors) {{
                     const el = parentDoc.querySelector(sel);
                     if (!el) continue;
@@ -794,16 +748,12 @@ def inject_scroll_hud_graphics(enabled: bool = True):
                             return el;
                         }}
                         const st = parentWin.getComputedStyle(el);
-                        if (
-                            (st.overflowY === "auto" || st.overflowY === "scroll" || st.overflow === "auto") &&
-                            range > bestRange
-                        ) {{
+                        if ((st.overflowY === "auto" || st.overflowY === "scroll" || st.overflow === "auto") && range > bestRange) {{
                             bestRange = range;
                             bestCandidate = el;
                         }}
                     }}
                 }}
-
                 if (bestCandidate) return bestCandidate;
                 return parentDoc.scrollingElement || parentDoc.documentElement;
             }}
@@ -814,45 +764,34 @@ def inject_scroll_hud_graphics(enabled: bool = True):
                 if (winY > 0 && docEl && docEl.scrollHeight > docEl.clientHeight) {{
                     return Math.max(0, Math.min(100, (winY / (docEl.scrollHeight - docEl.clientHeight)) * 100));
                 }}
-
                 const el = findScrollElement();
                 if (!el) return 0;
                 const maxScroll = Math.max(1, el.scrollHeight - el.clientHeight);
-                const pct = (el.scrollTop / maxScroll) * 100;
-                return Math.max(0, Math.min(100, pct));
+                return Math.max(0, Math.min(100, (el.scrollTop / maxScroll) * 100));
             }}
 
             parentWin.__miCurrentPct = parentWin.__miCurrentPct || 0;
-
             parentWin.__miHudStepFn = function() {{
                 const root = parentDoc.getElementById("mi-scroll-hud-root");
                 const inner = parentDoc.getElementById("mi-scroll-hud-ticks-inner");
                 const indicator = parentDoc.getElementById("mi-scroll-hud-indicator");
                 const pctLabel = parentDoc.getElementById("mi-scroll-hud-pct");
-
                 if (root && inner && indicator && pctLabel) {{
                     const targetPct = getScrollPercentage();
                     parentWin.__miCurrentPct += (targetPct - parentWin.__miCurrentPct) * 0.18;
-
                     const vh = root.clientHeight;
                     const indicatorY = vh * (0.24 + 0.52 * (parentWin.__miCurrentPct / 100.0));
                     indicator.style.top = `${{indicatorY.toFixed(2)}}px`;
-
                     const trackY = indicatorY - (parentWin.__miCurrentPct * PX_PER_UNIT);
                     inner.style.transform = `translate3d(0, ${{trackY.toFixed(2)}}px, 0)`;
-
-                    const displayNum = Math.round(parentWin.__miCurrentPct);
-                    pctLabel.textContent = `${{displayNum}}%`;
+                    pctLabel.textContent = `${{Math.round(parentWin.__miCurrentPct)}}%`;
                 }}
             }};
 
             function loop() {{
-                if (parentWin.__miHudStepFn) {{
-                    parentWin.__miHudStepFn();
-                }}
+                if (parentWin.__miHudStepFn) parentWin.__miHudStepFn();
                 parentWin.__miScrollHudRAF = parentWin.requestAnimationFrame(loop);
             }}
-
             parentWin.__miScrollHudRAF = parentWin.requestAnimationFrame(loop);
         }})();
         </script>
@@ -900,7 +839,6 @@ COL_START_DATE_KN = "ಕಾಮಗಾರಿ ಪ್ರಾರಂಭಿಸಿದ ದ
 COL_TARGET_DATE_KN = "ಕಾಮಗಾರಿ ಮುಕ್ತಾಯಗೊಳಿಸಬೇಕಾದ ದಿನಾಂಕ"
 COL_ACTUAL_DATE_KN = "ಮುಕ್ತಾಯವಾದ ದಿನಾಂಕ"
 COL_HOA_KN = "ಲೆಕ್ಕಶೀರ್ಷಿಕೆ"
-COL_STATUS_STD = "CP/CF/P/TBS/TP/ETS/OTH"
 
 LABEL_DIV_EN = "Division"
 LABEL_SUBDIV_EN = "Sub-division"
@@ -922,15 +860,15 @@ DEFAULT_SHEET_URL = st.secrets.get(
     "https://docs.google.com/spreadsheets/d/13W04z-fdU3RhuVJ5vQFRpK4BBSQRJWfscPqpr7Oj2Y8/edit?gid=1055199869#gid=1055199869",
 )
 
-SCHEMA_VERSION = "v11_ce_overdue_dashboard"
-DISK_BACKUP_FILE = "/tmp/mi_overdue_shared_snapshot_v11.pkl"
+SCHEMA_VERSION = "v12_ce_overdue_analytics"
+DISK_BACKUP_FILE = "/tmp/mi_overdue_shared_snapshot_v12.pkl"
 
 
 # -----------------------------------------------------------------------------
 # SHARED SERVER MEMORY & LOCK
 # -----------------------------------------------------------------------------
 @st.cache_resource
-def get_shared_state_v11() -> dict:
+def get_shared_state_v12() -> dict:
     state = {
         "version": SCHEMA_VERSION,
         "lock": threading.Lock(),
@@ -1417,13 +1355,15 @@ def render_ce_overdue_html_table(df_display: pd.DataFrame) -> str:
                 )
         rows_html.append(f"<tr>{''.join(cells_html)}</tr>")
 
-    return (
-        f'<div class="ce-table-wrapper">'
-        f'<table class="ce-overdue-table">'
-        f"<thead><tr>{headers_html}</tr></thead>"
-        f"<tbody>{''.join(rows_html)}</tbody>"
-        f"</table>"
-        f"</div>"
+    return clean_html(
+        f"""
+        <div class="ce-table-wrapper">
+            <table class="ce-overdue-table">
+                <thead><tr>{headers_html}</tr></thead>
+                <tbody>{''.join(rows_html)}</tbody>
+            </table>
+        </div>
+        """
     )
 
 
@@ -1659,6 +1599,7 @@ def parse_xlsx_workbook(workbook_bytes: bytes):
                 {
                     "sheet_name": target,
                     "ಕಾಮಗಾರಿ ಹೆಸರು": s_work_name,
+                    "Work Name": s_work_name,
                     "division_name": s_div_raw,
                     "subdivision_name": s_subdiv_mapped,
                     "ee_name": s_ee_mapped,
@@ -1668,6 +1609,9 @@ def parse_xlsx_workbook(workbook_bytes: bytes):
                     "aee_name": s_aee_mapped,
                     "status_raw": s_status,
                     "target_date_raw": s_target_Formatted,
+                    "Target Date": s_target_Formatted,
+                    "Overdue By": s_overdue_duration,
+                    "H.O.A.": s_hoa,
                     "actual_empty": actual_empty,
                     "is_status_p": is_status_p,
                     "is_status_ets": is_status_ets,
@@ -1867,38 +1811,42 @@ show_scroll_hud = st.sidebar.checkbox(
 )
 
 # -----------------------------------------------------------------------------
-# TOP HEADER BAR WITH CENTERED TITLE & RIGHT-SIDE LIQUID GLASS 'ANALYTICS' BUTTON
+# TOP HEADER BAR WITH CENTERED TITLE & MATTE NAVIGATION BUTTON (NO GLOW)
 # -----------------------------------------------------------------------------
 hdr_col_left, hdr_col_center, hdr_col_right = st.columns(
     [0.15, 0.70, 0.15], gap="small", vertical_alignment="center"
 )
 
 with hdr_col_left:
-    st.markdown('<div class="liquid-glass-nav-marker"></div>', unsafe_allow_html=True)
+    st.markdown('<div class="clean-nav-marker"></div>', unsafe_allow_html=True)
 
 with hdr_col_center:
     if st.session_state["pc_active_page"] == "dashboard":
         st.markdown(
-            """
-            <div class="premium-compact-header">
-                <h1 class="premium-compact-title">Minor Irrigation - Overdue Works Dashboard</h1>
-            </div>
-            """,
+            clean_html(
+                """
+                <div class="premium-compact-header">
+                    <h1 class="premium-compact-title">Minor Irrigation - Overdue Works Dashboard</h1>
+                </div>
+                """
+            ),
             unsafe_allow_html=True,
         )
     else:
         st.markdown(
-            """
-            <div class="premium-compact-header">
-                <h1 class="premium-compact-title">Minor Irrigation — CE Analytics &amp; ETS Truth Audit</h1>
-            </div>
-            """,
+            clean_html(
+                """
+                <div class="premium-compact-header">
+                    <h1 class="premium-compact-title">Minor Irrigation — CE Analytics &amp; ETS Truth Audit</h1>
+                </div>
+                """
+            ),
             unsafe_allow_html=True,
         )
 
 with hdr_col_right:
     if st.session_state["pc_active_page"] == "dashboard":
-        if st.button("✨ Analytics", use_container_width=True, key="nav_to_analytics"):
+        if st.button("📊 Analytics ➔", use_container_width=True, key="nav_to_analytics"):
             st.session_state["pc_active_page"] = "analytics"
             st.rerun()
     else:
@@ -1909,7 +1857,7 @@ with hdr_col_right:
 # -----------------------------------------------------------------------------
 # THREAD-SAFE DATA LOADING
 # -----------------------------------------------------------------------------
-shared_state = get_shared_state_v11()
+shared_state = get_shared_state_v12()
 
 if uploaded_xlsx is not None:
     file_id = f"{uploaded_xlsx.name}_{uploaded_xlsx.size}_{SCHEMA_VERSION}"
@@ -1957,13 +1905,15 @@ elif (
 master_df, overdue_full_df, diag_df, today_str = shared_state["data"]
 
 st.markdown(
-    f"""
-    <div class="mi-status-bar">
-        <span class="mi-status-pill">⚡ {shared_state['source_label']}</span>
-        <span>🕒 <b>Last Synced:</b> {shared_state['last_synced']} IST</span>
-        <span>📌 <b>Row Rule:</b> Valid text in <b>Division</b> column (empty <b>Sub-division</b> rows included)</span>
-    </div>
-    """,
+    clean_html(
+        f"""
+        <div class="mi-status-bar">
+            <span class="mi-status-pill">⚡ {shared_state['source_label']}</span>
+            <span>🕒 <b>Last Synced:</b> {shared_state['last_synced']} IST</span>
+            <span>📌 <b>Row Rule:</b> Valid text in <b>Division</b> column (empty <b>Sub-division</b> rows included)</span>
+        </div>
+        """
+    ),
     unsafe_allow_html=True,
 )
 
@@ -2020,72 +1970,95 @@ def build_officer_analytics_df(
     return grp
 
 
-def render_top5_leaderboard_html(
-    df_top5: pd.DataFrame,
+def render_executive_leaderboard_panel(
+    df_slice: pd.DataFrame,
     officer_col: str,
     title_text: str,
     subtitle_text: str,
     is_danger: bool = True,
     primary_metric: str = "count",
 ) -> str:
-    card_border_cls = "pbi-lb-card-danger" if is_danger else "pbi-lb-card-success"
-    badge_cls = "pbi-badge-red" if is_danger else "pbi-badge-green"
+    """Renders a Power BI-style progress-card leaderboard panel."""
+    panel_cls = "exec-lb-panel-danger" if is_danger else "exec-lb-panel-success"
+    pill_cls = "exec-pill-danger" if is_danger else "exec-pill-success"
 
-    if df_top5.empty:
-        return (
-            f'<div class="pbi-lb-card {card_border_cls}">'
-            f'<div class="pbi-lb-title"><span>{html.escape(title_text)}</span>'
-            f'<span style="font-size:0.71rem;color:#94A3B8;">{html.escape(subtitle_text)}</span></div>'
-            f'<div style="color:#94A3B8;font-size:0.8rem;padding:8px 0;">No officers match the current criteria.</div>'
-            f"</div>"
+    if df_slice.empty:
+        return clean_html(
+            f"""
+            <div class="exec-lb-panel {panel_cls}">
+                <div class="exec-lb-header">
+                    <span class="exec-lb-title">{html.escape(title_text)}</span>
+                    <span class="exec-lb-sub">{html.escape(subtitle_text)}</span>
+                </div>
+                <div style="color:#94A3B8;font-size:0.84rem;padding:12px 0;">
+                    No officers match the current filter criteria.
+                </div>
+            </div>
+            """
         )
 
+    max_od = max(int(df_slice["overdue_works"].max()), 1)
     rows_html = []
-    for rank_idx, (_, r) in enumerate(df_top5.iterrows(), start=1):
+
+    for rank_idx, (_, r) in enumerate(df_slice.iterrows(), start=1):
         off_name = html.escape(str(r[officer_col]))
         div_name = html.escape(str(r.get("primary_div", "-")))
         od_cnt = int(r["overdue_works"])
         od_pct = float(r["overdue_pct"])
         ets_cnt = int(r["ets_works"])
-        tot_cnt = int(r["total_works"])
+        tot_cnt = max(int(r["total_works"]), 1)
 
         if primary_metric == "pct":
-            main_badge = f'<span class="{badge_cls}">{od_pct:.1f}% ({od_cnt})</span>'
+            main_badge = f'<span class="{pill_cls}">{od_pct:.1f}% ({od_cnt} OD)</span>'
+            od_bar_w = min(100.0, max(2.0 if od_cnt > 0 else 0.0, od_pct))
         else:
-            main_badge = f'<span class="{badge_cls}">{od_cnt} ({od_pct:.1f}%)</span>'
+            main_badge = f'<span class="{pill_cls}">{od_cnt} OD ({od_pct:.1f}%)</span>'
+            od_bar_w = (
+                min(100.0, max(4.0, (od_cnt / max_od) * 100.0))
+                if is_danger and od_cnt > 0
+                else min(100.0, (od_cnt / tot_cnt) * 100.0)
+            )
 
+        ets_bar_w = min(100.0 - od_bar_w, (ets_cnt / tot_cnt) * 100.0)
         ets_badge = (
-            f'<span class="pbi-badge-amber">{ets_cnt} ETS</span>'
+            f'<span class="exec-pill-ets">{ets_cnt} ETS</span>'
             if ets_cnt > 0
-            else '<span style="color:#64748B;font-size:0.73rem;">0 ETS</span>'
+            else '<span style="color:#64748B;font-size:0.74rem;">0 ETS</span>'
         )
 
         rows_html.append(
-            f"<tr>"
-            f'<td><span class="pbi-rank-pill">#{rank_idx}</span></td>'
-            f'<td><div style="font-weight:700;color:#F8FAFC;">{off_name}</div>'
-            f'<div style="font-size:0.68rem;color:#94A3B8;">🏛️ {div_name}</div></td>'
-            f'<td style="text-align:right;">{main_badge}</td>'
-            f'<td style="text-align:right;">{ets_badge}</td>'
-            f'<td style="text-align:right;font-weight:700;color:#38BDF8;">{tot_cnt}</td>'
-            f"</tr>"
+            f"""
+            <div class="exec-lb-row">
+                <div class="exec-lb-row-top">
+                    <div class="exec-lb-officer-wrap">
+                        <span class="exec-lb-rank">#{rank_idx}</span>
+                        <span class="exec-lb-name" title="{off_name}">{off_name}</span>
+                        <span class="exec-lb-div-tag">🏛️ {div_name}</span>
+                    </div>
+                    <div class="exec-lb-badges">
+                        {main_badge}
+                        {ets_badge}
+                        <span class="exec-pill-total">{tot_cnt} Total</span>
+                    </div>
+                </div>
+                <div class="exec-lb-bar-bg">
+                    <div class="exec-lb-bar-od" style="width:{od_bar_w:.1f}%;"></div>
+                    <div class="exec-lb-bar-ets" style="width:{ets_bar_w:.1f}%;"></div>
+                </div>
+            </div>
+            """
         )
 
-    return (
-        f'<div class="pbi-lb-card {card_border_cls}">'
-        f'<div class="pbi-lb-title">'
-        f"<span>{html.escape(title_text)}</span>"
-        f'<span style="font-size:0.70rem;color:#94A3B8;font-weight:600;">{html.escape(subtitle_text)}</span>'
-        f"</div>"
-        f'<table class="pbi-mini-table">'
-        f"<thead><tr>"
-        f"<th>#</th><th>{html.escape(officer_col)}</th>"
-        f'<th style="text-align:right;">Overdue</th>'
-        f'<th style="text-align:right;">In ETS</th>'
-        f'<th style="text-align:right;">Total</th>'
-        f"</tr></thead>"
-        f"<tbody>{''.join(rows_html)}</tbody>"
-        f"</table></div>"
+    return clean_html(
+        f"""
+        <div class="exec-lb-panel {panel_cls}">
+            <div class="exec-lb-header">
+                <span class="exec-lb-title">{html.escape(title_text)}</span>
+                <span class="exec-lb-sub">{html.escape(subtitle_text)}</span>
+            </div>
+            {''.join(rows_html)}
+        </div>
+        """
     )
 
 
@@ -2110,7 +2083,6 @@ def classify_overdue_age_bucket(target_str: str, today_dt: date) -> str:
 # PAGE 2 VIEW: CE EXECUTIVE ANALYTICS & ETS TRUTH AUDIT SUITE
 # =============================================================================
 if st.session_state["pc_active_page"] == "analytics":
-    # --- Top Filter Slicers for Analytics ---
     af_c1, af_c2, af_c3, af_c4, af_c5, af_c6 = st.columns(
         [1.1, 1.1, 1.1, 1.0, 1.0, 1.3], gap="small"
     )
@@ -2192,7 +2164,7 @@ if st.session_state["pc_active_page"] == "analytics":
                 min_value=1,
                 max_value=50,
                 value=5,
-                help="Ensures officers with only 1 or 2 works do not skew the Top 5 Percentage & Least Overdue rankings.",
+                help="Ensures officers with only 1 or 2 works do not skew the Percentage & Least Overdue rankings.",
             )
 
     if denominator_mode.startswith("Only Ongoing Works"):
@@ -2211,7 +2183,6 @@ if st.session_state["pc_active_page"] == "analytics":
     ae_stats_df = build_officer_analytics_df(an_scope_df, "so_name", LABEL_AE_EN)
     aee_stats_df = build_officer_analytics_df(an_scope_df, "aee_name", LABEL_AEE_EN)
 
-    # Portfolio KPIs
     tot_works_an = len(an_scope_df)
     tot_od_an = int(an_scope_df["is_overdue"].sum())
     tot_ets_an = int(an_scope_df["is_status_ets"].sum())
@@ -2242,45 +2213,47 @@ if st.session_state["pc_active_page"] == "analytics":
 
     # --- 6-Card Power BI Executive KPI Ribbon ---
     st.markdown(
-        f"""
-        <div class="pbi-kpi-grid">
-            <div class="pbi-kpi-card" style="border-top: 3px solid #06B6D4;">
-                <div class="pbi-kpi-label">📋 Total Works in Scope</div>
-                <div class="pbi-kpi-value">{tot_works_an:,}</div>
-                <div class="pbi-kpi-sub">{len(ae_stats_df)} AEs &bull; {len(aee_stats_df)} AEEs</div>
+        clean_html(
+            f"""
+            <div class="pbi-kpi-grid">
+                <div class="pbi-kpi-card" style="border-top: 3px solid #06B6D4;">
+                    <div class="pbi-kpi-label">📋 Total Works in Scope</div>
+                    <div class="pbi-kpi-value">{tot_works_an:,}</div>
+                    <div class="pbi-kpi-sub">{len(ae_stats_df)} AEs &bull; {len(aee_stats_df)} AEEs</div>
+                </div>
+                <div class="pbi-kpi-card" style="border-top: 3px solid #EF4444;">
+                    <div class="pbi-kpi-label">🔴 True Overdue ('P')</div>
+                    <div class="pbi-kpi-value" style="color:#FCA5A5;">{tot_od_an:,} ({od_pct_an}%)</div>
+                    <div class="pbi-kpi-sub">Past Target Date &amp; Not in ETS</div>
+                </div>
+                <div class="pbi-kpi-card" style="border-top: 3px solid #10B981;">
+                    <div class="pbi-kpi-label">🟢 Claimed 'ETS' Works</div>
+                    <div class="pbi-kpi-value" style="color:#6EE7B7;">{tot_ets_an:,} ({ets_pct_an}%)</div>
+                    <div class="pbi-kpi-sub">Extension of Time Status</div>
+                </div>
+                <div class="pbi-kpi-card" style="border-top: 3px solid #F59E0B;">
+                    <div class="pbi-kpi-label">⚠️ Total Delayed Exposure</div>
+                    <div class="pbi-kpi-value" style="color:#FCD34D;">{tot_delayed_an:,}</div>
+                    <div class="pbi-kpi-sub">Overdue ('P') + 'ETS' Combined</div>
+                </div>
+                <div class="pbi-kpi-card" style="border-top: 3px solid #EC4899;">
+                    <div class="pbi-kpi-label">🕵️ Unexcused Overdue Ratio</div>
+                    <div class="pbi-kpi-value" style="color:#F472B6;">{unexcused_share_an}%</div>
+                    <div class="pbi-kpi-sub">Of delayed works are NOT in ETS</div>
+                </div>
+                <div class="pbi-kpi-card" style="border-top: 3px solid #8B5CF6;">
+                    <div class="pbi-kpi-label">⏳ Chronic Overdue (&gt;2 Yrs)</div>
+                    <div class="pbi-kpi-value" style="color:#C4B5FD;">{chronic_2yr_plus:,}</div>
+                    <div class="pbi-kpi-sub">Target elapsed by 2+ years</div>
+                </div>
             </div>
-            <div class="pbi-kpi-card" style="border-top: 3px solid #EF4444;">
-                <div class="pbi-kpi-label">🔴 True Overdue ('P')</div>
-                <div class="pbi-kpi-value" style="color:#FCA5A5;">{tot_od_an:,} ({od_pct_an}%)</div>
-                <div class="pbi-kpi-sub">Past Target Date &amp; Not in ETS</div>
-            </div>
-            <div class="pbi-kpi-card" style="border-top: 3px solid #10B981;">
-                <div class="pbi-kpi-label">🟢 Claimed 'ETS' Works</div>
-                <div class="pbi-kpi-value" style="color:#6EE7B7;">{tot_ets_an:,} ({ets_pct_an}%)</div>
-                <div class="pbi-kpi-sub">Extension of Time Status</div>
-            </div>
-            <div class="pbi-kpi-card" style="border-top: 3px solid #F59E0B;">
-                <div class="pbi-kpi-label">⚠️ Total Delayed Exposure</div>
-                <div class="pbi-kpi-value" style="color:#FCD34D;">{tot_delayed_an:,}</div>
-                <div class="pbi-kpi-sub">Overdue ('P') + 'ETS' Combined</div>
-            </div>
-            <div class="pbi-kpi-card" style="border-top: 3px solid #EC4899;">
-                <div class="pbi-kpi-label">🕵️ Unexcused Overdue Ratio</div>
-                <div class="pbi-kpi-value" style="color:#F472B6;">{unexcused_share_an}%</div>
-                <div class="pbi-kpi-sub">Of delayed works are NOT in ETS</div>
-            </div>
-            <div class="pbi-kpi-card" style="border-top: 3px solid #8B5CF6;">
-                <div class="pbi-kpi-label">⏳ Chronic Overdue (&gt;2 Yrs)</div>
-                <div class="pbi-kpi-value" style="color:#C4B5FD;">{chronic_2yr_plus:,}</div>
-                <div class="pbi-kpi-sub">Target elapsed by 2+ years</div>
-            </div>
-        </div>
-        """,
+            """
+        ),
         unsafe_allow_html=True,
     )
 
     # =========================================================================
-    # ANALYTICS SECTION 1: CE TRUTH DETECTOR (OVERDUE 'P' VS. CLAIMED 'ETS')
+    # ANALYTICS SECTION 1: AE / AEE WISE ANALYTICS & CONNECTED AGEING TREE
     # =========================================================================
     with st.container(border=True):
         audit_role = st.radio(
@@ -2289,12 +2262,15 @@ if st.session_state["pc_active_page"] == "analytics":
             horizontal=True,
             key="an_truth_role_radio",
         )
-        active_audit_df = ae_stats_df if audit_role == LABEL_AE_EN else aee_stats_df
+        active_audit_df = (
+            ae_stats_df if audit_role == LABEL_AE_EN else aee_stats_df
+        )
 
-        # Updated dynamic heading per your request
         st.markdown(
-            f"<h4 style='color:#F8FAFC; margin-bottom:0.5rem; margin-top:0.2rem;'>🔍 {audit_role} Wise Analytics</h4>",
-            unsafe_allow_html=True
+            clean_html(
+                f"<h4 style='color:#F8FAFC; margin-bottom:0.5rem; margin-top:0.2rem;'>🔍 {html.escape(audit_role)} Wise Analytics</h4>"
+            ),
+            unsafe_allow_html=True,
         )
 
         if not active_audit_df.empty:
@@ -2309,7 +2285,9 @@ if st.session_state["pc_active_page"] == "analytics":
                 key="an_fact_check_select",
             )
 
-            off_row = active_audit_df[active_audit_df[audit_role] == picked_off].iloc[0]
+            off_row = active_audit_df[
+                active_audit_df[audit_role] == picked_off
+            ].iloc[0]
             o_tot = int(off_row["total_works"])
             o_od = int(off_row["overdue_works"])
             o_ets = int(off_row["ets_works"])
@@ -2321,158 +2299,178 @@ if st.session_state["pc_active_page"] == "analytics":
             if o_od == 0 and o_ets == 0:
                 verdict_color = "#10B981"
                 verdict_title = "✅ CLEAN RECORD (0 Overdue, 0 ETS)"
-                verdict_msg = f"<b>{html.escape(picked_off)}</b> has zero overdue works and zero ETS works across <b>{o_tot}</b> assigned works."
+                verdict_msg = (
+                    f"<b>{html.escape(picked_off)}</b> has zero overdue works and "
+                    f"zero ETS works across <b>{o_tot}</b> assigned works."
+                )
             elif o_od > 0 and o_ets == 0:
                 verdict_color = "#EF4444"
                 verdict_title = "🚨 100% UNEXCUSED OVERDUE (ZERO ETS!)"
-                verdict_msg = f"If <b>{html.escape(picked_off)}</b> claims their delayed works are in ETS, <b>that is false</b>: <b>{o_od} work(s)</b> are sitting in Overdue ('P') and <b>0 works</b> are in ETS."
+                verdict_msg = (
+                    f"If <b>{html.escape(picked_off)}</b> claims their delayed works are in ETS, "
+                    f"<b>that is false</b>: <b>{o_od} work(s)</b> are sitting in Overdue ('P') and <b>0 works</b> are in ETS."
+                )
             elif o_od > o_ets:
                 verdict_color = "#F97316"
-                verdict_title = f"⚠️ MORE OVERDUE THAN ETS ({o_unexcused_pct:.1f}% Unexcused)"
-                verdict_msg = f"Out of <b>{o_od + o_ets}</b> delayed works under <b>{html.escape(picked_off)}</b>, only <b>{o_ets}</b> are in ETS while <b>{o_od} works ({o_unexcused_pct:.1f}%)</b> are sitting in Overdue ('P')."
+                verdict_title = (
+                    f"⚠️ MORE OVERDUE THAN ETS ({o_unexcused_pct:.1f}% Unexcused)"
+                )
+                verdict_msg = (
+                    f"Out of <b>{o_od + o_ets}</b> delayed works under <b>{html.escape(picked_off)}</b>, "
+                    f"only <b>{o_ets}</b> are in ETS while <b>{o_od} works ({o_unexcused_pct:.1f}%)</b> are sitting in Overdue ('P')."
+                )
             else:
                 verdict_color = "#F59E0B"
                 verdict_title = f"📌 ETS HEAVY ({o_ets} in ETS vs. {o_od} Overdue)"
-                verdict_msg = f"<b>{html.escape(picked_off)}</b> has placed <b>{o_ets}</b> works in ETS, and still has <b>{o_od}</b> active Overdue ('P') work(s) ({o_od_pct:.1f}% of total)."
+                verdict_msg = (
+                    f"<b>{html.escape(picked_off)}</b> has placed <b>{o_ets}</b> works in ETS, "
+                    f"and still has <b>{o_od}</b> active Overdue ('P') work(s) ({o_od_pct:.1f}% of total)."
+                )
 
-            # 1. Calculate Ageing for the Tree
+            # Calculate 6 Overdue Age Buckets for the Connected Root Tree
             target_col = "so_name" if audit_role == LABEL_AE_EN else "aee_name"
-            off_od_df = od_rows_in_scope[od_rows_in_scope[target_col] == picked_off].copy()
-            
+            off_od_df = od_rows_in_scope[
+                od_rows_in_scope[target_col] == picked_off
+            ].copy()
+
             od_u6 = od_6_12 = od_1_2 = od_2_3 = od_3_4 = od_4_plus = 0
             if not off_od_df.empty:
                 def _custom_age_bucket(target_str):
                     parsed = parse_indian_date_list(pd.Series([target_str]))
                     t_dt = parsed[0] if parsed else None
-                    if not isinstance(t_dt, date) or t_dt >= today_ist_obj: return "Unknown"
+                    if not isinstance(t_dt, date) or t_dt >= today_ist_obj:
+                        return "Unknown"
                     days = (today_ist_obj - t_dt).days
-                    if days <= 180: return "Under 6 Months"
-                    if days <= 365: return "6 Months to 1 Year"
-                    if days <= 730: return "1-2 Years"
-                    if days <= 1095: return "2-3 Years"
-                    if days <= 1460: return "3-4 Years"
+                    if days <= 180:
+                        return "Under 6 Months"
+                    if days <= 365:
+                        return "6 Months to 1 Year"
+                    if days <= 730:
+                        return "1-2 Years"
+                    if days <= 1095:
+                        return "2-3 Years"
+                    if days <= 1460:
+                        return "3-4 Years"
                     return "4+ Years"
 
-                off_od_df["tree_bucket"] = off_od_df["target_date_raw"].map(_custom_age_bucket)
+                off_od_df["tree_bucket"] = off_od_df["target_date_raw"].map(
+                    _custom_age_bucket
+                )
                 tree_counts = off_od_df["tree_bucket"].value_counts()
-                
-                od_u6 = tree_counts.get("Under 6 Months", 0)
-                od_6_12 = tree_counts.get("6 Months to 1 Year", 0)
-                od_1_2 = tree_counts.get("1-2 Years", 0)
-                od_2_3 = tree_counts.get("2-3 Years", 0)
-                od_3_4 = tree_counts.get("3-4 Years", 0)
-                od_4_plus = tree_counts.get("4+ Years", 0)
 
-            # 2. Build the visual flowchart tree in HTML exactly as drawn
-            tree_html = ""
-            if o_od > 0:
-                tree_html = f"""
-                <div style="position:relative; width:100%; margin-top:0px; padding-top:24px; z-index:1;">
-                    <!-- Vertical drop line from Overdue Box (Center of 1st box out of 4 = ~12.5%) -->
-                    <div style="position:absolute; top:0; left:12.5%; width:2px; height:12px; background:#EF4444;"></div>
-                    
-                    <!-- Horizontal spine spanning across 6 boxes -->
-                    <div style="position:absolute; top:12px; left:8.33%; right:8.33%; height:2px; background:#EF4444;"></div>
-                    
-                    <!-- 6 Age Bucket Flowchart Cards -->
-                    <div style="display:flex; justify-content:space-between; width:100%;">
-                        <div style="width:15%; text-align:center; position:relative;">
-                            <div style="position:absolute; top:-12px; left:50%; width:2px; height:12px; background:#EF4444;"></div>
-                            <div style="background:rgba(239,68,68,0.12); border:1px dashed rgba(239,68,68,0.5); border-radius:6px; padding:8px 4px; box-shadow: 0 4px 6px rgba(0,0,0,0.2);">
-                                <div style="font-size:0.60rem; color:#FCA5A5; font-weight:700; text-transform:uppercase;">Under 6 Mos</div>
-                                <div style="font-size:1.15rem; font-weight:800; color:#FCA5A5;">{od_u6}</div>
-                            </div>
+                od_u6 = int(tree_counts.get("Under 6 Months", 0))
+                od_6_12 = int(tree_counts.get("6 Months to 1 Year", 0))
+                od_1_2 = int(tree_counts.get("1-2 Years", 0))
+                od_2_3 = int(tree_counts.get("2-3 Years", 0))
+                od_3_4 = int(tree_counts.get("3-4 Years", 0))
+                od_4_plus = int(tree_counts.get("4+ Years", 0))
+
+            tree_html = f"""
+            <div style="position:relative; width:100%; margin-top:0px; padding-top:26px; z-index:1;">
+                <div style="position:absolute; top:0; left:12.2%; width:2.5px; height:14px; background:#EF4444;"></div>
+                <div style="position:absolute; top:14px; left:7.8%; right:7.8%; height:2.5px; background:#EF4444;"></div>
+                <div style="display:grid; grid-template-columns:repeat(6, 1fr); gap:10px; width:100%;">
+                    <div style="text-align:center; position:relative;">
+                        <div style="position:absolute; top:-12px; left:50%; transform:translateX(-50%); width:2.5px; height:12px; background:#EF4444;"></div>
+                        <div style="background:rgba(127,29,29,0.28); border:1.5px solid rgba(239,68,68,0.55); border-radius:8px; padding:9px 6px;">
+                            <div style="font-size:0.68rem; color:#FCA5A5; font-weight:700; text-transform:uppercase;">Under 6 Months</div>
+                            <div style="font-size:1.3rem; font-weight:800; color:#FFFFFF; margin-top:2px;">{od_u6}</div>
                         </div>
-                        <div style="width:15%; text-align:center; position:relative;">
-                            <div style="position:absolute; top:-12px; left:50%; width:2px; height:12px; background:#EF4444;"></div>
-                            <div style="background:rgba(239,68,68,0.12); border:1px dashed rgba(239,68,68,0.5); border-radius:6px; padding:8px 4px; box-shadow: 0 4px 6px rgba(0,0,0,0.2);">
-                                <div style="font-size:0.60rem; color:#FCA5A5; font-weight:700; text-transform:uppercase;">6 Mos - 1 Yr</div>
-                                <div style="font-size:1.15rem; font-weight:800; color:#FCA5A5;">{od_6_12}</div>
-                            </div>
+                    </div>
+                    <div style="text-align:center; position:relative;">
+                        <div style="position:absolute; top:-12px; left:50%; transform:translateX(-50%); width:2.5px; height:12px; background:#EF4444;"></div>
+                        <div style="background:rgba(127,29,29,0.28); border:1.5px solid rgba(239,68,68,0.55); border-radius:8px; padding:9px 6px;">
+                            <div style="font-size:0.68rem; color:#FCA5A5; font-weight:700; text-transform:uppercase;">6 Months – 1 Yr</div>
+                            <div style="font-size:1.3rem; font-weight:800; color:#FFFFFF; margin-top:2px;">{od_6_12}</div>
                         </div>
-                        <div style="width:15%; text-align:center; position:relative;">
-                            <div style="position:absolute; top:-12px; left:50%; width:2px; height:12px; background:#EF4444;"></div>
-                            <div style="background:rgba(239,68,68,0.12); border:1px dashed rgba(239,68,68,0.5); border-radius:6px; padding:8px 4px; box-shadow: 0 4px 6px rgba(0,0,0,0.2);">
-                                <div style="font-size:0.60rem; color:#FCA5A5; font-weight:700; text-transform:uppercase;">1 - 2 Yrs</div>
-                                <div style="font-size:1.15rem; font-weight:800; color:#FCA5A5;">{od_1_2}</div>
-                            </div>
+                    </div>
+                    <div style="text-align:center; position:relative;">
+                        <div style="position:absolute; top:-12px; left:50%; transform:translateX(-50%); width:2.5px; height:12px; background:#EF4444;"></div>
+                        <div style="background:rgba(127,29,29,0.28); border:1.5px solid rgba(239,68,68,0.55); border-radius:8px; padding:9px 6px;">
+                            <div style="font-size:0.68rem; color:#FCA5A5; font-weight:700; text-transform:uppercase;">1 – 2 Years</div>
+                            <div style="font-size:1.3rem; font-weight:800; color:#FFFFFF; margin-top:2px;">{od_1_2}</div>
                         </div>
-                        <div style="width:15%; text-align:center; position:relative;">
-                            <div style="position:absolute; top:-12px; left:50%; width:2px; height:12px; background:#EF4444;"></div>
-                            <div style="background:rgba(239,68,68,0.12); border:1px dashed rgba(239,68,68,0.5); border-radius:6px; padding:8px 4px; box-shadow: 0 4px 6px rgba(0,0,0,0.2);">
-                                <div style="font-size:0.60rem; color:#FCA5A5; font-weight:700; text-transform:uppercase;">2 - 3 Yrs</div>
-                                <div style="font-size:1.15rem; font-weight:800; color:#FCA5A5;">{od_2_3}</div>
-                            </div>
+                    </div>
+                    <div style="text-align:center; position:relative;">
+                        <div style="position:absolute; top:-12px; left:50%; transform:translateX(-50%); width:2.5px; height:12px; background:#EF4444;"></div>
+                        <div style="background:rgba(127,29,29,0.28); border:1.5px solid rgba(239,68,68,0.55); border-radius:8px; padding:9px 6px;">
+                            <div style="font-size:0.68rem; color:#FCA5A5; font-weight:700; text-transform:uppercase;">2 – 3 Years</div>
+                            <div style="font-size:1.3rem; font-weight:800; color:#FFFFFF; margin-top:2px;">{od_2_3}</div>
                         </div>
-                        <div style="width:15%; text-align:center; position:relative;">
-                            <div style="position:absolute; top:-12px; left:50%; width:2px; height:12px; background:#EF4444;"></div>
-                            <div style="background:rgba(239,68,68,0.12); border:1px dashed rgba(239,68,68,0.5); border-radius:6px; padding:8px 4px; box-shadow: 0 4px 6px rgba(0,0,0,0.2);">
-                                <div style="font-size:0.60rem; color:#FCA5A5; font-weight:700; text-transform:uppercase;">3 - 4 Yrs</div>
-                                <div style="font-size:1.15rem; font-weight:800; color:#FCA5A5;">{od_3_4}</div>
-                            </div>
+                    </div>
+                    <div style="text-align:center; position:relative;">
+                        <div style="position:absolute; top:-12px; left:50%; transform:translateX(-50%); width:2.5px; height:12px; background:#EF4444;"></div>
+                        <div style="background:rgba(127,29,29,0.28); border:1.5px solid rgba(239,68,68,0.55); border-radius:8px; padding:9px 6px;">
+                            <div style="font-size:0.68rem; color:#FCA5A5; font-weight:700; text-transform:uppercase;">3 – 4 Years</div>
+                            <div style="font-size:1.3rem; font-weight:800; color:#FFFFFF; margin-top:2px;">{od_3_4}</div>
                         </div>
-                        <div style="width:15%; text-align:center; position:relative;">
-                            <div style="position:absolute; top:-12px; left:50%; width:2px; height:12px; background:#EF4444;"></div>
-                            <div style="background:rgba(239,68,68,0.12); border:1px dashed rgba(239,68,68,0.5); border-radius:6px; padding:8px 4px; box-shadow: 0 4px 6px rgba(0,0,0,0.2);">
-                                <div style="font-size:0.60rem; color:#FCA5A5; font-weight:700; text-transform:uppercase;">4+ Yrs</div>
-                                <div style="font-size:1.15rem; font-weight:800; color:#FCA5A5;">{od_4_plus}</div>
-                            </div>
+                    </div>
+                    <div style="text-align:center; position:relative;">
+                        <div style="position:absolute; top:-12px; left:50%; transform:translateX(-50%); width:2.5px; height:12px; background:#EF4444;"></div>
+                        <div style="background:rgba(127,29,29,0.28); border:1.5px solid rgba(239,68,68,0.55); border-radius:8px; padding:9px 6px;">
+                            <div style="font-size:0.68rem; color:#FCA5A5; font-weight:700; text-transform:uppercase;">4+ Years</div>
+                            <div style="font-size:1.3rem; font-weight:800; color:#FFFFFF; margin-top:2px;">{od_4_plus}</div>
                         </div>
                     </div>
                 </div>
-                """
+            </div>
+            """
 
             st.markdown(
-                f"""
-                <div class="truth-audit-box" style="border-left-color: {verdict_color}; margin-bottom: 20px;">
-                    <div style="font-size:0.95rem;font-weight:800;color:{verdict_color};margin-bottom:6px;">
-                        {verdict_title}
+                clean_html(
+                    f"""
+                    <div class="truth-audit-box" style="border-left-color: {verdict_color};">
+                        <div style="font-size:0.95rem;font-weight:800;color:{verdict_color};margin-bottom:6px;">
+                            {verdict_title}
+                        </div>
+                        <div style="font-size:0.86rem;color:#E2E8F0;line-height:1.45;margin-bottom:14px;">
+                            {verdict_msg}
+                        </div>
+                        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;text-align:center;position:relative;z-index:2;">
+                            <div style="background:rgba(239,68,68,0.18);border:1.5px solid rgba(239,68,68,0.65);border-radius:8px;padding:12px;">
+                                <div style="font-size:0.75rem;color:#FCA5A5;text-transform:uppercase;font-weight:700;letter-spacing:0.5px;">Overdue ('P')</div>
+                                <div style="font-size:1.55rem;font-weight:800;color:#FCA5A5;">{o_od}</div>
+                            </div>
+                            <div style="background:rgba(16,185,129,0.16);border:1px solid rgba(16,185,129,0.4);border-radius:8px;padding:12px;">
+                                <div style="font-size:0.75rem;color:#6EE7B7;text-transform:uppercase;font-weight:700;letter-spacing:0.5px;">In 'ETS'</div>
+                                <div style="font-size:1.55rem;font-weight:800;color:#6EE7B7;">{o_ets}</div>
+                            </div>
+                            <div style="background:rgba(59,130,246,0.16);border:1px solid rgba(59,130,246,0.4);border-radius:8px;padding:12px;">
+                                <div style="font-size:0.75rem;color:#93C5FD;text-transform:uppercase;font-weight:700;letter-spacing:0.5px;">On-Track ('P')</div>
+                                <div style="font-size:1.55rem;font-weight:800;color:#93C5FD;">{o_ontrack}</div>
+                            </div>
+                            <div style="background:rgba(148,163,184,0.16);border:1px solid rgba(148,163,184,0.3);border-radius:8px;padding:12px;">
+                                <div style="font-size:0.75rem;color:#CBD5E1;text-transform:uppercase;font-weight:700;letter-spacing:0.5px;">Total Works</div>
+                                <div style="font-size:1.55rem;font-weight:800;color:#F8FAFC;">{o_tot}</div>
+                            </div>
+                        </div>
+                        {tree_html}
                     </div>
-                    <div style="font-size:0.86rem;color:#E2E8F0;line-height:1.45;margin-bottom:14px;">
-                        {verdict_msg}
-                    </div>
-                    
-                    <!-- 4 KPI Metrics -->
-                    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;text-align:center;position:relative;z-index:2;">
-                        <div style="background:rgba(239,68,68,0.16);border:1px solid rgba(239,68,68,0.45);border-radius:8px;padding:12px;box-shadow: 0 4px 8px rgba(0,0,0,0.2);">
-                            <div style="font-size:0.75rem;color:#FCA5A5;text-transform:uppercase;font-weight:700;letter-spacing:0.5px;">Overdue ('P')</div>
-                            <div style="font-size:1.55rem;font-weight:800;color:#FCA5A5;">{o_od}</div>
-                        </div>
-                        <div style="background:rgba(16,185,129,0.16);border:1px solid rgba(16,185,129,0.4);border-radius:8px;padding:12px;box-shadow: 0 4px 8px rgba(0,0,0,0.2);">
-                            <div style="font-size:0.75rem;color:#6EE7B7;text-transform:uppercase;font-weight:700;letter-spacing:0.5px;">In 'ETS'</div>
-                            <div style="font-size:1.55rem;font-weight:800;color:#6EE7B7;">{o_ets}</div>
-                        </div>
-                        <div style="background:rgba(59,130,246,0.16);border:1px solid rgba(59,130,246,0.4);border-radius:8px;padding:12px;box-shadow: 0 4px 8px rgba(0,0,0,0.2);">
-                            <div style="font-size:0.75rem;color:#93C5FD;text-transform:uppercase;font-weight:700;letter-spacing:0.5px;">On-Track ('P')</div>
-                            <div style="font-size:1.55rem;font-weight:800;color:#93C5FD;">{o_ontrack}</div>
-                        </div>
-                        <div style="background:rgba(148,163,184,0.16);border:1px solid rgba(148,163,184,0.3);border-radius:8px;padding:12px;box-shadow: 0 4px 8px rgba(0,0,0,0.2);">
-                            <div style="font-size:0.75rem;color:#CBD5E1;text-transform:uppercase;font-weight:700;letter-spacing:0.5px;">Total Works</div>
-                            <div style="font-size:1.55rem;font-weight:800;color:#F8FAFC;">{o_tot}</div>
-                        </div>
-                    </div>
-                    {tree_html}
-                </div>
-                """,
+                    """
+                ),
                 unsafe_allow_html=True,
             )
 
-            # --- Below the Box: 3D Donut & Exact Data Table ---
-            fc_c1, fc_c2 = st.columns([1.1, 1.4], gap="large")
-            
+            # --- Below the Tree: 3D Hover-Grow Donut (Overdue Combined) & Single Table ---
+            fc_c1, fc_c2 = st.columns([1.05, 1.45], gap="large")
+
             with fc_c1:
-                # 3D Thick-Bordered Combined Donut Chart (grows heavily on hover)
                 fig_off_donut = go.Figure(
                     data=[
                         go.Pie(
-                            labels=["Overdue ('P')", "Claimed 'ETS'", "On-Track ('P')", "Completed / Rest"],
+                            labels=[
+                                "Overdue ('P')",
+                                "Claimed 'ETS'",
+                                "On-Track ('P')",
+                                "Completed / Rest",
+                            ],
                             values=[o_od, o_ets, o_ontrack, o_rest],
-                            hole=0.55,
+                            hole=0.56,
+                            pull=[0.06 if o_od > 0 else 0, 0, 0, 0],
                             hoverinfo="label+percent+value",
-                            pull=[0.05, 0, 0, 0], # Pulls only the Overdue slice slightly out for a 3D effect
                             marker=dict(
                                 colors=["#EF4444", "#10B981", "#3B82F6", "#475569"],
-                                line=dict(color="#0F172A", width=3) # Heavy border mimics Power BI 3D edges
+                                line=dict(color="#0F172A", width=3),
                             ),
                             textinfo="label+value",
                             textfont=dict(size=12, color="#F8FAFC"),
@@ -2480,11 +2478,13 @@ if st.session_state["pc_active_page"] == "analytics":
                     ]
                 )
                 fig_off_donut.update_traces(
-                    hoverlabel=dict(bgcolor="#1E293B", font_size=13, font_color="#F8FAFC"),
+                    hoverlabel=dict(
+                        bgcolor="#1E293B", font_size=13, font_color="#F8FAFC"
+                    )
                 )
                 fig_off_donut.update_layout(
-                    height=290,
-                    margin=dict(l=10, r=10, t=10, b=10),
+                    height=300,
+                    margin=dict(l=10, r=10, t=12, b=12),
                     paper_bgcolor="rgba(0,0,0,0)",
                     showlegend=False,
                     annotations=[
@@ -2501,39 +2501,76 @@ if st.session_state["pc_active_page"] == "analytics":
                 st.plotly_chart(fig_off_donut, use_container_width=True)
 
             with fc_c2:
-                if not off_od_df.empty:
-                    st.markdown(f"**📂 View {len(off_od_df)} Actual Overdue Work(s) of {html.escape(picked_off)}**")
+                off_od_col = "_so_name" if audit_role == LABEL_AE_EN else "_aee_name"
+                proof_df = pd.DataFrame()
+                if not overdue_full_df.empty:
+                    proof_df = overdue_full_df[
+                        overdue_full_df[off_od_col] == picked_off
+                    ].copy()
+                    if an_div != ALL_OPTION:
+                        proof_df = proof_df[proof_df["_division_name"] == an_div]
+                    if an_subdiv != ALL_OPTION:
+                        proof_df = proof_df[proof_df["_subdivision_name"] == an_subdiv]
+                    if an_ee != ALL_OPTION:
+                        proof_df = proof_df[proof_df["_ee_name"] == an_ee]
+                    if an_ta != ALL_OPTION:
+                        proof_df = proof_df[proof_df["_ta_name"] == an_ta]
+                    if an_as != ALL_OPTION:
+                        proof_df = proof_df[proof_df["_as_name"] == an_as]
+
+                if not proof_df.empty:
+                    st.markdown(
+                        f"**📂 View {len(proof_df)} Actual Overdue Work(s) of {html.escape(picked_off)}**"
+                    )
                     st.dataframe(
-                        off_od_df[
+                        proof_df[
                             [
                                 COL_WORK_NAME_KN,
                                 COL_TARGET_DATE_KN,
                                 "Overdue By",
+                                COL_HOA_KN,
                             ]
                         ].rename(
                             columns={
                                 COL_WORK_NAME_KN: "Work Name",
                                 COL_TARGET_DATE_KN: "Target Date",
+                                COL_HOA_KN: "H.O.A.",
                             }
                         ),
                         use_container_width=True,
                         hide_index=True,
-                        height=260
+                        height=265,
                     )
                 else:
-                    st.info(f"{picked_off} has no raw Overdue ('P') works to list.")
+                    st.info(
+                        f"🎉 {picked_off} has 0 actual Overdue ('P') works in the selected scope."
+                    )
+
     # =========================================================================
-    # ANALYTICS SECTION 2: ALL 8 TOP-5 LEADERBOARDS (AE & AEE)
+    # ANALYTICS SECTION 2: REDESIGNED SPACIOUS AE & AEE LEADERBOARDS
     # =========================================================================
-    st.markdown(
-        f"""
-        <div class="exec-section-banner">
-            <div class="exec-section-title">🏆 Top 5 AE &amp; AEE Leaderboards — Highest &amp; Least Overdue (By Count &amp; Percentage)</div>
-            <div class="exec-scope-badge">Percentage &amp; Least-Overdue rankings require &ge; {min_works_threshold} assigned works (ties broken by highest workload)</div>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
+    lb_top_ctrl1, lb_top_ctrl2 = st.columns([0.75, 0.25], vertical_alignment="center")
+    with lb_top_ctrl1:
+        st.markdown(
+            clean_html(
+                f"""
+                <div class="exec-section-banner">
+                    <div class="exec-section-title">🏆 Executive AE &amp; AEE Leaderboards — Highest &amp; Least Overdue</div>
+                    <div class="exec-scope-badge">Min. {min_works_threshold} assigned works required for Percentage &amp; Least-Overdue rankings</div>
+                </div>
+                """
+            ),
+            unsafe_allow_html=True,
+        )
+    with lb_top_ctrl2:
+        top_n_count = st.radio(
+            "Leaderboard Depth:",
+            options=[5, 10],
+            format_func=lambda x: f"Top {x}",
+            horizontal=True,
+            index=0,
+            key="lb_depth_radio",
+        )
 
     ae_qual = ae_stats_df[ae_stats_df["total_works"] >= min_works_threshold].copy()
     if ae_qual.empty:
@@ -2542,19 +2579,19 @@ if st.session_state["pc_active_page"] == "analytics":
     ae_high_cnt = ae_stats_df.sort_values(
         by=["overdue_works", "overdue_pct", "total_works"],
         ascending=[False, False, False],
-    ).head(5)
+    ).head(top_n_count)
     ae_high_pct = ae_qual.sort_values(
         by=["overdue_pct", "overdue_works", "total_works"],
         ascending=[False, False, False],
-    ).head(5)
+    ).head(top_n_count)
     ae_least_cnt = ae_qual.sort_values(
         by=["overdue_works", "overdue_pct", "total_works"],
         ascending=[True, True, False],
-    ).head(5)
+    ).head(top_n_count)
     ae_least_pct = ae_qual.sort_values(
         by=["overdue_pct", "overdue_works", "total_works"],
         ascending=[True, True, False],
-    ).head(5)
+    ).head(top_n_count)
 
     aee_qual = aee_stats_df[aee_stats_df["total_works"] >= min_works_threshold].copy()
     if aee_qual.empty:
@@ -2563,132 +2600,145 @@ if st.session_state["pc_active_page"] == "analytics":
     aee_high_cnt = aee_stats_df.sort_values(
         by=["overdue_works", "overdue_pct", "total_works"],
         ascending=[False, False, False],
-    ).head(5)
+    ).head(top_n_count)
     aee_high_pct = aee_qual.sort_values(
         by=["overdue_pct", "overdue_works", "total_works"],
         ascending=[False, False, False],
-    ).head(5)
+    ).head(top_n_count)
     aee_least_cnt = aee_qual.sort_values(
         by=["overdue_works", "overdue_pct", "total_works"],
         ascending=[True, True, False],
-    ).head(5)
+    ).head(top_n_count)
     aee_least_pct = aee_qual.sort_values(
         by=["overdue_pct", "overdue_works", "total_works"],
         ascending=[True, True, False],
-    ).head(5)
+    ).head(top_n_count)
 
-    # Row 1: HIGHEST OVERDUE (4 Cards)
-    lb_r1_c1, lb_r1_c2, lb_r1_c3, lb_r1_c4 = st.columns(4, gap="small")
-    with lb_r1_c1:
-        st.markdown(
-            render_top5_leaderboard_html(
-                ae_high_cnt,
-                LABEL_AE_EN,
-                "🔴 Top 5 AEs — Highest Overdue (Count)",
-                "By Overdue Count",
-                is_danger=True,
-                primary_metric="count",
-            ),
-            unsafe_allow_html=True,
-        )
-    with lb_r1_c2:
-        st.markdown(
-            render_top5_leaderboard_html(
-                ae_high_pct,
-                LABEL_AE_EN,
-                "🔴 Top 5 AEs — Highest Overdue (%)",
-                f"Min {min_works_threshold} Works",
-                is_danger=True,
-                primary_metric="pct",
-            ),
-            unsafe_allow_html=True,
-        )
-    with lb_r1_c3:
-        st.markdown(
-            render_top5_leaderboard_html(
-                aee_high_cnt,
-                LABEL_AEE_EN,
-                "🔴 Top 5 AEEs — Highest Overdue (Count)",
-                "By Overdue Count",
-                is_danger=True,
-                primary_metric="count",
-            ),
-            unsafe_allow_html=True,
-        )
-    with lb_r1_c4:
-        st.markdown(
-            render_top5_leaderboard_html(
-                aee_high_pct,
-                LABEL_AEE_EN,
-                "🔴 Top 5 AEEs — Highest Overdue (%)",
-                f"Min {min_works_threshold} Works",
-                is_danger=True,
-                primary_metric="pct",
-            ),
-            unsafe_allow_html=True,
-        )
+    tab_ae_lb, tab_aee_lb = st.tabs(
+        [
+            f"👷 Assistant Engineer (AE) — Top {top_n_count} Leaderboards",
+            f"👔 Assistant Executive Engineer (AEE) — Top {top_n_count} Leaderboards",
+        ]
+    )
 
-    # Row 2: LEAST OVERDUE (4 Cards)
-    lb_r2_c1, lb_r2_c2, lb_r2_c3, lb_r2_c4 = st.columns(4, gap="small")
-    with lb_r2_c1:
-        st.markdown(
-            render_top5_leaderboard_html(
-                ae_least_cnt,
-                LABEL_AE_EN,
-                "🟢 Top 5 AEs — Least Overdue (Count)",
-                f"Min {min_works_threshold} Works",
-                is_danger=False,
-                primary_metric="count",
-            ),
-            unsafe_allow_html=True,
-        )
-    with lb_r2_c2:
-        st.markdown(
-            render_top5_leaderboard_html(
-                ae_least_pct,
-                LABEL_AE_EN,
-                "🟢 Top 5 AEs — Least Overdue (%)",
-                f"Min {min_works_threshold} Works",
-                is_danger=False,
-                primary_metric="pct",
-            ),
-            unsafe_allow_html=True,
-        )
-    with lb_r2_c3:
-        st.markdown(
-            render_top5_leaderboard_html(
-                aee_least_cnt,
-                LABEL_AEE_EN,
-                "🟢 Top 5 AEEs — Least Overdue (Count)",
-                f"Min {min_works_threshold} Works",
-                is_danger=False,
-                primary_metric="count",
-            ),
-            unsafe_allow_html=True,
-        )
-    with lb_r2_c4:
-        st.markdown(
-            render_top5_leaderboard_html(
-                aee_least_pct,
-                LABEL_AEE_EN,
-                "🟢 Top 5 AEEs — Least Overdue (%)",
-                f"Min {min_works_threshold} Works",
-                is_danger=False,
-                primary_metric="pct",
-            ),
-            unsafe_allow_html=True,
-        )
+    with tab_ae_lb:
+        ae_r1_c1, ae_r1_c2 = st.columns(2, gap="medium")
+        with ae_r1_c1:
+            st.markdown(
+                render_executive_leaderboard_panel(
+                    ae_high_cnt,
+                    LABEL_AE_EN,
+                    f"🔴 Top {top_n_count} AEs — Highest Overdue (By Count)",
+                    "Ranked by Overdue Works Count",
+                    is_danger=True,
+                    primary_metric="count",
+                ),
+                unsafe_allow_html=True,
+            )
+        with ae_r1_c2:
+            st.markdown(
+                render_executive_leaderboard_panel(
+                    ae_high_pct,
+                    LABEL_AE_EN,
+                    f"🔴 Top {top_n_count} AEs — Highest Overdue (By Percentage %)",
+                    f"Min. {min_works_threshold} Works Assigned",
+                    is_danger=True,
+                    primary_metric="pct",
+                ),
+                unsafe_allow_html=True,
+            )
+
+        ae_r2_c1, ae_r2_c2 = st.columns(2, gap="medium")
+        with ae_r2_c1:
+            st.markdown(
+                render_executive_leaderboard_panel(
+                    ae_least_cnt,
+                    LABEL_AE_EN,
+                    f"🟢 Top {top_n_count} AEs — Least Overdue (By Count)",
+                    f"Min. {min_works_threshold} Works • Ties broken by highest workload",
+                    is_danger=False,
+                    primary_metric="count",
+                ),
+                unsafe_allow_html=True,
+            )
+        with ae_r2_c2:
+            st.markdown(
+                render_executive_leaderboard_panel(
+                    ae_least_pct,
+                    LABEL_AE_EN,
+                    f"🟢 Top {top_n_count} AEs — Least Overdue (By Percentage %)",
+                    f"Min. {min_works_threshold} Works • Ties broken by highest workload",
+                    is_danger=False,
+                    primary_metric="pct",
+                ),
+                unsafe_allow_html=True,
+            )
+
+    with tab_aee_lb:
+        aee_r1_c1, aee_r1_c2 = st.columns(2, gap="medium")
+        with aee_r1_c1:
+            st.markdown(
+                render_executive_leaderboard_panel(
+                    aee_high_cnt,
+                    LABEL_AEE_EN,
+                    f"🔴 Top {top_n_count} AEEs — Highest Overdue (By Count)",
+                    "Ranked by Overdue Works Count",
+                    is_danger=True,
+                    primary_metric="count",
+                ),
+                unsafe_allow_html=True,
+            )
+        with aee_r1_c2:
+            st.markdown(
+                render_executive_leaderboard_panel(
+                    aee_high_pct,
+                    LABEL_AEE_EN,
+                    f"🔴 Top {top_n_count} AEEs — Highest Overdue (By Percentage %)",
+                    f"Min. {min_works_threshold} Works Assigned",
+                    is_danger=True,
+                    primary_metric="pct",
+                ),
+                unsafe_allow_html=True,
+            )
+
+        aee_r2_c1, aee_r2_c2 = st.columns(2, gap="medium")
+        with aee_r2_c1:
+            st.markdown(
+                render_executive_leaderboard_panel(
+                    aee_least_cnt,
+                    LABEL_AEE_EN,
+                    f"🟢 Top {top_n_count} AEEs — Least Overdue (By Count)",
+                    f"Min. {min_works_threshold} Works • Ties broken by highest workload",
+                    is_danger=False,
+                    primary_metric="count",
+                ),
+                unsafe_allow_html=True,
+            )
+        with aee_r2_c2:
+            st.markdown(
+                render_executive_leaderboard_panel(
+                    aee_least_pct,
+                    LABEL_AEE_EN,
+                    f"🟢 Top {top_n_count} AEEs — Least Overdue (By Percentage %)",
+                    f"Min. {min_works_threshold} Works • Ties broken by highest workload",
+                    is_danger=False,
+                    primary_metric="pct",
+                ),
+                unsafe_allow_html=True,
+            )
 
     # =========================================================================
     # ANALYTICS SECTION 3: POWER BI DONUT CHARTS, AGEING & DIVISION BREAKDOWN
     # =========================================================================
     st.markdown(
-        """
-        <div class="exec-section-banner">
-            <div class="exec-section-title">📊 Portfolio Visuals: Work Status Donut, Delay Ageing Donut &amp; Division Comparison</div>
-            <div class="exec-scope-badge">Power BI Interactive Breakdown</div>
-        </div>
-        """,
+        clean_html(
+            """
+            <div class="exec-section-banner">
+                <div class="exec-section-title">📊 Portfolio Visuals: Work Status Donut, Delay Ageing Donut &amp; Division Comparison</div>
+                <div class="exec-scope-badge">Power BI Interactive Breakdown</div>
+            </div>
+            """
+        ),
         unsafe_allow_html=True,
     )
 
@@ -2712,8 +2762,10 @@ if st.session_state["pc_active_page"] == "analytics":
                             tot_rest_other_an,
                         ],
                         hole=0.58,
+                        pull=[0.05 if tot_od_an > 0 else 0, 0, 0, 0],
                         marker=dict(
-                            colors=["#EF4444", "#10B981", "#3B82F6", "#475569"]
+                            colors=["#EF4444", "#10B981", "#3B82F6", "#475569"],
+                            line=dict(color="#0F172A", width=2.5),
                         ),
                         textinfo="percent+value",
                         textfont=dict(size=11, color="#F8FAFC"),
@@ -2781,7 +2833,8 @@ if st.session_state["pc_active_page"] == "analytics":
                                     "#F97316",
                                     "#EF4444",
                                     "#991B1B",
-                                ]
+                                ],
+                                line=dict(color="#0F172A", width=2.5),
                             ),
                             textinfo="percent+value",
                             textfont=dict(size=11, color="#F8FAFC"),
@@ -2941,7 +2994,10 @@ if st.session_state["pc_active_page"] == "analytics":
                         y=scatter_df["overdue_pct"],
                         mode="markers+text",
                         text=[
-                            r[LABEL_AE_EN] if r["overdue_works"] >= top6_cut and r["overdue_works"] > 0 else ""
+                            r[LABEL_AE_EN]
+                            if r["overdue_works"] >= top6_cut
+                            and r["overdue_works"] > 0
+                            else ""
                             for _, r in scatter_df.iterrows()
                         ],
                         textposition="top center",
@@ -3001,12 +3057,14 @@ if st.session_state["pc_active_page"] == "analytics":
     # ANALYTICS SECTION 4: COMPLETE OFFICER TRUTH AUDIT TABLE & EXCEL DOWNLOAD
     # =========================================================================
     st.markdown(
-        """
-        <div class="exec-section-banner">
-            <div class="exec-section-title">📋 Complete Officer Overdue vs. ETS Truth Audit Register</div>
-            <div class="exec-scope-badge">Flags officers with unexcused Overdue ('P') works vs. Claimed 'ETS'</div>
-        </div>
-        """,
+        clean_html(
+            """
+            <div class="exec-section-banner">
+                <div class="exec-section-title">📋 Complete Officer Overdue vs. ETS Truth Audit Register</div>
+                <div class="exec-scope-badge">Flags officers with unexcused Overdue ('P') works vs. Claimed 'ETS'</div>
+            </div>
+            """
+        ),
         unsafe_allow_html=True,
     )
 
@@ -3312,12 +3370,14 @@ st.divider()
 # SECTION 1: HORIZONTAL BAR CHART
 # =============================================================================
 st.markdown(
-    f"""
-    <div class="exec-section-banner">
-        <div class="exec-section-title">📈 Overdue &amp; ETS Works by {view_choice} ({sort_choice})</div>
-        <div class="exec-scope-badge">{html.escape(filter_scope_label)}</div>
-    </div>
-    """,
+    clean_html(
+        f"""
+        <div class="exec-section-banner">
+            <div class="exec-section-title">📈 Overdue &amp; ETS Works by {html.escape(view_choice)} ({html.escape(sort_choice)})</div>
+            <div class="exec-scope-badge">{html.escape(filter_scope_label)}</div>
+        </div>
+        """
+    ),
     unsafe_allow_html=True,
 )
 
@@ -3593,12 +3653,14 @@ st.divider()
 # SECTION 2: COMBINED OVERDUE WORKS TABLE (ENGLISH HEADERS)
 # =============================================================================
 st.markdown(
-    f"""
-    <div class="exec-section-banner">
-        <div class="exec-section-title">📂 Combined Overdue Works by {view_choice}</div>
-        <div class="exec-scope-badge">{html.escape(filter_scope_label)}</div>
-    </div>
-    """,
+    clean_html(
+        f"""
+        <div class="exec-section-banner">
+            <div class="exec-section-title">📂 Combined Overdue Works by {html.escape(view_choice)}</div>
+            <div class="exec-scope-badge">{html.escape(filter_scope_label)}</div>
+        </div>
+        """
+    ),
     unsafe_allow_html=True,
 )
 
@@ -3749,12 +3811,14 @@ st.divider()
 # SECTION 3: OFFICER-WISE SUMMARY TABLE (ENGLISH)
 # =============================================================================
 st.markdown(
-    f"""
-    <div class="exec-section-banner">
-        <div class="exec-section-title">📋 Officer-Wise Summary Table</div>
-        <div class="exec-scope-badge">{html.escape(filter_scope_label)}</div>
-    </div>
-    """,
+    clean_html(
+        f"""
+        <div class="exec-section-banner">
+            <div class="exec-section-title">📋 Officer-Wise Summary Table</div>
+            <div class="exec-scope-badge">{html.escape(filter_scope_label)}</div>
+        </div>
+        """
+    ),
     unsafe_allow_html=True,
 )
 display_table = summary_df[
@@ -3787,7 +3851,6 @@ st.dataframe(
 with st.expander("🔍 Inspect Worksheet Loading Status (23 Target Sheets)"):
     st.dataframe(diag_df, use_container_width=True)
 
-# Mount the ultra-slim 14px, writing-free right-edge scrolling HUD overlay
 inject_scroll_hud_graphics(enabled=show_scroll_hud)
 
 st.error("🔍 DEBUG: Find Unassigned / Missing Data Works (Across All Columns)")
