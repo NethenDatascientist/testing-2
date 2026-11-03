@@ -3394,10 +3394,7 @@ k5.metric(
 k6.metric("🟢 'ETS' Works", f"{total_ets_all:,}")
 
 # =========================================================================
-# PAGE 1: OVERDUE AGEING TREE FLOWCHART (INSERTED UNDER KPI CARDS)
-# =========================================================================
-# =========================================================================
-# PAGE 1: EXECUTIVE OVERDUE AGEING BREAKDOWN TREE (UNDER KPI CARDS)
+# PAGE 1: COMPACT SINGLE-LINE OVERDUE AGEING TREE (MATCHING OVERDUE KPI)
 # =========================================================================
 od_u6_p1 = od_6_12_p1 = od_1_2_p1 = od_2_3_p1 = od_3_4_p1 = od_4_plus_p1 = 0
 
@@ -3430,22 +3427,20 @@ if not page1_od_df.empty:
     od_3_4_p1 = int(p1_tree_counts.get("3 - 4 Years", 0))
     od_4_plus_p1 = int(p1_tree_counts.get("4+ Years", 0))
 
-# Tuple: (Label, Count, Accent Color, Badge Text Color, Position)
 p1_buckets_data = [
-    ("Under 6 Months", od_u6_p1, "#38BDF8", "#7DD3FC", "first"),
-    ("6 Months – 1 Yr", od_6_12_p1, "#FBBF24", "#FDE68A", "mid"),
-    ("1 – 2 Years", od_1_2_p1, "#F97316", "#FDBA74", "mid"),
-    ("2 – 3 Years", od_2_3_p1, "#EF4444", "#FCA5A5", "parent_col"),
-    ("3 – 4 Years", od_3_4_p1, "#E11D48", "#FDA4AF", "mid"),
-    ("4+ Years", od_4_plus_p1, "#BE123C", "#FECDD3", "last"),
+    ("UNDER 6 MONTHS", od_u6_p1, "first"),
+    ("6 MONTHS – 1 YR", od_6_12_p1, "mid"),
+    ("1 – 2 YEARS", od_1_2_p1, "mid"),
+    ("2 – 3 YEARS", od_2_3_p1, "parent_col"),
+    ("3 – 4 YEARS", od_3_4_p1, "mid"),
+    ("4+ YEARS", od_4_plus_p1, "last"),
 ]
 
 denom_od_p1 = max(total_overdue_all, 1)
 p1_cards_html = []
 
-for b_label, b_val, b_accent, b_text_col, b_pos in p1_buckets_data:
+for b_label, b_val, b_pos in p1_buckets_data:
     b_pct = round((b_val / denom_od_p1) * 100, 1) if total_overdue_all > 0 else 0.0
-    bar_w = min(100.0, max(4.0 if b_val > 0 else 0.0, b_pct))
 
     if b_pos == "first":
         h_line_style = "left:50%; right:-0.5rem;"
@@ -3462,30 +3457,20 @@ for b_label, b_val, b_accent, b_text_col, b_pos in p1_buckets_data:
         else ""
     )
 
-    is_zero = b_val == 0
-    card_opacity = "0.52" if is_zero else "1.0"
-    val_color = "#64748B" if is_zero else "#F8FAFC"
-    top_border_col = "rgba(148, 163, 184, 0.25)" if is_zero else b_accent
-
     p1_cards_html.append(
         f"""
         <div style="display:flex; flex-direction:column; align-items:center;">
-            <div style="position:relative; width:100%; height:14px;">
-                <div style="position:absolute; top:0; {h_line_style} height:1.5px; background:rgba(248, 113, 113, 0.42);"></div>
+            <div style="position:relative; width:100%; height:13px;">
+                <div style="position:absolute; top:0; {h_line_style} height:1.5px; background:rgba(239, 68, 68, 0.55);"></div>
                 {junction_dot}
-                <div style="width:1.5px; height:14px; background:rgba(248, 113, 113, 0.42); margin:0 auto;"></div>
+                <div style="width:1.5px; height:13px; background:rgba(239, 68, 68, 0.55); margin:0 auto;"></div>
             </div>
-            <div class="p1-age-card" style="width:100%; opacity:{card_opacity}; background:linear-gradient(155deg, rgba(30, 41, 59, 0.72), rgba(15, 23, 42, 0.92)); border:1px solid rgba(148, 163, 184, 0.18); border-top:3px solid {top_border_col}; border-radius:10px; padding:10px 12px; box-shadow:0 4px 12px rgba(0, 0, 0, 0.22); transition:transform 0.2s ease, border-color 0.2s ease;">
-                <div style="display:flex; align-items:center; justify-content:space-between; gap:4px; margin-bottom:4px;">
-                    <span style="font-size:0.70rem; color:#CBD5E1; font-weight:700; text-transform:uppercase; letter-spacing:0.3px;">{b_label}</span>
-                    <span style="font-size:0.68rem; color:{b_text_col if not is_zero else '#64748B'}; background:rgba(15, 23, 42, 0.65); border:1px solid rgba(148, 163, 184, 0.16); padding:1px 6px; border-radius:999px; font-weight:700;">{b_pct:.1f}%</span>
+            <div class="p1-age-card">
+                <div style="display:flex; align-items:center; gap:5px; min-width:0;">
+                    <span style="font-size:0.70rem; color:#CBD5E1; font-weight:700; text-transform:uppercase; letter-spacing:0.3px; white-space:nowrap;">{b_label} :</span>
+                    <span style="font-size:1.12rem; font-weight:800; color:#F8FAFC; line-height:1; white-space:nowrap;">{b_val:,}</span>
                 </div>
-                <div style="font-size:1.32rem; font-weight:800; color:{val_color}; line-height:1.15; margin-bottom:7px;">
-                    {b_val:,}
-                </div>
-                <div style="width:100%; height:4px; background:rgba(148, 163, 184, 0.14); border-radius:999px; overflow:hidden;">
-                    <div style="width:{bar_w:.1f}%; height:100%; background:{b_accent}; border-radius:999px;"></div>
-                </div>
+                <span style="font-size:0.70rem; color:#FCA5A5; background:rgba(239, 68, 68, 0.16); border:1px solid rgba(239, 68, 68, 0.35); padding:2px 7px; border-radius:999px; font-weight:700; white-space:nowrap;">{b_pct:.1f}%</span>
             </div>
         </div>
         """
@@ -3495,18 +3480,36 @@ st.markdown(
     clean_html(
         f"""
         <style>
+            .p1-age-card {{
+                width: 100%;
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                gap: 6px;
+                background: linear-gradient(145deg, rgba(239, 68, 68, 0.12), rgba(15, 23, 42, 0.85));
+                border: 1px solid rgba(148, 163, 184, 0.18);
+                border-top: 3px solid #EF4444;
+                border-radius: 10px;
+                padding: 9px 11px;
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+                transition: transform 0.22s cubic-bezier(0.22, 1, 0.36, 1),
+                            box-shadow 0.22s ease,
+                            border-color 0.22s ease;
+                cursor: pointer;
+            }}
             .p1-age-card:hover {{
-                transform: translateY(-2px);
-                border-color: rgba(148, 163, 184, 0.38) !important;
+                transform: translateY(-3px) scale(1.02);
+                border-color: rgba(239, 68, 68, 0.65) !important;
+                box-shadow: 0 8px 25px rgba(239, 68, 68, 0.75) !important;
             }}
         </style>
-        <div style="width:100%; margin-top:-10px; margin-bottom:14px;">
+        <div style="width:100%; margin-top:-10px; margin-bottom:12px;">
             <div style="display:grid; grid-template-columns:repeat(6, 1fr); column-gap:1rem; width:100%;">
                 <div></div>
                 <div></div>
                 <div></div>
                 <div style="display:flex; justify-content:center;">
-                    <div style="width:1.5px; height:12px; background:rgba(248, 113, 113, 0.55);"></div>
+                    <div style="width:1.5px; height:11px; background:rgba(239, 68, 68, 0.55);"></div>
                 </div>
                 <div></div>
                 <div></div>
