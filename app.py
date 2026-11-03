@@ -139,10 +139,12 @@ st.markdown(
             }
 
            /* 4. KPI Metric Cards */
+            /* 4. KPI Metric Cards Base */
             div[data-testid="stMetric"] {
                 border: 1px solid rgba(148, 163, 184, 0.18) !important;
                 border-radius: 12px !important;
                 padding: 0.6rem 0.85rem !important;
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important; /* Standard dark shadow (no glow) at rest */
                 transition: transform 0.22s cubic-bezier(0.22, 1, 0.36, 1),
                             box-shadow 0.22s ease,
                             border-color 0.22s ease !important;
@@ -152,82 +154,76 @@ st.markdown(
                 transform: translateY(-3px) scale(1.02) !important;
             }
 
-            /* 1st Card: Bright Blue Glow */
+            /* 1st Card: Blue */
             div[data-testid="stHorizontalBlock"] > div:nth-child(1) div[data-testid="stMetric"],
             div[data-testid="column"]:nth-child(1) div[data-testid="stMetric"] {
                 border-top: 3px solid #3B82F6 !important;
-                background: linear-gradient(145deg, rgba(59, 130, 246, 0.25), rgba(15, 23, 42, 0.85)) !important;
-                box-shadow: 0 4px 15px rgba(59, 130, 246, 0.30) !important;
+                background: linear-gradient(145deg, rgba(59, 130, 246, 0.12), rgba(15, 23, 42, 0.85)) !important;
             }
             div[data-testid="stHorizontalBlock"] > div:nth-child(1) div[data-testid="stMetric"]:hover,
             div[data-testid="column"]:nth-child(1) div[data-testid="stMetric"]:hover {
                 border-color: rgba(59, 130, 246, 0.65) !important;
-                box-shadow: 0 8px 25px rgba(59, 130, 246, 0.65) !important;
+                box-shadow: 0 8px 25px rgba(59, 130, 246, 0.75) !important; /* GLOW ONLY ON HOVER */
             }
 
-            /* 2nd Card: Bright Purple Glow */
+            /* 2nd Card: Purple */
             div[data-testid="stHorizontalBlock"] > div:nth-child(2) div[data-testid="stMetric"],
             div[data-testid="column"]:nth-child(2) div[data-testid="stMetric"] {
                 border-top: 3px solid #8B5CF6 !important;
-                background: linear-gradient(145deg, rgba(139, 92, 246, 0.25), rgba(15, 23, 42, 0.85)) !important;
-                box-shadow: 0 4px 15px rgba(139, 92, 246, 0.30) !important;
+                background: linear-gradient(145deg, rgba(139, 92, 246, 0.12), rgba(15, 23, 42, 0.85)) !important;
             }
             div[data-testid="stHorizontalBlock"] > div:nth-child(2) div[data-testid="stMetric"]:hover,
             div[data-testid="column"]:nth-child(2) div[data-testid="stMetric"]:hover {
                 border-color: rgba(139, 92, 246, 0.65) !important;
-                box-shadow: 0 8px 25px rgba(139, 92, 246, 0.65) !important;
+                box-shadow: 0 8px 25px rgba(139, 92, 246, 0.75) !important; /* GLOW ONLY ON HOVER */
             }
 
-            /* 3rd Card: Bright Cyan Glow */
+            /* 3rd Card: Cyan */
             div[data-testid="stHorizontalBlock"] > div:nth-child(3) div[data-testid="stMetric"],
             div[data-testid="column"]:nth-child(3) div[data-testid="stMetric"] {
                 border-top: 3px solid #06B6D4 !important;
-                background: linear-gradient(145deg, rgba(6, 182, 212, 0.25), rgba(15, 23, 42, 0.85)) !important;
-                box-shadow: 0 4px 15px rgba(6, 182, 212, 0.30) !important;
+                background: linear-gradient(145deg, rgba(6, 182, 212, 0.12), rgba(15, 23, 42, 0.85)) !important;
             }
             div[data-testid="stHorizontalBlock"] > div:nth-child(3) div[data-testid="stMetric"]:hover,
             div[data-testid="column"]:nth-child(3) div[data-testid="stMetric"]:hover {
                 border-color: rgba(6, 182, 212, 0.65) !important;
-                box-shadow: 0 8px 25px rgba(6, 182, 212, 0.65) !important;
+                box-shadow: 0 8px 25px rgba(6, 182, 212, 0.75) !important; /* GLOW ONLY ON HOVER */
             }
 
-            /* 4th Card: Bright Red Glow */
+            /* 4th Card: Red */
             div[data-testid="stHorizontalBlock"] > div:nth-child(4) div[data-testid="stMetric"],
             div[data-testid="column"]:nth-child(4) div[data-testid="stMetric"] {
                 border-top: 3px solid #EF4444 !important;
-                background: linear-gradient(145deg, rgba(239, 68, 68, 0.25), rgba(15, 23, 42, 0.85)) !important;
-                box-shadow: 0 4px 15px rgba(239, 68, 68, 0.30) !important;
+                background: linear-gradient(145deg, rgba(239, 68, 68, 0.12), rgba(15, 23, 42, 0.85)) !important;
             }
             div[data-testid="stHorizontalBlock"] > div:nth-child(4) div[data-testid="stMetric"]:hover,
             div[data-testid="column"]:nth-child(4) div[data-testid="stMetric"]:hover {
                 border-color: rgba(239, 68, 68, 0.65) !important;
-                box-shadow: 0 8px 25px rgba(239, 68, 68, 0.65) !important;
+                box-shadow: 0 8px 25px rgba(239, 68, 68, 0.75) !important; /* GLOW ONLY ON HOVER */
             }
 
-            /* 5th Card: Bright Amber Glow */
+            /* 5th Card: Amber (Chronic Overdue) */
             div[data-testid="stHorizontalBlock"] > div:nth-child(5) div[data-testid="stMetric"],
             div[data-testid="column"]:nth-child(5) div[data-testid="stMetric"] {
                 border-top: 3px solid #F59E0B !important;
-                background: linear-gradient(145deg, rgba(245, 158, 11, 0.25), rgba(15, 23, 42, 0.85)) !important;
-                box-shadow: 0 4px 15px rgba(245, 158, 11, 0.30) !important;
+                background: linear-gradient(145deg, rgba(245, 158, 11, 0.12), rgba(15, 23, 42, 0.85)) !important;
             }
             div[data-testid="stHorizontalBlock"] > div:nth-child(5) div[data-testid="stMetric"]:hover,
             div[data-testid="column"]:nth-child(5) div[data-testid="stMetric"]:hover {
                 border-color: rgba(245, 158, 11, 0.65) !important;
-                box-shadow: 0 8px 25px rgba(245, 158, 11, 0.65) !important;
+                box-shadow: 0 8px 25px rgba(245, 158, 11, 0.75) !important; /* GLOW ONLY ON HOVER */
             }
 
-            /* 6th Card: Bright Green Glow */
+            /* 6th Card: Green (ETS) */
             div[data-testid="stHorizontalBlock"] > div:nth-child(6) div[data-testid="stMetric"],
             div[data-testid="column"]:nth-child(6) div[data-testid="stMetric"] {
                 border-top: 3px solid #4ADE80 !important;
-                background: linear-gradient(145deg, rgba(16, 185, 129, 0.25), rgba(15, 23, 42, 0.85)) !important;
-                box-shadow: 0 4px 15px rgba(16, 185, 129, 0.30) !important;
+                background: linear-gradient(145deg, rgba(16, 185, 129, 0.12), rgba(15, 23, 42, 0.85)) !important;
             }
             div[data-testid="stHorizontalBlock"] > div:nth-child(6) div[data-testid="stMetric"]:hover,
             div[data-testid="column"]:nth-child(6) div[data-testid="stMetric"]:hover {
                 border-color: rgba(74, 222, 128, 0.65) !important;
-                box-shadow: 0 8px 25px rgba(74, 222, 128, 0.65) !important;
+                box-shadow: 0 8px 25px rgba(74, 222, 128, 0.75) !important; /* GLOW ONLY ON HOVER */
             }
 
             div[data-testid="stMetricValue"] {
