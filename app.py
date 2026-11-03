@@ -139,6 +139,7 @@ st.markdown(
             }
 
            /* 4. KPI Metric Cards */
+            /* 4. KPI Metric Cards */
             div[data-testid="stMetric"] {
                 border: 1px solid rgba(148, 163, 184, 0.18) !important;
                 border-radius: 12px !important;
@@ -154,54 +155,50 @@ st.markdown(
                 box-shadow: 0 8px 20px rgba(0, 0, 0, 0.35) !important;
             }
 
-            /* 1st Card: Blue */
+            /* 1st Card: Bright Blue Glow */
             div[data-testid="stHorizontalBlock"] > div:nth-child(1) div[data-testid="stMetric"],
             div[data-testid="column"]:nth-child(1) div[data-testid="stMetric"] {
                 border-top: 3px solid #3B82F6 !important;
-                background: linear-gradient(145deg, rgba(30, 58, 138, 0.40), rgba(15, 23, 42, 0.85)) !important;
+                background: linear-gradient(145deg, rgba(59, 130, 246, 0.25), rgba(15, 23, 42, 0.85)) !important;
             }
-            /* 2nd Card: Purple */
+            /* 2nd Card: Bright Purple Glow */
             div[data-testid="stHorizontalBlock"] > div:nth-child(2) div[data-testid="stMetric"],
             div[data-testid="column"]:nth-child(2) div[data-testid="stMetric"] {
                 border-top: 3px solid #8B5CF6 !important;
-                background: linear-gradient(145deg, rgba(88, 28, 135, 0.38), rgba(15, 23, 42, 0.85)) !important;
+                background: linear-gradient(145deg, rgba(139, 92, 246, 0.25), rgba(15, 23, 42, 0.85)) !important;
             }
-            /* 3rd Card: Cyan */
+            /* 3rd Card: Bright Cyan Glow */
             div[data-testid="stHorizontalBlock"] > div:nth-child(3) div[data-testid="stMetric"],
             div[data-testid="column"]:nth-child(3) div[data-testid="stMetric"] {
                 border-top: 3px solid #06B6D4 !important;
-                background: linear-gradient(145deg, rgba(22, 78, 99, 0.42), rgba(15, 23, 42, 0.85)) !important;
+                background: linear-gradient(145deg, rgba(6, 182, 212, 0.25), rgba(15, 23, 42, 0.85)) !important;
             }
-            /* 4th Card: Red */
+            /* 4th Card: Bright Red Glow */
             div[data-testid="stHorizontalBlock"] > div:nth-child(4) div[data-testid="stMetric"],
             div[data-testid="column"]:nth-child(4) div[data-testid="stMetric"] {
                 border-top: 3px solid #EF4444 !important;
-                background: linear-gradient(145deg, rgba(127, 29, 29, 0.38), rgba(15, 23, 42, 0.85)) !important;
+                background: linear-gradient(145deg, rgba(239, 68, 68, 0.25), rgba(15, 23, 42, 0.85)) !important;
             }
-            
-            /* 5th Card: Amber/Orange (Chronic Overdue) */
+            /* 5th Card: Bright Amber Glow */
             div[data-testid="stHorizontalBlock"] > div:nth-child(5) div[data-testid="stMetric"],
             div[data-testid="column"]:nth-child(5) div[data-testid="stMetric"] {
                 border-top: 3px solid #F59E0B !important;
-                background: linear-gradient(145deg, rgba(146, 64, 14, 0.45), rgba(15, 23, 42, 0.85)) !important;
+                background: linear-gradient(145deg, rgba(245, 158, 11, 0.25), rgba(15, 23, 42, 0.85)) !important;
             }
-            div[data-testid="stHorizontalBlock"] > div:nth-child(5) div[data-testid="stMetric"]:hover,
-            div[data-testid="column"]:nth-child(5) div[data-testid="stMetric"]:hover {
-                border-color: rgba(245, 158, 11, 0.65) !important;
-                box-shadow: 0 10px 24px rgba(245, 158, 11, 0.28) !important;
-            }
-            
-            /* 6th Card: Green (ETS) */
+            /* 6th Card: Bright Green Glow */
             div[data-testid="stHorizontalBlock"] > div:nth-child(6) div[data-testid="stMetric"],
             div[data-testid="column"]:nth-child(6) div[data-testid="stMetric"] {
                 border-top: 3px solid #4ADE80 !important;
-                background: linear-gradient(145deg, rgba(6, 78, 59, 0.38), rgba(15, 23, 42, 0.85)) !important;
+                background: linear-gradient(145deg, rgba(16, 185, 129, 0.25), rgba(15, 23, 42, 0.85)) !important;
             }
-            div[data-testid="stHorizontalBlock"] > div:nth-child(6) div[data-testid="stMetric"]:hover,
-            div[data-testid="column"]:nth-child(6) div[data-testid="stMetric"]:hover {
-                border-color: rgba(74, 222, 128, 0.55) !important;
-                box-shadow: 0 10px 24px rgba(74, 222, 128, 0.22) !important;
-            }
+
+            /* --- Hover Highlight Borders --- */
+            div[data-testid="column"]:nth-child(1) div[data-testid="stMetric"]:hover { border-color: rgba(59, 130, 246, 0.55) !important; }
+            div[data-testid="column"]:nth-child(2) div[data-testid="stMetric"]:hover { border-color: rgba(139, 92, 246, 0.55) !important; }
+            div[data-testid="column"]:nth-child(3) div[data-testid="stMetric"]:hover { border-color: rgba(6, 182, 212, 0.55) !important; }
+            div[data-testid="column"]:nth-child(4) div[data-testid="stMetric"]:hover { border-color: rgba(239, 68, 68, 0.55) !important; }
+            div[data-testid="column"]:nth-child(5) div[data-testid="stMetric"]:hover { border-color: rgba(245, 158, 11, 0.55) !important; }
+            div[data-testid="column"]:nth-child(6) div[data-testid="stMetric"]:hover { border-color: rgba(74, 222, 128, 0.55) !important; }
 
             div[data-testid="stMetricValue"] {
                 font-size: 1.6rem !important;
