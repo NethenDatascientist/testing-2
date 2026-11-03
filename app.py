@@ -3393,7 +3393,94 @@ k5.metric(
 )
 k6.metric("🟢 'ETS' Works", f"{total_ets_all:,}")
 
-st.divider()
+# =========================================================================
+# PAGE 1: OVERDUE AGEING TREE FLOWCHART (INSERTED UNDER KPI CARDS)
+# =========================================================================
+od_u6_p1 = od_6_12_p1 = od_1_2_p1 = od_2_3_p1 = od_3_4_p1 = od_4_plus_p1 = 0
+
+if not page1_od_df.empty:
+    def _custom_p1_age_bucket(target_str):
+        parsed = parse_indian_date_list(pd.Series([target_str]))
+        t_dt = parsed[0] if parsed else None
+        if not isinstance(t_dt, date) or t_dt >= today_ist_obj: return "Unknown"
+        days = (today_ist_obj - t_dt).days
+        if days <= 180: return "Under 6 Months"
+        if days <= 365: return "6 Months to 1 Year"
+        if days <= 730: return "1 - 2 Years"
+        if days <= 1095: return "2 - 3 Years"
+        if days <= 1460: return "3 - 4 Years"
+        return "4+ Years"
+
+    page1_od_df["tree_bucket"] = page1_od_df["target_date_raw"].map(_custom_p1_age_bucket)
+    p1_tree_counts = page1_od_df["tree_bucket"].value_counts()
+    
+    od_u6_p1 = int(p1_tree_counts.get("Under 6 Months", 0))
+    od_6_12_p1 = int(p1_tree_counts.get("6 Months to 1 Year", 0))
+    od_1_2_p1 = int(p1_tree_counts.get("1 - 2 Years", 0))
+    od_2_3_p1 = int(p1_tree_counts.get("2 - 3 Years", 0))
+    od_3_4_p1 = int(p1_tree_counts.get("3 - 4 Years", 0))
+    od_4_plus_p1 = int(p1_tree_counts.get("4+ Years", 0))
+
+st.markdown(
+    clean_html(
+        f"""
+        <div style="position:relative; width:100%; margin-top:-10px; margin-bottom: 30px; padding-top:24px; z-index:1;">
+            <!-- Vertical drop line from the Overdue Box (Centered under 4th Card out of 6 -> left: 58.33%) -->
+            <div style="position:absolute; top:0; left:58.33%; width:2px; height:14px; background:#EF4444; z-index:2;"></div>
+            
+            <!-- Horizontal spine spanning across 6 boxes -->
+            <div style="position:absolute; top:14px; left:8.33%; right:8.33%; height:2px; background:#EF4444; z-index:2;"></div>
+            
+            <!-- 6 Age Bucket Flowchart Cards -->
+            <div style="display:flex; justify-content:space-between; width:100%;">
+                <div style="width:15%; text-align:center; position:relative;">
+                    <div style="position:absolute; top:-14px; left:50%; width:2px; height:14px; background:#EF4444; z-index:2;"></div>
+                    <div style="background:rgba(239,68,68,0.08); border:1px dashed rgba(239,68,68,0.45); border-radius:8px; padding:10px 4px; box-shadow: 0 4px 10px rgba(0,0,0,0.2);">
+                        <div style="font-size:0.62rem; color:#FCA5A5; font-weight:700; text-transform:uppercase;">Under 6 Months</div>
+                        <div style="font-size:1.25rem; font-weight:800; color:#FCA5A5;">{od_u6_p1:,}</div>
+                    </div>
+                </div>
+                <div style="width:15%; text-align:center; position:relative;">
+                    <div style="position:absolute; top:-14px; left:50%; width:2px; height:14px; background:#EF4444; z-index:2;"></div>
+                    <div style="background:rgba(239,68,68,0.08); border:1px dashed rgba(239,68,68,0.45); border-radius:8px; padding:10px 4px; box-shadow: 0 4px 10px rgba(0,0,0,0.2);">
+                        <div style="font-size:0.62rem; color:#FCA5A5; font-weight:700; text-transform:uppercase;">6 Months - 1 Yr</div>
+                        <div style="font-size:1.25rem; font-weight:800; color:#FCA5A5;">{od_6_12_p1:,}</div>
+                    </div>
+                </div>
+                <div style="width:15%; text-align:center; position:relative;">
+                    <div style="position:absolute; top:-14px; left:50%; width:2px; height:14px; background:#EF4444; z-index:2;"></div>
+                    <div style="background:rgba(239,68,68,0.08); border:1px dashed rgba(239,68,68,0.45); border-radius:8px; padding:10px 4px; box-shadow: 0 4px 10px rgba(0,0,0,0.2);">
+                        <div style="font-size:0.62rem; color:#FCA5A5; font-weight:700; text-transform:uppercase;">1 - 2 Years</div>
+                        <div style="font-size:1.25rem; font-weight:800; color:#FCA5A5;">{od_1_2_p1:,}</div>
+                    </div>
+                </div>
+                <div style="width:15%; text-align:center; position:relative;">
+                    <div style="position:absolute; top:-14px; left:50%; width:2px; height:14px; background:#EF4444; z-index:2;"></div>
+                    <div style="background:rgba(239,68,68,0.08); border:1px dashed rgba(239,68,68,0.45); border-radius:8px; padding:10px 4px; box-shadow: 0 4px 10px rgba(0,0,0,0.2);">
+                        <div style="font-size:0.62rem; color:#FCA5A5; font-weight:700; text-transform:uppercase;">2 - 3 Years</div>
+                        <div style="font-size:1.25rem; font-weight:800; color:#FCA5A5;">{od_2_3_p1:,}</div>
+                    </div>
+                </div>
+                <div style="width:15%; text-align:center; position:relative;">
+                    <div style="position:absolute; top:-14px; left:50%; width:2px; height:14px; background:#EF4444; z-index:2;"></div>
+                    <div style="background:rgba(239,68,68,0.08); border:1px dashed rgba(239,68,68,0.45); border-radius:8px; padding:10px 4px; box-shadow: 0 4px 10px rgba(0,0,0,0.2);">
+                        <div style="font-size:0.62rem; color:#FCA5A5; font-weight:700; text-transform:uppercase;">3 - 4 Years</div>
+                        <div style="font-size:1.25rem; font-weight:800; color:#FCA5A5;">{od_3_4_p1:,}</div>
+                    </div>
+                </div>
+                <div style="width:15%; text-align:center; position:relative;">
+                    <div style="position:absolute; top:-14px; left:50%; width:2px; height:14px; background:#EF4444; z-index:2;"></div>
+                    <div style="background:rgba(239,68,68,0.08); border:1px dashed rgba(239,68,68,0.45); border-radius:8px; padding:10px 4px; box-shadow: 0 4px 10px rgba(0,0,0,0.2);">
+                        <div style="font-size:0.62rem; color:#FCA5A5; font-weight:700; text-transform:uppercase;">4+ Years</div>
+                        <div style="font-size:1.25rem; font-weight:800; color:#FCA5A5;">{od_4_plus_p1:,}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        """
+    ),
+    unsafe_allow_html=True,
+)
 # =============================================================================
 # SECTION 1: HORIZONTAL BAR CHART
 # =============================================================================
