@@ -54,28 +54,16 @@ st.markdown(
     clean_html(
         f"""
         <style>
-            /* Immediately hide the outgoing page container & any stale widgets */
+            /* Hide ONLY the inactive page container — never collapse active dropdown updates */
             .st-key-{_inactive_key},
-            div[data-testid="stVerticalBlockBorderWrapper"]:has(.st-key-{_inactive_key}),
-            div.element-container:has(.st-key-{_inactive_key}),
-            .st-key-pc_page_dashboard [data-stale="true"],
-            .st-key-pc_page_analytics [data-stale="true"],
-            [data-stale="true"] .js-plotly-plot {{
+            div.element-container:has(.st-key-{_inactive_key}) {{
                 display: none !important;
-                opacity: 0 !important;
-                height: 0 !important;
-                max-height: 0 !important;
-                overflow: hidden !important;
-                pointer-events: none !important;
-                margin: 0 !important;
-                padding: 0 !important;
             }}
         </style>
         """
     ),
     unsafe_allow_html=True,
 )
-
 # -----------------------------------------------------------------------------
 # GLOBAL DASHBOARD STYLES
 # -----------------------------------------------------------------------------
@@ -2294,16 +2282,10 @@ def render_executive_leaderboard_panel(
 
 
 # =============================================================================
-# ATOMIC PAGE SLOT (100% ISOLATED CONTAINERS FOR BOTH PAGES)
-# =============================================================================
-page_view_slot = st.empty()
-page_view_slot.empty()
-
-# =============================================================================
 # PAGE 2 VIEW: CE EXECUTIVE ANALYTICS & ETS TRUTH AUDIT SUITE
 # =============================================================================
 if st.session_state["pc_active_page"] == "analytics":
-    with page_view_slot.container(key="pc_page_analytics"):
+    with st.container(key="pc_page_analytics"):
         # Identical 5-Column Top Filter Bar as Dashboard (Zero Width Shift)
         af_c1, af_c2, af_c3, af_c4, af_c5 = st.columns(5, gap="small")
 
@@ -3242,7 +3224,7 @@ if st.session_state["pc_active_page"] == "analytics":
 # =============================================================================
 # PAGE 1 VIEW: MAIN OVERDUE WORKS DASHBOARD (100% INSIDE KEYED CONTAINER)
 # =============================================================================
-with page_view_slot.container(key="pc_page_dashboard"):
+    with st.container(key="pc_page_dashboard"):
     f_col1, f_col2, f_col3, f_col4, f_col5 = st.columns(5, gap="small")
 
     unique_divisions = sorted(
