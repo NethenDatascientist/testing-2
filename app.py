@@ -3245,30 +3245,30 @@ filtered_master_df = (
 # -----------------------------------------------------------------------------
 # TOP CONTROLS ROW 2: OFFICER VIEW & SORT ORDER (COMPACT & EMOJI-FREE)
 # -----------------------------------------------------------------------------
-r_col1, r_col2 = st.columns(2, gap="medium")
+r_col1, r_col2 = st.columns(2, gap="small")
 
 with r_col1:
-    view_choice = st.radio(
-        "Officer View",
-        options=[LABEL_AE_EN, LABEL_AEE_EN],
-        horizontal=True,
-        label_visibility="collapsed",
-    )
+    with st.container(border=True):
+        view_choice = st.radio(
+            "Officer View",
+            options=[LABEL_AE_EN, LABEL_AEE_EN],
+            horizontal=True,
+            label_visibility="collapsed",
+        )
 
 with r_col2:
-    sort_choice = st.radio(
-        "Sort Order",
-        options=[
-            "Highest Overdue Count at Top",
-            "Highest Overdue Percentage (%) at Top",
-        ],
-        horizontal=True,
-        label_visibility="collapsed",
-    )
+    with st.container(border=True):
+        sort_choice = st.radio(
+            "Sort Order",
+            options=[
+                "Highest Overdue Count at Top",
+                "Highest Overdue Percentage (%) at Top",
+            ],
+            horizontal=True,
+            label_visibility="collapsed",
+        )
 
-group_col = "so_name" if view_choice == LABEL_AE_EN else "aee_name"
-full_filter_col = "_so_name" if view_choice == LABEL_AE_EN else "_aee_name"
-
+st.markdown("<div style='margin-top: 0.15rem;'></div>", unsafe_allow_html=True)
 # -----------------------------------------------------------------------------
 # APPLY FILTERS TO BUILD SUMMARY DATAFRAME
 # -----------------------------------------------------------------------------
