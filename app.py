@@ -3395,8 +3395,7 @@ k6.metric("🟢 'ETS' Works", f"{total_ets_all:,}")
 # PAGE 1: COMPACT SINGLE-LINE OVERDUE AGEING TREE (MATCHING OVERDUE KPI)
 # =========================================================================
 
-# =============================================================================
-# SECTION 1: H# =========================================================================
+# =========================================================================
 # PAGE 1: COMPACT SINGLE-LINE OVERDUE AGEING TREE (MATCHING OVERDUE KPI)
 # =========================================================================
 od_u6_p1 = od_6_12_p1 = od_1_2_p1 = od_2_3_p1 = od_3_4_p1 = od_4_plus_p1 = 0
@@ -3526,7 +3525,7 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-st.divider()ORIZONTAL BAR CHART
+st.divider()
 # =============================================================================
 st.markdown(
     clean_html(
