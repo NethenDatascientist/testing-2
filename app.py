@@ -3245,30 +3245,26 @@ filtered_master_df = (
 # -----------------------------------------------------------------------------
 # TOP CONTROLS ROW 2: OFFICER VIEW & SORT ORDER (COMPACT & EMOJI-FREE)
 # -----------------------------------------------------------------------------
-r_col1, r_col2 = st.columns(2, gap="small")
+r_col1, r_col2 = st.columns(2, gap="medium")
 
 with r_col1:
-    with st.container(border=True):
-        view_choice = st.radio(
-            "Officer View",
-            options=[LABEL_AE_EN, LABEL_AEE_EN],
-            horizontal=True,
-            label_visibility="collapsed",
-        )
+    view_choice = st.radio(
+        "Officer View",
+        options=[LABEL_AE_EN, LABEL_AEE_EN],
+        horizontal=True,
+        label_visibility="collapsed",
+    )
 
 with r_col2:
-    with st.container(border=True):
-        sort_choice = st.radio(
-            "Sort Order",
-            options=[
-                "Highest Overdue Count at Top",
-                "Highest Overdue Percentage (%) at Top",
-            ],
-            horizontal=True,
-            label_visibility="collapsed",
-        )
-
-st.markdown("<div style='margin-top: 0.15rem;'></div>", unsafe_allow_html=True)
+    sort_choice = st.radio(
+        "Sort Order",
+        options=[
+            "Highest Overdue Count at Top",
+            "Highest Overdue Percentage (%) at Top",
+        ],
+        horizontal=True,
+        label_visibility="collapsed",
+    )
 
 group_col = "so_name" if view_choice == LABEL_AE_EN else "aee_name"
 full_filter_col = "_so_name" if view_choice == LABEL_AE_EN else "_aee_name"
@@ -3398,6 +3394,11 @@ k6.metric("🟢 'ETS' Works", f"{total_ets_all:,}")
 # =========================================================================
 # PAGE 1: COMPACT SINGLE-LINE OVERDUE AGEING TREE (MATCHING OVERDUE KPI)
 # =========================================================================
+
+# =============================================================================
+# SECTION 1: H# =========================================================================
+# PAGE 1: COMPACT SINGLE-LINE OVERDUE AGEING TREE (MATCHING OVERDUE KPI)
+# =========================================================================
 od_u6_p1 = od_6_12_p1 = od_1_2_p1 = od_2_3_p1 = od_3_4_p1 = od_4_plus_p1 = 0
 
 if not page1_od_df.empty:
@@ -3525,9 +3526,7 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-st.divider()
-# =============================================================================
-# SECTION 1: HORIZONTAL BAR CHART
+st.divider()ORIZONTAL BAR CHART
 # =============================================================================
 st.markdown(
     clean_html(
