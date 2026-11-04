@@ -138,7 +138,6 @@ st.markdown(
                 padding-top: 0.15rem !important;
             }
 
-           /* 4. KPI Metric Cards */
             /* 4. KPI Metric Cards Base */
             div[data-testid="stMetric"] {
                 border: 1px solid rgba(148, 163, 184, 0.18) !important;
@@ -234,6 +233,7 @@ st.markdown(
                 font-size: 0.82rem !important;
                 color: #CBD5E1 !important;
             }
+            
             /* Section Header Banners */
             .exec-section-banner {
                 display: flex;
@@ -3248,27 +3248,29 @@ filtered_master_df = (
 r_col1, r_col2 = st.columns(2, gap="small")
 
 with r_col1:
-    with st.container(border=True):
-        view_choice = st.radio(
-            "Officer View",
-            options=[LABEL_AE_EN, LABEL_AEE_EN],
-            horizontal=True,
-            label_visibility="collapsed",
-        )
+    view_choice = st.radio(
+        "Officer View",
+        options=[LABEL_AE_EN, LABEL_AEE_EN],
+        horizontal=True,
+        label_visibility="collapsed",
+    )
 
 with r_col2:
-    with st.container(border=True):
-        sort_choice = st.radio(
-            "Sort Order",
-            options=[
-                "Highest Overdue Count at Top",
-                "Highest Overdue Percentage (%) at Top",
-            ],
-            horizontal=True,
-            label_visibility="collapsed",
-        )
+    sort_choice = st.radio(
+        "Sort Order",
+        options=[
+            "Highest Overdue Count at Top",
+            "Highest Overdue Percentage (%) at Top",
+        ],
+        horizontal=True,
+        label_visibility="collapsed",
+    )
 
 st.markdown("<div style='margin-top: 0.15rem;'></div>", unsafe_allow_html=True)
+
+group_col = "so_name" if view_choice == LABEL_AE_EN else "aee_name"
+full_filter_col = "_so_name" if view_choice == LABEL_AE_EN else "_aee_name"
+
 # -----------------------------------------------------------------------------
 # APPLY FILTERS TO BUILD SUMMARY DATAFRAME
 # -----------------------------------------------------------------------------
@@ -3390,10 +3392,6 @@ k5.metric(
     help="Severe delays: Target date elapsed by more than 24 months.",
 )
 k6.metric("🟢 'ETS' Works", f"{total_ets_all:,}")
-
-# =========================================================================
-# PAGE 1: COMPACT SINGLE-LINE OVERDUE AGEING TREE (MATCHING OVERDUE KPI)
-# =========================================================================
 
 # =========================================================================
 # PAGE 1: COMPACT SINGLE-LINE OVERDUE AGEING TREE (MATCHING OVERDUE KPI)
@@ -3526,6 +3524,8 @@ st.markdown(
 )
 
 st.divider()
+# =============================================================================
+# SECTION 1: HORIZONTAL BAR CHART
 # =============================================================================
 st.markdown(
     clean_html(
