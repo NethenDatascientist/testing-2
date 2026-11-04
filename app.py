@@ -2160,7 +2160,7 @@ if master_df.empty:
 def build_officer_analytics_df(
     df_scope: pd.DataFrame, col_key: str, label_name: str
 ) -> pd.DataFrame:
-    """Aggregates named officer performance including Overdue ('P'), Claimed 'ETS', and Unexcused Ratio."""
+    """Aggregates named officer performance including Overdue ('P'), ETS, and Unexcused Ratio."""
     sub = df_scope[
         (df_scope[col_key] != "")
         & (df_scope[col_key] != UNASSIGNED_LABEL)
@@ -2446,7 +2446,7 @@ if st.session_state["pc_active_page"] == "analytics":
                         <div class="pbi-kpi-sub">Past Target Date &amp; Not in ETS</div>
                     </div>
                     <div class="pbi-kpi-card" style="border-top: 3px solid #10B981;">
-                        <div class="pbi-kpi-label">🟢 Claimed 'ETS' Works</div>
+                        <div class="pbi-kpi-label">🟢 ETS Works</div>
                         <div class="pbi-kpi-value" style="color:#6EE7B7;">{tot_ets_an:,} ({ets_pct_an}%)</div>
                         <div class="pbi-kpi-sub">Extension of Time Status</div>
                     </div>
@@ -2632,7 +2632,7 @@ if st.session_state["pc_active_page"] == "analytics":
                                     <div style="font-size:1.55rem;font-weight:800;color:#6EE7B7;">{o_ets}</div>
                                 </div>
                                 <div style="background:rgba(59,130,246,0.16);border:1px solid rgba(59,130,246,0.4);border-radius:8px;padding:12px;">
-                                    <div style="font-size:0.75rem;color:#93C5FD;text-transform:uppercase;font-weight:700;letter-spacing:0.5px;">On-Track ('P')</div>
+                                    <div style="font-size:0.75rem;color:#93C5FD;text-transform:uppercase;font-weight:700;letter-spacing:0.5px;">In Progress</div>
                                     <div style="font-size:1.55rem;font-weight:800;color:#93C5FD;">{o_ontrack}</div>
                                 </div>
                                 <div style="background:rgba(148,163,184,0.16);border:1px solid rgba(148,163,184,0.3);border-radius:8px;padding:12px;">
@@ -2655,8 +2655,8 @@ if st.session_state["pc_active_page"] == "analytics":
                             go.Pie(
                                 labels=[
                                     "Overdue ('P')",
-                                    "Claimed 'ETS'",
-                                    "On-Track ('P')",
+                                    "ETS",
+                                    "In Progress",
                                     "Completed / Rest",
                                 ],
                                 values=[o_od, o_ets, o_ontrack, o_rest],
@@ -2960,7 +2960,7 @@ if st.session_state["pc_active_page"] == "analytics":
                         go.Pie(
                             labels=[
                                 "Overdue ('P')",
-                                "Claimed 'ETS'",
+                                "ETS",
                                 "On-Track Ongoing ('P')",
                                 "Completed / Other Statuses",
                             ],
@@ -3161,7 +3161,7 @@ if st.session_state["pc_active_page"] == "analytics":
                         hovertemplate=(
                             "<b>Scheme (H.O.A.): %{x}</b><br>"
                             "🔴 Actual Overdue ('P'): <b>%{customdata[1]}</b> (%{customdata[3]:.1f}%)<br>"
-                            "🟢 Claimed 'ETS': <b>%{customdata[2]}</b><br>"
+                            "🟢 ETS: <b>%{customdata[2]}</b><br>"
                             "📋 Total Scheme Works: <b>%{customdata[0]}</b><extra></extra>"
                         ),
                     )
@@ -3171,7 +3171,7 @@ if st.session_state["pc_active_page"] == "analytics":
                     go.Scatter(
                         x=hoa_active["sheet_name"],
                         y=hoa_active["ets_works"],
-                        name="🟢 Claimed 'ETS' Works",
+                        name="🟢 ETS Works",
                         mode="markers+text",
                         text=[
                             str(int(v)) if int(v) > 0 else ""
@@ -3190,7 +3190,7 @@ if st.session_state["pc_active_page"] == "analytics":
                         ].values,
                         hovertemplate=(
                             "<b>Scheme (H.O.A.): %{x}</b><br>"
-                            "🟢 Claimed 'ETS': <b>%{customdata[2]}</b><br>"
+                            "🟢 ETS: <b>%{customdata[2]}</b><br>"
                             "🔴 Actual Overdue ('P'): <b>%{customdata[1]}</b><br>"
                             "📋 Total Scheme Works: <b>%{customdata[0]}</b><extra></extra>"
                         ),
