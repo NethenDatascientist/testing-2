@@ -2628,7 +2628,7 @@ if st.session_state["pc_active_page"] == "analytics":
                                     <div style="font-size:1.55rem;font-weight:800;color:#FCA5A5;">{o_od}</div>
                                 </div>
                                 <div style="background:rgba(16,185,129,0.16);border:1px solid rgba(16,185,129,0.4);border-radius:8px;padding:12px;">
-                                    <div style="font-size:0.75rem;color:#6EE7B7;text-transform:uppercase;font-weight:700;letter-spacing:0.5px;">In 'ETS'</div>
+                                    <div style="font-size:0.75rem;color:#6EE7B7;text-transform:uppercase;font-weight:700;letter-spacing:0.5px;">ETS</div>
                                     <div style="font-size:1.55rem;font-weight:800;color:#6EE7B7;">{o_ets}</div>
                                 </div>
                                 <div style="background:rgba(59,130,246,0.16);border:1px solid rgba(59,130,246,0.4);border-radius:8px;padding:12px;">
