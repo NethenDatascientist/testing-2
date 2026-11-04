@@ -42,8 +42,8 @@ def clean_html(raw_html: str) -> str:
 
 
 # -----------------------------------------------------------------------------
-# INSTANT CSS KILL-SWITCH FOR INACTIVE PAGE & STALE GHOST ELEMENTS
-# (Executes at line 1 of every rerun so old pie charts/tables vanish in 0ms)
+# INSTANT CSS KILL-SWITCH FOR INACTIVE PAGE CONTAINER
+# (Hides the inactive page immediately on switch, without touching dropdowns)
 # -----------------------------------------------------------------------------
 _active_page = st.session_state["pc_active_page"]
 _inactive_key = (
@@ -54,7 +54,6 @@ st.markdown(
     clean_html(
         f"""
         <style>
-            /* Hide ONLY the inactive page container — never collapse active dropdown updates */
             .st-key-{_inactive_key},
             div.element-container:has(.st-key-{_inactive_key}) {{
                 display: none !important;
@@ -64,6 +63,7 @@ st.markdown(
     ),
     unsafe_allow_html=True,
 )
+
 # -----------------------------------------------------------------------------
 # GLOBAL DASHBOARD STYLES
 # -----------------------------------------------------------------------------
@@ -82,32 +82,6 @@ st.markdown(
             }
             [data-testid="stPlotlyChart"] {
                 width: 100% !important;
-            }
-
-            /* Ultra-Smooth Page Mount Animation */
-            .st-key-pc_page_dashboard,
-            .st-key-pc_page_analytics {
-                animation: pcSmoothPageMount 0.16s cubic-bezier(0.22, 1, 0.36, 1) forwards;
-                will-change: opacity, transform;
-            }
-            @keyframes pcSmoothPageMount {
-                0% {
-                    opacity: 0;
-                    transform: translateY(5px);
-                }
-                100% {
-                    opacity: 1;
-                    transform: translateY(0);
-                }
-            }
-
-            /* Instant client-side hide class triggered the millisecond the nav button is clicked */
-            body.mi-page-switching .st-key-pc_page_dashboard,
-            body.mi-page-switching .st-key-pc_page_analytics {
-                opacity: 0 !important;
-                transform: translateY(4px) !important;
-                transition: opacity 0.08s ease, transform 0.08s ease !important;
-                pointer-events: none !important;
             }
 
             /* 3D Depth & Hover Growth on Plotly Donut Slices */
@@ -721,7 +695,7 @@ st.markdown(
 
 
 # -----------------------------------------------------------------------------
-# ULTRA-SLIM (14px) RIGHT-EDGE SCROLLER + 0ms PAGE-SWITCH CURTAIN
+# ULTRA-SLIM (14px) RIGHT-EDGE SCROLLER
 # -----------------------------------------------------------------------------
 def inject_scroll_hud_graphics(enabled: bool = True):
     components.html(
@@ -731,21 +705,6 @@ def inject_scroll_hud_graphics(enabled: bool = True):
             const parentDoc = window.parent.document;
             const parentWin = window.parent;
             const isEnabled = {str(enabled).lower()};
-
-            // 1. Clear page-switching curtain class as soon as new page finishes mounting
-            parentDoc.body.classList.remove("mi-page-switching");
-
-            // 2. Attach 0ms instant fade-out on Nav Button click so old charts never linger
-            if (!parentWin.__miNavClickHooked) {{
-                parentDoc.addEventListener("pointerdown", function(e) {{
-                    const btn = e.target.closest(".st-key-nav_to_analytics button, .st-key-nav_to_dashboard button");
-                    if (btn) {{
-                        parentDoc.body.classList.add("mi-page-switching");
-                        setTimeout(() => parentDoc.body.classList.remove("mi-page-switching"), 1200);
-                    }}
-                }}, true);
-                parentWin.__miNavClickHooked = true;
-            }}
 
             if (parentWin.__miScrollHudRAF) {{
                 parentWin.cancelAnimationFrame(parentWin.__miScrollHudRAF);
@@ -2039,7 +1998,7 @@ with hdr_col_center:
             clean_html(
                 """
                 <div class="premium-compact-header">
-                    <h1 class="premium-compact-title">Minor Irrigation — CE Analytics amp </h1>
+                    <h1 class="premium-compact-title">Minor Irrigation — CE Analytics &amp; ETS Truth Audit</h1>
                 </div>
                 """
             ),
@@ -2114,7 +2073,6 @@ elif (
 
 master_df, overdue_full_df, diag_df, today_str = shared_state["data"]
 
-# Ensure precomputed age columns exist even if loaded from an older disk snapshot
 today_ist_obj = datetime.now(ZoneInfo("Asia/Kolkata")).date()
 if not master_df.empty and (
     "age_bucket" not in master_df.columns
@@ -2148,7 +2106,7 @@ if master_df.empty:
 def build_officer_analytics_df(
     df_scope: pd.DataFrame, col_key: str, label_name: str
 ) -> pd.DataFrame:
-    """Aggregates named officer performance including Overdue ('P'), ETS, and Unexcused Ratio."""
+    """Aggregates named officer performance including Overdue ('P'), Claimed 'ETS', and Unexcused Ratio."""
     sub = df_scope[
         (df_scope[col_key] != "")
         & (df_scope[col_key] != UNASSIGNED_LABEL)
@@ -2428,7 +2386,7 @@ if st.session_state["pc_active_page"] == "analytics":
                         <div class="pbi-kpi-sub">Past Target Date &amp; Not in ETS</div>
                     </div>
                     <div class="pbi-kpi-card" style="border-top: 3px solid #10B981;">
-                        <div class="pbi-kpi-label">🟢 ETS Works</div>
+                        <div class="pbi-kpi-label">🟢 Claimed 'ETS' Works</div>
                         <div class="pbi-kpi-value" style="color:#6EE7B7;">{tot_ets_an:,} ({ets_pct_an}%)</div>
                         <div class="pbi-kpi-sub">Extension of Time Status</div>
                     </div>
@@ -2610,11 +2568,11 @@ if st.session_state["pc_active_page"] == "analytics":
                                     <div style="font-size:1.55rem;font-weight:800;color:#FCA5A5;">{o_od}</div>
                                 </div>
                                 <div style="background:rgba(16,185,129,0.16);border:1px solid rgba(16,185,129,0.4);border-radius:8px;padding:12px;">
-                                    <div style="font-size:0.75rem;color:#6EE7B7;text-transform:uppercase;font-weight:700;letter-spacing:0.5px;">ETS</div>
+                                    <div style="font-size:0.75rem;color:#6EE7B7;text-transform:uppercase;font-weight:700;letter-spacing:0.5px;">In 'ETS'</div>
                                     <div style="font-size:1.55rem;font-weight:800;color:#6EE7B7;">{o_ets}</div>
                                 </div>
                                 <div style="background:rgba(59,130,246,0.16);border:1px solid rgba(59,130,246,0.4);border-radius:8px;padding:12px;">
-                                    <div style="font-size:0.75rem;color:#93C5FD;text-transform:uppercase;font-weight:700;letter-spacing:0.5px;">In Progress</div>
+                                    <div style="font-size:0.75rem;color:#93C5FD;text-transform:uppercase;font-weight:700;letter-spacing:0.5px;">On-Track ('P')</div>
                                     <div style="font-size:1.55rem;font-weight:800;color:#93C5FD;">{o_ontrack}</div>
                                 </div>
                                 <div style="background:rgba(148,163,184,0.16);border:1px solid rgba(148,163,184,0.3);border-radius:8px;padding:12px;">
@@ -2637,8 +2595,8 @@ if st.session_state["pc_active_page"] == "analytics":
                             go.Pie(
                                 labels=[
                                     "Overdue ('P')",
-                                    "ETS",
-                                    "In Progress",
+                                    "Claimed 'ETS'",
+                                    "On-Track ('P')",
                                     "Completed / Rest",
                                 ],
                                 values=[o_od, o_ets, o_ontrack, o_rest],
@@ -2942,7 +2900,7 @@ if st.session_state["pc_active_page"] == "analytics":
                         go.Pie(
                             labels=[
                                 "Overdue ('P')",
-                                "ETS",
+                                "Claimed 'ETS'",
                                 "On-Track Ongoing ('P')",
                                 "Completed / Other Statuses",
                             ],
@@ -3143,7 +3101,7 @@ if st.session_state["pc_active_page"] == "analytics":
                         hovertemplate=(
                             "<b>Scheme (H.O.A.): %{x}</b><br>"
                             "🔴 Actual Overdue ('P'): <b>%{customdata[1]}</b> (%{customdata[3]:.1f}%)<br>"
-                            "🟢 ETS: <b>%{customdata[2]}</b><br>"
+                            "🟢 Claimed 'ETS': <b>%{customdata[2]}</b><br>"
                             "📋 Total Scheme Works: <b>%{customdata[0]}</b><extra></extra>"
                         ),
                     )
@@ -3153,7 +3111,7 @@ if st.session_state["pc_active_page"] == "analytics":
                     go.Scatter(
                         x=hoa_active["sheet_name"],
                         y=hoa_active["ets_works"],
-                        name="🟢 ETS Works",
+                        name="🟢 Claimed 'ETS' Works",
                         mode="markers+text",
                         text=[
                             str(int(v)) if int(v) > 0 else ""
@@ -3172,7 +3130,7 @@ if st.session_state["pc_active_page"] == "analytics":
                         ].values,
                         hovertemplate=(
                             "<b>Scheme (H.O.A.): %{x}</b><br>"
-                            "🟢 ETS: <b>%{customdata[2]}</b><br>"
+                            "🟢 Claimed 'ETS': <b>%{customdata[2]}</b><br>"
                             "🔴 Actual Overdue ('P'): <b>%{customdata[1]}</b><br>"
                             "📋 Total Scheme Works: <b>%{customdata[0]}</b><extra></extra>"
                         ),
@@ -3222,880 +3180,865 @@ if st.session_state["pc_active_page"] == "analytics":
 
 
 # =============================================================================
-# PAGE 1 VIEW: MAIN OVERDUE WORKS DASHBOARD (100% INSIDE KEYED CONTAINER)
+# PAGE 1 VIEW: MAIN OVERDUE WORKS DASHBOARD
 # =============================================================================
-    with st.container(key="pc_page_dashboard"):
-    f_col1, f_col2, f_col3, f_col4, f_col5 = st.columns(5, gap="small")
+f_col1, f_col2, f_col3, f_col4, f_col5 = st.columns(5, gap="small")
 
-    unique_divisions = sorted(
-        [d for d in master_df["division_name"].dropna().unique().tolist() if d != ""]
-    )
-    division_options = [ALL_OPTION] + unique_divisions
+unique_divisions = sorted(
+    [d for d in master_df["division_name"].dropna().unique().tolist() if d != ""]
+)
+division_options = [ALL_OPTION] + unique_divisions
 
-    with f_col1:
-        with st.container(border=True):
-            selected_division = st.selectbox(
-                f"🏛️ Select {LABEL_DIV_EN}:",
-                options=division_options,
-                index=0,
-            )
-
-    df_step1 = (
-        master_df[master_df["division_name"] == selected_division].copy()
-        if selected_division != ALL_OPTION
-        else master_df.copy()
-    )
-
-    subdivision_options = build_dropdown_options(df_step1, "subdivision_name")
-    with f_col2:
-        with st.container(border=True):
-            selected_subdivision = st.selectbox(
-                f"🏢 Select {LABEL_SUBDIV_EN}:",
-                options=subdivision_options,
-                index=0,
-            )
-
-    df_step2 = (
-        df_step1[df_step1["subdivision_name"] == selected_subdivision].copy()
-        if selected_subdivision != ALL_OPTION
-        else df_step1.copy()
-    )
-
-    ee_options = build_dropdown_options(df_step2, "ee_name")
-    with f_col3:
-        with st.container(border=True):
-            selected_ee = st.selectbox(
-                f"👔 Select {LABEL_EE_EN}:",
-                options=ee_options,
-                index=0,
-            )
-
-    df_step3 = (
-        df_step2[df_step2["ee_name"] == selected_ee].copy()
-        if selected_ee != ALL_OPTION
-        else df_step2.copy()
-    )
-
-    ta_options = build_dropdown_options(df_step3, "ta_name")
-    with f_col4:
-        with st.container(border=True):
-            selected_ta = st.selectbox(
-                f"🛠️ Select {LABEL_TA_EN}:",
-                options=ta_options,
-                index=0,
-            )
-
-    df_step4 = (
-        df_step3[df_step3["ta_name"] == selected_ta].copy()
-        if selected_ta != ALL_OPTION
-        else df_step3.copy()
-    )
-
-    as_options = build_dropdown_options(df_step4, "as_name")
-    with f_col5:
-        with st.container(border=True):
-            selected_as = st.selectbox(
-                f"📑 Select {LABEL_AS_EN}:",
-                options=as_options,
-                index=0,
-            )
-
-    filtered_master_df = (
-        df_step4[df_step4["as_name"] == selected_as].copy()
-        if selected_as != ALL_OPTION
-        else df_step4.copy()
-    )
-
-    # -------------------------------------------------------------------------
-    # TOP CONTROLS ROW 2: OFFICER VIEW & SORT ORDER (COMPACT & EMOJI-FREE)
-    # -------------------------------------------------------------------------
-    r_col1, r_col2 = st.columns(2, gap="small")
-
-    with r_col1:
-        view_choice = st.radio(
-            "Officer View",
-            options=[LABEL_AE_EN, LABEL_AEE_EN],
-            horizontal=True,
-            label_visibility="collapsed",
+with f_col1:
+    with st.container(border=True):
+        selected_division = st.selectbox(
+            f"🏛️ Select {LABEL_DIV_EN}:",
+            options=division_options,
+            index=0,
         )
 
-    with r_col2:
-        sort_choice = st.radio(
-            "Sort Order",
-            options=[
-                "Highest Overdue Count at Top",
-                "Highest Overdue Percentage (%) at Top",
-            ],
-            horizontal=True,
-            label_visibility="collapsed",
+df_step1 = (
+    master_df[master_df["division_name"] == selected_division].copy()
+    if selected_division != ALL_OPTION
+    else master_df.copy()
+)
+
+subdivision_options = build_dropdown_options(df_step1, "subdivision_name")
+with f_col2:
+    with st.container(border=True):
+        selected_subdivision = st.selectbox(
+            f"🏢 Select {LABEL_SUBDIV_EN}:",
+            options=subdivision_options,
+            index=0,
         )
 
-    st.markdown("<div style='margin-top: 0.15rem;'></div>", unsafe_allow_html=True)
+df_step2 = (
+    df_step1[df_step1["subdivision_name"] == selected_subdivision].copy()
+    if selected_subdivision != ALL_OPTION
+    else df_step1.copy()
+)
 
-    group_col = "so_name" if view_choice == LABEL_AE_EN else "aee_name"
-    full_filter_col = "_so_name" if view_choice == LABEL_AE_EN else "_aee_name"
-
-    valid_df = filtered_master_df[filtered_master_df[group_col] != ""].copy()
-
-    if not show_unassigned_bar:
-        valid_df = valid_df[valid_df[group_col] != UNASSIGNED_LABEL].copy()
-
-    if denominator_mode.startswith("Only Ongoing Works"):
-        valid_df = valid_df[valid_df["is_status_p"]].copy()
-
-    if valid_df.empty:
-        st.warning("No works found matching the selected filters.")
-        inject_scroll_hud_graphics(enabled=show_scroll_hud)
-        st.stop()
-
-    summary_df = (
-        valid_df.groupby(group_col, as_index=False)
-        .agg(
-            total_works=("is_overdue", "count"),
-            ongoing_p_works=("is_status_p", "sum"),
-            ets_works=("is_status_ets", "sum"),
-            overdue_works=("is_overdue", "sum"),
+ee_options = build_dropdown_options(df_step2, "ee_name")
+with f_col3:
+    with st.container(border=True):
+        selected_ee = st.selectbox(
+            f"👔 Select {LABEL_EE_EN}:",
+            options=ee_options,
+            index=0,
         )
-        .rename(columns={group_col: view_choice})
+
+df_step3 = (
+    df_step2[df_step2["ee_name"] == selected_ee].copy()
+    if selected_ee != ALL_OPTION
+    else df_step2.copy()
+)
+
+ta_options = build_dropdown_options(df_step3, "ta_name")
+with f_col4:
+    with st.container(border=True):
+        selected_ta = st.selectbox(
+            f"🛠️ Select {LABEL_TA_EN}:",
+            options=ta_options,
+            index=0,
+        )
+
+df_step4 = (
+    df_step3[df_step3["ta_name"] == selected_ta].copy()
+    if selected_ta != ALL_OPTION
+    else df_step3.copy()
+)
+
+as_options = build_dropdown_options(df_step4, "as_name")
+with f_col5:
+    with st.container(border=True):
+        selected_as = st.selectbox(
+            f"📑 Select {LABEL_AS_EN}:",
+            options=as_options,
+            index=0,
+        )
+
+filtered_master_df = (
+    df_step4[df_step4["as_name"] == selected_as].copy()
+    if selected_as != ALL_OPTION
+    else df_step4.copy()
+)
+
+# -----------------------------------------------------------------------------
+# TOP CONTROLS ROW 2: OFFICER VIEW & SORT ORDER (COMPACT & EMOJI-FREE)
+# -----------------------------------------------------------------------------
+r_col1, r_col2 = st.columns(2, gap="small")
+
+with r_col1:
+    view_choice = st.radio(
+        "Officer View",
+        options=[LABEL_AE_EN, LABEL_AEE_EN],
+        horizontal=True,
+        label_visibility="collapsed",
     )
 
-    summary_df["rest_works"] = (
-        summary_df["total_works"]
-        - summary_df["overdue_works"]
-        - summary_df["ets_works"]
-    ).clip(lower=0)
+with r_col2:
+    sort_choice = st.radio(
+        "Sort Order",
+        options=[
+            "Highest Overdue Count at Top",
+            "Highest Overdue Percentage (%) at Top",
+        ],
+        horizontal=True,
+        label_visibility="collapsed",
+    )
 
-    summary_df["overdue_pct"] = (
-        (summary_df["overdue_works"] / summary_df["total_works"]) * 100
-    ).round(1).fillna(0.0)
+st.markdown("<div style='margin-top: 0.15rem;'></div>", unsafe_allow_html=True)
 
-    summary_df["_is_unassigned"] = summary_df[view_choice] == UNASSIGNED_LABEL
+group_col = "so_name" if view_choice == LABEL_AE_EN else "aee_name"
+full_filter_col = "_so_name" if view_choice == LABEL_AE_EN else "_aee_name"
 
-    if sort_choice == "Highest Overdue Percentage (%) at Top":
-        summary_df = summary_df.sort_values(
-            by=["_is_unassigned", "overdue_pct", "overdue_works", "total_works"],
-            ascending=[True, False, False, False],
-        ).reset_index(drop=True)
+# -----------------------------------------------------------------------------
+# APPLY FILTERS TO BUILD SUMMARY DATAFRAME
+# -----------------------------------------------------------------------------
+valid_df = filtered_master_df[filtered_master_df[group_col] != ""].copy()
+
+if not show_unassigned_bar:
+    valid_df = valid_df[valid_df[group_col] != UNASSIGNED_LABEL].copy()
+
+if denominator_mode.startswith("Only Ongoing Works"):
+    valid_df = valid_df[valid_df["is_status_p"]].copy()
+
+if valid_df.empty:
+    st.warning("No works found matching the selected filters.")
+    inject_scroll_hud_graphics(enabled=show_scroll_hud)
+    st.stop()
+
+summary_df = (
+    valid_df.groupby(group_col, as_index=False)
+    .agg(
+        total_works=("is_overdue", "count"),
+        ongoing_p_works=("is_status_p", "sum"),
+        ets_works=("is_status_ets", "sum"),
+        overdue_works=("is_overdue", "sum"),
+    )
+    .rename(columns={group_col: view_choice})
+)
+
+summary_df["rest_works"] = (
+    summary_df["total_works"] - summary_df["overdue_works"] - summary_df["ets_works"]
+).clip(lower=0)
+
+summary_df["overdue_pct"] = (
+    (summary_df["overdue_works"] / summary_df["total_works"]) * 100
+).round(1).fillna(0.0)
+
+summary_df["_is_unassigned"] = summary_df[view_choice] == UNASSIGNED_LABEL
+
+if sort_choice == "Highest Overdue Percentage (%) at Top":
+    summary_df = summary_df.sort_values(
+        by=["_is_unassigned", "overdue_pct", "overdue_works", "total_works"],
+        ascending=[True, False, False, False],
+    ).reset_index(drop=True)
+else:
+    summary_df = summary_df.sort_values(
+        by=["_is_unassigned", "overdue_works", "overdue_pct", "total_works"],
+        ascending=[True, False, False, False],
+    ).reset_index(drop=True)
+
+# -----------------------------------------------------------------------------
+# KPI SUMMARY METRIC CARDS (6 COLUMNS)
+# -----------------------------------------------------------------------------
+total_assigned_all = int(summary_df["total_works"].sum())
+total_overdue_all = int(summary_df["overdue_works"].sum())
+total_ets_all = int(summary_df["ets_works"].sum())
+
+if hide_zero_overdue:
+    named_officers_count = int(
+        ((~summary_df["_is_unassigned"]) & (summary_df["overdue_works"] > 0)).sum()
+    )
+else:
+    named_officers_count = int((~summary_df["_is_unassigned"]).sum())
+
+unassigned_works_count = int(
+    summary_df.loc[summary_df["_is_unassigned"], "total_works"].sum()
+)
+
+overall_overdue_pct = (
+    round((total_overdue_all / total_assigned_all) * 100, 1)
+    if total_assigned_all > 0
+    else 0.0
+)
+
+active_scope_parts = [
+    f"{LABEL_DIV_EN}: {selected_division}",
+    f"{LABEL_SUBDIV_EN}: {selected_subdivision}",
+    f"EE: {selected_ee}",
+    f"TA: {selected_ta}",
+    f"AS: {selected_as}",
+]
+filter_scope_label = " | ".join(active_scope_parts)
+
+page1_od_df = valid_df[valid_df["is_overdue"]]
+if not page1_od_df.empty:
+    chronic_2yr_plus_p1 = int(
+        page1_od_df["age_bucket"]
+        .isin(["4. 2 – 5 Years", "5. > 5 Years (Chronic)"])
+        .sum()
+    )
+else:
+    chronic_2yr_plus_p1 = 0
+
+k1, k2, k3, k4, k5, k6 = st.columns(6, gap="medium")
+k1.metric("📅 Date (Today)", today_str)
+
+officer_help_text = (
+    f"Officers with >0 Overdue works (plus {unassigned_works_count:,} unassigned works)."
+    if hide_zero_overdue
+    else f"All named {view_choice}s (plus {unassigned_works_count:,} unassigned works)."
+)
+
+k2.metric(
+    f"👥 {view_choice}s",
+    f"{named_officers_count:,}",
+    help=officer_help_text,
+)
+k3.metric("📋 Total Works", f"{total_assigned_all:,}")
+k4.metric(
+    "🔴 Overdue Works ('P')",
+    f"{total_overdue_all:,} ({overall_overdue_pct}%)",
+)
+k5.metric(
+    "⏳ Chronic Overdue (>2 Yrs)",
+    f"{chronic_2yr_plus_p1:,}",
+    help="Severe delays: Target date elapsed by more than 24 months.",
+)
+k6.metric("🟢 'ETS' Works", f"{total_ets_all:,}")
+
+# =========================================================================
+# PAGE 1: COMPACT SINGLE-LINE OVERDUE AGEING TREE (PRECOMPUTED 0ms)
+# =========================================================================
+od_u6_p1 = od_6_12_p1 = od_1_2_p1 = od_2_3_p1 = od_3_4_p1 = od_4_plus_p1 = 0
+
+if not page1_od_df.empty:
+    p1_tree_counts = page1_od_df["tree_bucket"].value_counts()
+    od_u6_p1 = int(p1_tree_counts.get("Under 6 Months", 0))
+    od_6_12_p1 = int(p1_tree_counts.get("6 Months to 1 Year", 0))
+    od_1_2_p1 = int(p1_tree_counts.get("1 - 2 Years", 0))
+    od_2_3_p1 = int(p1_tree_counts.get("2 - 3 Years", 0))
+    od_3_4_p1 = int(p1_tree_counts.get("3 - 4 Years", 0))
+    od_4_plus_p1 = int(p1_tree_counts.get("4+ Years", 0))
+
+p1_buckets_data = [
+    ("UNDER 6 MONTHS", od_u6_p1, "first"),
+    ("6 MONTHS – 1 YR", od_6_12_p1, "mid"),
+    ("1 – 2 YEARS", od_1_2_p1, "mid"),
+    ("2 – 3 YEARS", od_2_3_p1, "parent_col"),
+    ("3 – 4 YEARS", od_3_4_p1, "mid"),
+    ("4+ YEARS", od_4_plus_p1, "last"),
+]
+
+denom_od_p1 = max(total_overdue_all, 1)
+p1_cards_html = []
+
+for b_label, b_val, b_pos in p1_buckets_data:
+    b_pct = round((b_val / denom_od_p1) * 100, 1) if total_overdue_all > 0 else 0.0
+
+    if b_pos == "first":
+        h_line_style = "left:50%; right:-0.5rem;"
+    elif b_pos == "last":
+        h_line_style = "left:-0.5rem; right:50%;"
     else:
-        summary_df = summary_df.sort_values(
-            by=["_is_unassigned", "overdue_works", "overdue_pct", "total_works"],
-            ascending=[True, False, False, False],
-        ).reset_index(drop=True)
+        h_line_style = "left:-0.5rem; right:-0.5rem;"
 
-    # -------------------------------------------------------------------------
-    # KPI SUMMARY METRIC CARDS (6 COLUMNS)
-    # -------------------------------------------------------------------------
-    total_assigned_all = int(summary_df["total_works"].sum())
-    total_overdue_all = int(summary_df["overdue_works"].sum())
-    total_ets_all = int(summary_df["ets_works"].sum())
-
-    if hide_zero_overdue:
-        named_officers_count = int(
-            ((~summary_df["_is_unassigned"]) & (summary_df["overdue_works"] > 0)).sum()
-        )
-    else:
-        named_officers_count = int((~summary_df["_is_unassigned"]).sum())
-
-    unassigned_works_count = int(
-        summary_df.loc[summary_df["_is_unassigned"], "total_works"].sum()
+    junction_dot = (
+        '<div style="position:absolute; top:-3.5px; left:50%; transform:translateX(-50%); '
+        'width:8px; height:8px; border-radius:50%; background:#EF4444; '
+        'border:2px solid #0F172A; box-shadow:0 0 8px rgba(239,68,68,0.8); z-index:4;"></div>'
+        if b_pos == "parent_col"
+        else ""
     )
 
-    overall_overdue_pct = (
-        round((total_overdue_all / total_assigned_all) * 100, 1)
-        if total_assigned_all > 0
-        else 0.0
+    p1_cards_html.append(
+        f"""
+        <div style="display:flex; flex-direction:column; align-items:center;">
+            <div style="position:relative; width:100%; height:13px;">
+                <div style="position:absolute; top:0; {h_line_style} height:1.5px; background:rgba(239, 68, 68, 0.55);"></div>
+                {junction_dot}
+                <div style="width:1.5px; height:13px; background:rgba(239, 68, 68, 0.55); margin:0 auto;"></div>
+            </div>
+            <div class="p1-age-card">
+                <div style="display:flex; align-items:center; gap:5px; min-width:0;">
+                    <span style="font-size:0.70rem; color:#CBD5E1; font-weight:700; text-transform:uppercase; letter-spacing:0.3px; white-space:nowrap;">{b_label} :</span>
+                    <span style="font-size:1.12rem; font-weight:800; color:#F8FAFC; line-height:1; white-space:nowrap;">{b_val:,}</span>
+                </div>
+                <span style="font-size:0.70rem; color:#FCA5A5; background:rgba(239, 68, 68, 0.16); border:1px solid rgba(239, 68, 68, 0.35); padding:2px 7px; border-radius:999px; font-weight:700; white-space:nowrap;">{b_pct:.1f}%</span>
+            </div>
+        </div>
+        """
     )
 
-    active_scope_parts = [
-        f"{LABEL_DIV_EN}: {selected_division}",
-        f"{LABEL_SUBDIV_EN}: {selected_subdivision}",
-        f"EE: {selected_ee}",
-        f"TA: {selected_ta}",
-        f"AS: {selected_as}",
-    ]
-    filter_scope_label = " | ".join(active_scope_parts)
+st.markdown(
+    clean_html(
+        f"""
+        <div style="width:100%; margin-top:-10px; margin-bottom:12px;">
+            <div style="display:grid; grid-template-columns:repeat(6, 1fr); column-gap:1rem; width:100%;">
+                <div></div>
+                <div></div>
+                <div></div>
+                <div style="display:flex; justify-content:center;">
+                    <div style="width:1.5px; height:11px; background:rgba(239, 68, 68, 0.55);"></div>
+                </div>
+                <div></div>
+                <div></div>
+            </div>
+            <div style="display:grid; grid-template-columns:repeat(6, 1fr); column-gap:1rem; width:100%;">
+                {''.join(p1_cards_html)}
+            </div>
+        </div>
+        """
+    ),
+    unsafe_allow_html=True,
+)
 
-    page1_od_df = valid_df[valid_df["is_overdue"]]
-    if not page1_od_df.empty:
-        chronic_2yr_plus_p1 = int(
-            page1_od_df["age_bucket"]
-            .isin(["4. 2 – 5 Years", "5. > 5 Years (Chronic)"])
-            .sum()
-        )
-    else:
-        chronic_2yr_plus_p1 = 0
+st.divider()
 
-    k1, k2, k3, k4, k5, k6 = st.columns(6, gap="medium")
-    k1.metric("📅 Date (Today)", today_str)
+# =============================================================================
+# SECTION 1: HORIZONTAL BAR CHART
+# =============================================================================
+st.markdown(
+    clean_html(
+        f"""
+        <div class="exec-section-banner">
+            <div class="exec-section-title">📈 Overdue &amp; ETS Works by {html.escape(view_choice)} ({html.escape(sort_choice)})</div>
+            <div class="exec-scope-badge">{html.escape(filter_scope_label)}</div>
+        </div>
+        """
+    ),
+    unsafe_allow_html=True,
+)
 
-    officer_help_text = (
-        f"Officers with >0 Overdue works (plus {unassigned_works_count:,} unassigned works)."
-        if hide_zero_overdue
-        else f"All named {view_choice}s (plus {unassigned_works_count:,} unassigned works)."
+if hide_zero_overdue:
+    chart_source_df = summary_df[
+        (summary_df["overdue_works"] > 0) | summary_df["_is_unassigned"]
+    ].copy()
+else:
+    chart_source_df = summary_df.copy()
+
+if chart_source_df.empty:
+    st.info(
+        "No officers match the current filter (try unchecking 'Show only officers with Overdue > 0' in the sidebar)."
+    )
+else:
+    plot_df = chart_source_df.iloc[::-1].copy()
+    plot_df["y_short"] = plot_df[view_choice].map(lambda s: shorten_label(s, 28))
+    plot_df["is_shrunk"] = shrink_outliers & (
+        plot_df["total_works"] > BAR_SHRINK_THRESHOLD
     )
 
-    k2.metric(
-        f"👥 {view_choice}s",
-        f"{named_officers_count:,}",
-        help=officer_help_text,
-    )
-    k3.metric("📋 Total Works", f"{total_assigned_all:,}")
-    k4.metric(
-        "🔴 Overdue Works ('P')",
-        f"{total_overdue_all:,} ({overall_overdue_pct}%)",
-    )
-    k5.metric(
-        "⏳ Chronic Overdue (>2 Yrs)",
-        f"{chronic_2yr_plus_p1:,}",
-        help="Severe delays: Target date elapsed by more than 24 months.",
-    )
-    k6.metric("🟢 'ETS' Works", f"{total_ets_all:,}")
-
-    # =========================================================================
-    # PAGE 1: COMPACT SINGLE-LINE OVERDUE AGEING TREE (PRECOMPUTED 0ms)
-    # =========================================================================
-    od_u6_p1 = od_6_12_p1 = od_1_2_p1 = od_2_3_p1 = od_3_4_p1 = od_4_plus_p1 = 0
-
-    if not page1_od_df.empty:
-        p1_tree_counts = page1_od_df["tree_bucket"].value_counts()
-        od_u6_p1 = int(p1_tree_counts.get("Under 6 Months", 0))
-        od_6_12_p1 = int(p1_tree_counts.get("6 Months to 1 Year", 0))
-        od_1_2_p1 = int(p1_tree_counts.get("1 - 2 Years", 0))
-        od_2_3_p1 = int(p1_tree_counts.get("2 - 3 Years", 0))
-        od_3_4_p1 = int(p1_tree_counts.get("3 - 4 Years", 0))
-        od_4_plus_p1 = int(p1_tree_counts.get("4+ Years", 0))
-
-    p1_buckets_data = [
-        ("UNDER 6 MONTHS", od_u6_p1, "first"),
-        ("6 MONTHS – 1 YR", od_6_12_p1, "mid"),
-        ("1 – 2 YEARS", od_1_2_p1, "mid"),
-        ("2 – 3 YEARS", od_2_3_p1, "parent_col"),
-        ("3 – 4 YEARS", od_3_4_p1, "mid"),
-        ("4+ YEARS", od_4_plus_p1, "last"),
-    ]
-
-    denom_od_p1 = max(total_overdue_all, 1)
-    p1_cards_html = []
-
-    for b_label, b_val, b_pos in p1_buckets_data:
-        b_pct = (
-            round((b_val / denom_od_p1) * 100, 1) if total_overdue_all > 0 else 0.0
-        )
-
-        if b_pos == "first":
-            h_line_style = "left:50%; right:-0.5rem;"
-        elif b_pos == "last":
-            h_line_style = "left:-0.5rem; right:50%;"
-        else:
-            h_line_style = "left:-0.5rem; right:-0.5rem;"
-
-        junction_dot = (
-            '<div style="position:absolute; top:-3.5px; left:50%; transform:translateX(-50%); '
-            'width:8px; height:8px; border-radius:50%; background:#EF4444; '
-            'border:2px solid #0F172A; box-shadow:0 0 8px rgba(239,68,68,0.8); z-index:4;"></div>'
-            if b_pos == "parent_col"
+    def _build_bar_label(r) -> str:
+        shrink_tag = (
+            f" <span style='color:#FBBF24'>[>{BAR_SHRINK_THRESHOLD} Shrunk]</span>"
+            if r["is_shrunk"]
+            and chart_style == "Overlay (Overdue + ETS + Rest of Works)"
             else ""
         )
-
-        p1_cards_html.append(
-            f"""
-            <div style="display:flex; flex-direction:column; align-items:center;">
-                <div style="position:relative; width:100%; height:13px;">
-                    <div style="position:absolute; top:0; {h_line_style} height:1.5px; background:rgba(239, 68, 68, 0.55);"></div>
-                    {junction_dot}
-                    <div style="width:1.5px; height:13px; background:rgba(239, 68, 68, 0.55); margin:0 auto;"></div>
-                </div>
-                <div class="p1-age-card">
-                    <div style="display:flex; align-items:center; gap:5px; min-width:0;">
-                        <span style="font-size:0.70rem; color:#CBD5E1; font-weight:700; text-transform:uppercase; letter-spacing:0.3px; white-space:nowrap;">{b_label} :</span>
-                        <span style="font-size:1.12rem; font-weight:800; color:#F8FAFC; line-height:1; white-space:nowrap;">{b_val:,}</span>
-                    </div>
-                    <span style="font-size:0.70rem; color:#FCA5A5; background:rgba(239, 68, 68, 0.16); border:1px solid rgba(239, 68, 68, 0.35); padding:2px 7px; border-radius:999px; font-weight:700; white-space:nowrap;">{b_pct:.1f}%</span>
-                </div>
-            </div>
-            """
-        )
-
-    st.markdown(
-        clean_html(
-            f"""
-            <div style="width:100%; margin-top:-10px; margin-bottom:12px;">
-                <div style="display:grid; grid-template-columns:repeat(6, 1fr); column-gap:1rem; width:100%;">
-                    <div></div>
-                    <div></div>
-                    <div></div>
-                    <div style="display:flex; justify-content:center;">
-                        <div style="width:1.5px; height:11px; background:rgba(239, 68, 68, 0.55);"></div>
-                    </div>
-                    <div></div>
-                    <div></div>
-                </div>
-                <div style="display:grid; grid-template-columns:repeat(6, 1fr); column-gap:1rem; width:100%;">
-                    {''.join(p1_cards_html)}
-                </div>
-            </div>
-            """
-        ),
-        unsafe_allow_html=True,
-    )
-
-    st.divider()
-
-    # =========================================================================
-    # SECTION 1: HORIZONTAL BAR CHART
-    # =========================================================================
-    st.markdown(
-        clean_html(
-            f"""
-            <div class="exec-section-banner">
-                <div class="exec-section-title">📈 Overdue &amp; ETS Works by {html.escape(view_choice)} ({html.escape(sort_choice)})</div>
-                <div class="exec-scope-badge">{html.escape(filter_scope_label)}</div>
-            </div>
-            """
-        ),
-        unsafe_allow_html=True,
-    )
-
-    if hide_zero_overdue:
-        chart_source_df = summary_df[
-            (summary_df["overdue_works"] > 0) | summary_df["_is_unassigned"]
-        ].copy()
-    else:
-        chart_source_df = summary_df.copy()
-
-    if chart_source_df.empty:
-        st.info(
-            "No officers match the current filter (try unchecking 'Show only officers with Overdue > 0' in the sidebar)."
-        )
-    else:
-        plot_df = chart_source_df.iloc[::-1].copy()
-        plot_df["y_short"] = plot_df[view_choice].map(lambda s: shorten_label(s, 28))
-        plot_df["is_shrunk"] = shrink_outliers & (
-            plot_df["total_works"] > BAR_SHRINK_THRESHOLD
-        )
-
-        def _build_bar_label(r) -> str:
-            shrink_tag = (
-                f" <span style='color:#FBBF24'>[>{BAR_SHRINK_THRESHOLD} Shrunk]</span>"
-                if r["is_shrunk"]
-                and chart_style == "Overlay (Overdue + ETS + Rest of Works)"
-                else ""
-            )
-            if sort_choice == "Highest Overdue Percentage (%) at Top":
-                return (
-                    f"  <b>{r['overdue_pct']:.1f}% Overdue</b> "
-                    f"({int(r['overdue_works'])} Overdue | "
-                    f"<span style='color:#4ADE80'>{int(r['ets_works'])} ETS</span> / "
-                    f"{int(r['total_works'])} Total){shrink_tag}"
-                )
+        if sort_choice == "Highest Overdue Percentage (%) at Top":
             return (
-                f"  <b>{int(r['overdue_works'])} Overdue</b> | "
+                f"  <b>{r['overdue_pct']:.1f}% Overdue</b> "
+                f"({int(r['overdue_works'])} Overdue | "
                 f"<span style='color:#4ADE80'>{int(r['ets_works'])} ETS</span> / "
-                f"{int(r['total_works'])} Total ({r['overdue_pct']:.1f}%){shrink_tag}"
+                f"{int(r['total_works'])} Total){shrink_tag}"
             )
+        return (
+            f"  <b>{int(r['overdue_works'])} Overdue</b> | "
+            f"<span style='color:#4ADE80'>{int(r['ets_works'])} ETS</span> / "
+            f"{int(r['total_works'])} Total ({r['overdue_pct']:.1f}%){shrink_tag}"
+        )
 
-        plot_df["bar_label"] = plot_df.apply(_build_bar_label, axis=1)
+    plot_df["bar_label"] = plot_df.apply(_build_bar_label, axis=1)
 
-        fig = go.Figure()
+    fig = go.Figure()
 
-        if chart_style == "Scale by Overdue Works (Full-Width Bars)":
-            fig.add_trace(
-                go.Bar(
-                    y=plot_df[view_choice],
-                    x=plot_df["overdue_works"],
-                    name="Overdue Works ('P')",
-                    orientation="h",
-                    marker=dict(
-                        color="#EF4444",
-                        line=dict(color="#DC2626", width=1),
-                    ),
-                    text=plot_df["bar_label"],
-                    textposition="outside",
-                    textfont=dict(size=13),
-                    cliponaxis=False,
-                    customdata=plot_df[
-                        [
-                            view_choice,
-                            "total_works",
-                            "ongoing_p_works",
-                            "ets_works",
-                            "rest_works",
-                            "overdue_pct",
-                        ]
-                    ],
-                    hovertemplate=(
-                        f"<b>{view_choice}:</b> %{{customdata[0]}}<br>"
-                        "<b>Overdue Works ('P'):</b> %{x}<br>"
-                        "<b>ETS Works ('ETS'):</b> %{customdata[3]}<br>"
-                        "<b>Rest of Works:</b> %{customdata[4]}<br>"
-                        "<b>Total Works Assigned:</b> %{customdata[1]}<br>"
-                        "<b>Overdue Percentage:</b> %{customdata[5]:.1f}%<extra></extra>"
-                    ),
-                )
-            )
-            max_x = max(int(plot_df["overdue_works"].max()), 1)
-            x_range_max = max_x * 1.25
-            x_axis_title = "Number of Overdue Works"
-
-        elif chart_style == "Scale by Overdue Percentage (%)":
-            fig.add_trace(
-                go.Bar(
-                    y=plot_df[view_choice],
-                    x=plot_df["overdue_pct"],
-                    name="Overdue %",
-                    orientation="h",
-                    marker=dict(
-                        color="#EF4444",
-                        line=dict(color="#DC2626", width=1),
-                    ),
-                    text=plot_df["bar_label"],
-                    textposition="outside",
-                    textfont=dict(size=13),
-                    cliponaxis=False,
-                    customdata=plot_df[
-                        [
-                            view_choice,
-                            "total_works",
-                            "ongoing_p_works",
-                            "overdue_works",
-                            "ets_works",
-                            "rest_works",
-                        ]
-                    ],
-                    hovertemplate=(
-                        f"<b>{view_choice}:</b> %{{customdata[0]}}<br>"
-                        "<b>Overdue Percentage:</b> %{x:.1f}%<br>"
-                        "<b>Overdue Works ('P'):</b> %{customdata[3]}<br>"
-                        "<b>ETS Works ('ETS'):</b> %{customdata[4]}<br>"
-                        "<b>Rest of Works:</b> %{customdata[5]}<br>"
-                        "<b>Total Works Assigned:</b> %{customdata[1]}<extra></extra>"
-                    ),
-                )
-            )
-            max_x = max(float(plot_df["overdue_pct"].max()), 1.0)
-            x_range_max = max_x * 1.25
-            x_axis_title = "Overdue Percentage (%)"
-
-        else:
-            plot_df["overdue_plus_ets"] = (
-                plot_df["overdue_works"] + plot_df["ets_works"]
-            )
-
-            if shrink_outliers:
-                plot_df["vis_total"] = plot_df["total_works"].map(compress_bar_length)
-                plot_df["vis_overdue_plus_ets"] = plot_df["overdue_plus_ets"].map(
-                    compress_bar_length
-                )
-                plot_df["vis_overdue"] = plot_df["overdue_works"].map(
-                    compress_bar_length
-                )
-            else:
-                plot_df["vis_total"] = plot_df["total_works"].astype(float)
-                plot_df["vis_overdue_plus_ets"] = plot_df["overdue_plus_ets"].astype(
-                    float
-                )
-                plot_df["vis_overdue"] = plot_df["overdue_works"].astype(float)
-
-            fig.add_trace(
-                go.Bar(
-                    y=plot_df[view_choice],
-                    x=plot_df["vis_total"],
-                    name="Rest of Works (Other Statuses)",
-                    orientation="h",
-                    marker=dict(
-                        color="rgba(148, 163, 184, 0.30)",
-                        line=dict(color="#64748B", width=1),
-                    ),
-                    text=plot_df["bar_label"],
-                    textposition="outside",
-                    textfont=dict(size=13),
-                    cliponaxis=False,
-                    customdata=plot_df[
-                        [
-                            view_choice,
-                            "total_works",
-                            "overdue_works",
-                            "ets_works",
-                            "rest_works",
-                            "overdue_pct",
-                        ]
-                    ],
-                    hovertemplate=(
-                        f"<b>{view_choice}:</b> %{{customdata[0]}}<br>"
-                        "<b>Total Works Assigned (Actual):</b> %{customdata[1]}<br>"
-                        "<b>Overdue Works ('P'):</b> %{customdata[2]}<br>"
-                        "<b>ETS Works ('ETS'):</b> %{customdata[3]}<br>"
-                        "<b>Rest of Works:</b> %{customdata[4]}<br>"
-                        "<b>Overdue Percentage:</b> %{customdata[5]:.1f}%<extra></extra>"
-                    ),
-                )
-            )
-
-            fig.add_trace(
-                go.Bar(
-                    y=plot_df[view_choice],
-                    x=plot_df["vis_overdue_plus_ets"],
-                    name="ETS Works ('ETS')",
-                    orientation="h",
-                    marker=dict(color="#4ADE80"),
-                    customdata=plot_df[
-                        [
-                            view_choice,
-                            "total_works",
-                            "overdue_works",
-                            "ets_works",
-                            "rest_works",
-                            "overdue_pct",
-                        ]
-                    ],
-                    hovertemplate=(
-                        f"<b>{view_choice}:</b> %{{customdata[0]}}<br>"
-                        "<b>ETS Works ('ETS'):</b> %{customdata[3]}<br>"
-                        "<b>Overdue Works ('P'):</b> %{customdata[2]}<br>"
-                        "<b>Rest of Works:</b> %{customdata[4]}<br>"
-                        "<b>Total Works Assigned (Actual):</b> %{customdata[1]}<br>"
-                        "<b>Overdue Percentage:</b> %{customdata[5]:.1f}%<extra></extra>"
-                    ),
-                )
-            )
-
-            fig.add_trace(
-                go.Bar(
-                    y=plot_df[view_choice],
-                    x=plot_df["vis_overdue"],
-                    name="Overdue Works ('P')",
-                    orientation="h",
-                    marker=dict(color="#EF4444"),
-                    customdata=plot_df[
-                        [
-                            view_choice,
-                            "total_works",
-                            "ongoing_p_works",
-                            "overdue_pct",
-                            "ets_works",
-                            "rest_works",
-                            "overdue_works",
-                        ]
-                    ],
-                    hovertemplate=(
-                        f"<b>{view_choice}:</b> %{{customdata[0]}}<br>"
-                        "<b>Overdue Works ('P'):</b> %{customdata[6]}<br>"
-                        "<b>ETS Works ('ETS'):</b> %{customdata[4]}<br>"
-                        "<b>Rest of Works:</b> %{customdata[5]}<br>"
-                        "<b>Total Works Assigned (Actual):</b> %{customdata[1]}<br>"
-                        "<b>Overdue Percentage:</b> %{customdata[3]:.1f}%<extra></extra>"
-                    ),
-                )
-            )
-
-            max_x = max(float(plot_df["vis_total"].max()), 1.0)
-            x_range_max = max_x * 1.24
-            x_axis_title = "Number of Works"
-
-        chart_height = max(480, len(plot_df) * 36 + 90)
-
-        fig.update_layout(
-            barmode="overlay",
-            height=chart_height,
-            bargap=0.22,
-            paper_bgcolor="rgba(0,0,0,0)",
-            plot_bgcolor="rgba(15, 23, 42, 0.35)",
-            xaxis=dict(
-                title=x_axis_title,
-                range=[0, x_range_max],
-                gridcolor="rgba(148, 163, 184, 0.14)",
-                zeroline=True,
-                zerolinecolor="rgba(148, 163, 184, 0.3)",
-            ),
-            yaxis=dict(
-                title="",
-                automargin=False,
-                tickmode="array",
-                tickvals=plot_df[view_choice],
-                ticktext=plot_df["y_short"],
-                tickfont=dict(size=13),
-            ),
-            legend=dict(
+    if chart_style == "Scale by Overdue Works (Full-Width Bars)":
+        fig.add_trace(
+            go.Bar(
+                y=plot_df[view_choice],
+                x=plot_df["overdue_works"],
+                name="Overdue Works ('P')",
                 orientation="h",
-                yanchor="bottom",
-                y=1.01,
-                xanchor="left",
-                x=0,
-                traceorder="reversed",
-            ),
-            margin=dict(l=210, r=14, t=35, b=40),
+                marker=dict(
+                    color="#EF4444",
+                    line=dict(color="#DC2626", width=1),
+                ),
+                text=plot_df["bar_label"],
+                textposition="outside",
+                textfont=dict(size=13),
+                cliponaxis=False,
+                customdata=plot_df[
+                    [
+                        view_choice,
+                        "total_works",
+                        "ongoing_p_works",
+                        "ets_works",
+                        "rest_works",
+                        "overdue_pct",
+                    ]
+                ],
+                hovertemplate=(
+                    f"<b>{view_choice}:</b> %{{customdata[0]}}<br>"
+                    "<b>Overdue Works ('P'):</b> %{x}<br>"
+                    "<b>ETS Works ('ETS'):</b> %{customdata[3]}<br>"
+                    "<b>Rest of Works:</b> %{customdata[4]}<br>"
+                    "<b>Total Works Assigned:</b> %{customdata[1]}<br>"
+                    "<b>Overdue Percentage:</b> %{customdata[5]:.1f}%<extra></extra>"
+                ),
+            )
         )
+        max_x = max(int(plot_df["overdue_works"].max()), 1)
+        x_range_max = max_x * 1.25
+        x_axis_title = "Number of Overdue Works"
 
-        st.plotly_chart(fig, use_container_width=True)
-
-    st.divider()
-
-    # =========================================================================
-    # SECTION 2: COMBINED OVERDUE WORKS TABLE (ENGLISH HEADERS)
-    # =========================================================================
-    st.markdown(
-        clean_html(
-            f"""
-            <div class="exec-section-banner">
-                <div class="exec-section-title">📂 Combined Overdue Works by {html.escape(view_choice)}</div>
-                <div class="exec-scope-badge">{html.escape(filter_scope_label)}</div>
-            </div>
-            """
-        ),
-        unsafe_allow_html=True,
-    )
-
-    officer_options = (
-        chart_source_df[view_choice].tolist()
-        if not chart_source_df.empty
-        else summary_df[view_choice].tolist()
-    )
-
-    officer_stats_map = {
-        row[view_choice]: (
-            int(row["overdue_works"]),
-            int(row["ets_works"]),
-            int(row["total_works"]),
-            float(row["overdue_pct"]),
+    elif chart_style == "Scale by Overdue Percentage (%)":
+        fig.add_trace(
+            go.Bar(
+                y=plot_df[view_choice],
+                x=plot_df["overdue_pct"],
+                name="Overdue %",
+                orientation="h",
+                marker=dict(
+                    color="#EF4444",
+                    line=dict(color="#DC2626", width=1),
+                ),
+                text=plot_df["bar_label"],
+                textposition="outside",
+                textfont=dict(size=13),
+                cliponaxis=False,
+                customdata=plot_df[
+                    [
+                        view_choice,
+                        "total_works",
+                        "ongoing_p_works",
+                        "overdue_works",
+                        "ets_works",
+                        "rest_works",
+                    ]
+                ],
+                hovertemplate=(
+                    f"<b>{view_choice}:</b> %{{customdata[0]}}<br>"
+                    "<b>Overdue Percentage:</b> %{x:.1f}%<br>"
+                    "<b>Overdue Works ('P'):</b> %{customdata[3]}<br>"
+                    "<b>ETS Works ('ETS'):</b> %{customdata[4]}<br>"
+                    "<b>Rest of Works:</b> %{customdata[5]}<br>"
+                    "<b>Total Works Assigned:</b> %{customdata[1]}<extra></extra>"
+                ),
+            )
         )
-        for _, row in summary_df.iterrows()
-    }
+        max_x = max(float(plot_df["overdue_pct"].max()), 1.0)
+        x_range_max = max_x * 1.25
+        x_axis_title = "Overdue Percentage (%)"
 
-    selected_officer = st.selectbox(
-        f"Select {view_choice} to view and download their Overdue Works:",
-        options=officer_options,
-        index=0 if officer_options else None,
-        format_func=lambda name: (
-            f"{name}  —  ({officer_stats_map[name][0]} Overdue | "
-            f"{officer_stats_map[name][1]} ETS / "
-            f"{officer_stats_map[name][2]} Total | {officer_stats_map[name][3]:.1f}%)"
-        ),
-    )
+    else:
+        plot_df["overdue_plus_ets"] = plot_df["overdue_works"] + plot_df["ets_works"]
 
-    if selected_officer:
-        if overdue_full_df.empty:
-            st.info("No overdue works found across the 23 worksheets.")
+        if shrink_outliers:
+            plot_df["vis_total"] = plot_df["total_works"].map(compress_bar_length)
+            plot_df["vis_overdue_plus_ets"] = plot_df["overdue_plus_ets"].map(
+                compress_bar_length
+            )
+            plot_df["vis_overdue"] = plot_df["overdue_works"].map(compress_bar_length)
         else:
-            officer_overdue_df = overdue_full_df[
-                overdue_full_df[full_filter_col] == selected_officer
+            plot_df["vis_total"] = plot_df["total_works"].astype(float)
+            plot_df["vis_overdue_plus_ets"] = plot_df["overdue_plus_ets"].astype(float)
+            plot_df["vis_overdue"] = plot_df["overdue_works"].astype(float)
+
+        fig.add_trace(
+            go.Bar(
+                y=plot_df[view_choice],
+                x=plot_df["vis_total"],
+                name="Rest of Works (Other Statuses)",
+                orientation="h",
+                marker=dict(
+                    color="rgba(148, 163, 184, 0.30)",
+                    line=dict(color="#64748B", width=1),
+                ),
+                text=plot_df["bar_label"],
+                textposition="outside",
+                textfont=dict(size=13),
+                cliponaxis=False,
+                customdata=plot_df[
+                    [
+                        view_choice,
+                        "total_works",
+                        "overdue_works",
+                        "ets_works",
+                        "rest_works",
+                        "overdue_pct",
+                    ]
+                ],
+                hovertemplate=(
+                    f"<b>{view_choice}:</b> %{{customdata[0]}}<br>"
+                    "<b>Total Works Assigned (Actual):</b> %{customdata[1]}<br>"
+                    "<b>Overdue Works ('P'):</b> %{customdata[2]}<br>"
+                    "<b>ETS Works ('ETS'):</b> %{customdata[3]}<br>"
+                    "<b>Rest of Works:</b> %{customdata[4]}<br>"
+                    "<b>Overdue Percentage:</b> %{customdata[5]:.1f}%<extra></extra>"
+                ),
+            )
+        )
+
+        fig.add_trace(
+            go.Bar(
+                y=plot_df[view_choice],
+                x=plot_df["vis_overdue_plus_ets"],
+                name="ETS Works ('ETS')",
+                orientation="h",
+                marker=dict(color="#4ADE80"),
+                customdata=plot_df[
+                    [
+                        view_choice,
+                        "total_works",
+                        "overdue_works",
+                        "ets_works",
+                        "rest_works",
+                        "overdue_pct",
+                    ]
+                ],
+                hovertemplate=(
+                    f"<b>{view_choice}:</b> %{{customdata[0]}}<br>"
+                    "<b>ETS Works ('ETS'):</b> %{customdata[3]}<br>"
+                    "<b>Overdue Works ('P'):</b> %{customdata[2]}<br>"
+                    "<b>Rest of Works:</b> %{customdata[4]}<br>"
+                    "<b>Total Works Assigned (Actual):</b> %{customdata[1]}<br>"
+                    "<b>Overdue Percentage:</b> %{customdata[5]:.1f}%<extra></extra>"
+                ),
+            )
+        )
+
+        fig.add_trace(
+            go.Bar(
+                y=plot_df[view_choice],
+                x=plot_df["vis_overdue"],
+                name="Overdue Works ('P')",
+                orientation="h",
+                marker=dict(color="#EF4444"),
+                customdata=plot_df[
+                    [
+                        view_choice,
+                        "total_works",
+                        "ongoing_p_works",
+                        "overdue_pct",
+                        "ets_works",
+                        "rest_works",
+                        "overdue_works",
+                    ]
+                ],
+                hovertemplate=(
+                    f"<b>{view_choice}:</b> %{{customdata[0]}}<br>"
+                    "<b>Overdue Works ('P'):</b> %{customdata[6]}<br>"
+                    "<b>ETS Works ('ETS'):</b> %{customdata[4]}<br>"
+                    "<b>Rest of Works:</b> %{customdata[5]}<br>"
+                    "<b>Total Works Assigned (Actual):</b> %{customdata[1]}<br>"
+                    "<b>Overdue Percentage:</b> %{customdata[3]:.1f}%<extra></extra>"
+                ),
+            )
+        )
+
+        max_x = max(float(plot_df["vis_total"].max()), 1.0)
+        x_range_max = max_x * 1.24
+        x_axis_title = "Number of Works"
+
+    chart_height = max(480, len(plot_df) * 36 + 90)
+
+    fig.update_layout(
+        barmode="overlay",
+        height=chart_height,
+        bargap=0.22,
+        paper_bgcolor="rgba(0,0,0,0)",
+        plot_bgcolor="rgba(15, 23, 42, 0.35)",
+        xaxis=dict(
+            title=x_axis_title,
+            range=[0, x_range_max],
+            gridcolor="rgba(148, 163, 184, 0.14)",
+            zeroline=True,
+            zerolinecolor="rgba(148, 163, 184, 0.3)",
+        ),
+        yaxis=dict(
+            title="",
+            automargin=False,
+            tickmode="array",
+            tickvals=plot_df[view_choice],
+            ticktext=plot_df["y_short"],
+            tickfont=dict(size=13),
+        ),
+        legend=dict(
+            orientation="h",
+            yanchor="bottom",
+            y=1.01,
+            xanchor="left",
+            x=0,
+            traceorder="reversed",
+        ),
+        margin=dict(l=210, r=14, t=35, b=40),
+    )
+
+    st.plotly_chart(fig, use_container_width=True)
+
+st.divider()
+
+# =============================================================================
+# SECTION 2: COMBINED OVERDUE WORKS TABLE (ENGLISH HEADERS)
+# =============================================================================
+st.markdown(
+    clean_html(
+        f"""
+        <div class="exec-section-banner">
+            <div class="exec-section-title">📂 Combined Overdue Works by {html.escape(view_choice)}</div>
+            <div class="exec-scope-badge">{html.escape(filter_scope_label)}</div>
+        </div>
+        """
+    ),
+    unsafe_allow_html=True,
+)
+
+officer_options = (
+    chart_source_df[view_choice].tolist()
+    if not chart_source_df.empty
+    else summary_df[view_choice].tolist()
+)
+
+officer_stats_map = {
+    row[view_choice]: (
+        int(row["overdue_works"]),
+        int(row["ets_works"]),
+        int(row["total_works"]),
+        float(row["overdue_pct"]),
+    )
+    for _, row in summary_df.iterrows()
+}
+
+selected_officer = st.selectbox(
+    f"Select {view_choice} to view and download their Overdue Works:",
+    options=officer_options,
+    index=0 if officer_options else None,
+    format_func=lambda name: (
+        f"{name}  —  ({officer_stats_map[name][0]} Overdue | "
+        f"{officer_stats_map[name][1]} ETS / "
+        f"{officer_stats_map[name][2]} Total | {officer_stats_map[name][3]:.1f}%)"
+    ),
+)
+
+if selected_officer:
+    if overdue_full_df.empty:
+        st.info("No overdue works found across the 23 worksheets.")
+    else:
+        officer_overdue_df = overdue_full_df[
+            overdue_full_df[full_filter_col] == selected_officer
+        ].copy()
+
+        if selected_division != ALL_OPTION:
+            officer_overdue_df = officer_overdue_df[
+                officer_overdue_df["_division_name"] == selected_division
             ].copy()
 
-            if selected_division != ALL_OPTION:
-                officer_overdue_df = officer_overdue_df[
-                    officer_overdue_df["_division_name"] == selected_division
-                ].copy()
+        if selected_subdivision != ALL_OPTION:
+            officer_overdue_df = officer_overdue_df[
+                officer_overdue_df["_subdivision_name"] == selected_subdivision
+            ].copy()
 
-            if selected_subdivision != ALL_OPTION:
-                officer_overdue_df = officer_overdue_df[
-                    officer_overdue_df["_subdivision_name"] == selected_subdivision
-                ].copy()
+        if selected_ee != ALL_OPTION:
+            officer_overdue_df = officer_overdue_df[
+                officer_overdue_df["_ee_name"] == selected_ee
+            ].copy()
 
-            if selected_ee != ALL_OPTION:
-                officer_overdue_df = officer_overdue_df[
-                    officer_overdue_df["_ee_name"] == selected_ee
-                ].copy()
+        if selected_ta != ALL_OPTION:
+            officer_overdue_df = officer_overdue_df[
+                officer_overdue_df["_ta_name"] == selected_ta
+            ].copy()
 
-            if selected_ta != ALL_OPTION:
-                officer_overdue_df = officer_overdue_df[
-                    officer_overdue_df["_ta_name"] == selected_ta
-                ].copy()
+        if selected_as != ALL_OPTION:
+            officer_overdue_df = officer_overdue_df[
+                officer_overdue_df["_as_name"] == selected_as
+            ].copy()
 
-            if selected_as != ALL_OPTION:
-                officer_overdue_df = officer_overdue_df[
-                    officer_overdue_df["_as_name"] == selected_as
-                ].copy()
+        opposite_officer_col = (
+            COL_AEE_KN if view_choice == LABEL_AE_EN else COL_SO_KN
+        )
+        opposite_officer_en = (
+            LABEL_AEE_EN if view_choice == LABEL_AE_EN else LABEL_AE_EN
+        )
 
-            opposite_officer_col = (
-                COL_AEE_KN if view_choice == LABEL_AE_EN else COL_SO_KN
-            )
-            opposite_officer_en = (
-                LABEL_AEE_EN if view_choice == LABEL_AE_EN else LABEL_AE_EN
-            )
-
-            curated_cols = [
-                COL_WORK_NAME_KN,
-                COL_DIV_KN,
-                COL_SUBDIV_KN,
-                opposite_officer_col,
-                LABEL_TA_EN,
-                LABEL_AS_EN,
-                LABEL_EE_EN,
-                COL_START_DATE_KN,
-                COL_TARGET_DATE_KN,
-                "Overdue By",
-                COL_HOA_KN,
-            ]
-
-            officer_overdue_df = officer_overdue_df[curated_cols].reset_index(
-                drop=True
-            )
-
-            rename_map = {
-                COL_WORK_NAME_KN: "Work Name",
-                COL_DIV_KN: LABEL_DIV_EN,
-                COL_SUBDIV_KN: LABEL_SUBDIV_EN,
-                opposite_officer_col: opposite_officer_en,
-                COL_START_DATE_KN: "Start Date",
-                COL_TARGET_DATE_KN: "Target Date",
-                COL_HOA_KN: "H.O.A.",
-            }
-            officer_overdue_df.rename(columns=rename_map, inplace=True)
-
-            officer_overdue_df.insert(
-                0, "Sl. No.", range(1, len(officer_overdue_df) + 1)
-            )
-
-            if officer_overdue_df.empty:
-                st.success(
-                    f"🎉 **{selected_officer}** has **0** overdue works in **{filter_scope_label}**!"
-                )
-            else:
-                hoa_involved = officer_overdue_df["H.O.A."].unique().tolist()
-                st.markdown(
-                    f"**Selected {view_choice}:** `{selected_officer}` &nbsp;|&nbsp; "
-                    f"**Total Overdue Works:** `{len(officer_overdue_df)}` &nbsp;|&nbsp; "
-                    f"**Account Heads (H.O.A.):** `{', '.join(hoa_involved)}`"
-                )
-
-                safe_name = (
-                    re.sub(r"[^\w\-]+", "_", selected_officer).strip("_")
-                    or "Unassigned"
-                )
-                safe_div = (
-                    re.sub(r"[^\w\-]+", "_", selected_division).strip("_")
-                    or "All_Divisions"
-                )
-                excel_bytes = convert_df_to_excel_bytes(officer_overdue_df)
-                csv_bytes = officer_overdue_df.to_csv(index=False).encode("utf-8-sig")
-
-                dl_col1, dl_col2, _ = st.columns([1.5, 1.5, 5])
-                with dl_col1:
-                    st.download_button(
-                        label="📥 Download Excel (.xlsx)",
-                        data=excel_bytes,
-                        file_name=f"Overdue_Works_{safe_div}_{safe_name}_{today_str}.xlsx",
-                        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                        use_container_width=True,
-                    )
-                with dl_col2:
-                    st.download_button(
-                        label="📥 Download CSV (.csv)",
-                        data=csv_bytes,
-                        file_name=f"Overdue_Works_{safe_div}_{safe_name}_{today_str}.csv",
-                        mime="text/csv",
-                        use_container_width=True,
-                    )
-
-                st.markdown(
-                    render_ce_overdue_html_table(officer_overdue_df),
-                    unsafe_allow_html=True,
-                )
-
-    st.divider()
-
-    # =========================================================================
-    # SECTION 3: OFFICER-WISE SUMMARY TABLE (ENGLISH)
-    # =========================================================================
-    st.markdown(
-        clean_html(
-            f"""
-            <div class="exec-section-banner">
-                <div class="exec-section-title">📋 Officer-Wise Summary Table</div>
-                <div class="exec-scope-badge">{html.escape(filter_scope_label)}</div>
-            </div>
-            """
-        ),
-        unsafe_allow_html=True,
-    )
-    display_table = summary_df[
-        [
-            view_choice,
-            "total_works",
-            "overdue_works",
-            "ets_works",
-            "rest_works",
-            "ongoing_p_works",
-            "overdue_pct",
+        curated_cols = [
+            COL_WORK_NAME_KN,
+            COL_DIV_KN,
+            COL_SUBDIV_KN,
+            opposite_officer_col,
+            LABEL_TA_EN,
+            LABEL_AS_EN,
+            LABEL_EE_EN,
+            COL_START_DATE_KN,
+            COL_TARGET_DATE_KN,
+            "Overdue By",
+            COL_HOA_KN,
         ]
-    ].rename(
-        columns={
-            "total_works": "Total Works Assigned",
-            "overdue_works": "Overdue Works ('P')",
-            "ets_works": "ETS Works ('ETS')",
-            "rest_works": "Rest of Works",
-            "ongoing_p_works": "Ongoing Works ('P')",
-            "overdue_pct": "Overdue %",
+
+        officer_overdue_df = officer_overdue_df[curated_cols].reset_index(drop=True)
+
+        rename_map = {
+            COL_WORK_NAME_KN: "Work Name",
+            COL_DIV_KN: LABEL_DIV_EN,
+            COL_SUBDIV_KN: LABEL_SUBDIV_EN,
+            opposite_officer_col: opposite_officer_en,
+            COL_START_DATE_KN: "Start Date",
+            COL_TARGET_DATE_KN: "Target Date",
+            COL_HOA_KN: "H.O.A.",
         }
-    )
-    display_table.index = display_table.index + 1
+        officer_overdue_df.rename(columns=rename_map, inplace=True)
 
-    st.dataframe(
-        display_table.style.format({"Overdue %": "{:.1f}%"}),
-        use_container_width=True,
-    )
+        officer_overdue_df.insert(0, "Sl. No.", range(1, len(officer_overdue_df) + 1))
 
-    with st.expander("🔍 Inspect Worksheet Loading Status (23 Target Sheets)"):
-        st.dataframe(diag_df, use_container_width=True)
+        if officer_overdue_df.empty:
+            st.success(
+                f"🎉 **{selected_officer}** has **0** overdue works in **{filter_scope_label}**!"
+            )
+        else:
+            hoa_involved = officer_overdue_df["H.O.A."].unique().tolist()
+            st.markdown(
+                f"**Selected {view_choice}:** `{selected_officer}` &nbsp;|&nbsp; "
+                f"**Total Overdue Works:** `{len(officer_overdue_df)}` &nbsp;|&nbsp; "
+                f"**Account Heads (H.O.A.):** `{', '.join(hoa_involved)}`"
+            )
 
-    st.error("🔍 DEBUG: Find Unassigned / Missing Data Works (Across All Columns)")
+            safe_name = (
+                re.sub(r"[^\w\-]+", "_", selected_officer).strip("_") or "Unassigned"
+            )
+            safe_div = (
+                re.sub(r"[^\w\-]+", "_", selected_division).strip("_")
+                or "All_Divisions"
+            )
+            excel_bytes = convert_df_to_excel_bytes(officer_overdue_df)
+            csv_bytes = officer_overdue_df.to_csv(index=False).encode("utf-8-sig")
 
-    empty_markers = {UNASSIGNED_LABEL, UNSPECIFIED_LABEL, "", "-"}
+            dl_col1, dl_col2, _ = st.columns([1.5, 1.5, 5])
+            with dl_col1:
+                st.download_button(
+                    label="📥 Download Excel (.xlsx)",
+                    data=excel_bytes,
+                    file_name=f"Overdue_Works_{safe_div}_{safe_name}_{today_str}.xlsx",
+                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                    use_container_width=True,
+                )
+            with dl_col2:
+                st.download_button(
+                    label="📥 Download CSV (.csv)",
+                    data=csv_bytes,
+                    file_name=f"Overdue_Works_{safe_div}_{safe_name}_{today_str}.csv",
+                    mime="text/csv",
+                    use_container_width=True,
+                )
 
-    missing_any_mask = (
-        filtered_master_df["subdivision_name"].isin(empty_markers)
-        | filtered_master_df["so_name"].isin(empty_markers)
-        | filtered_master_df["aee_name"].isin(empty_markers)
-        | filtered_master_df["ee_name"].isin(empty_markers)
-        | filtered_master_df["ta_name"].isin(empty_markers)
-        | filtered_master_df["as_name"].isin(empty_markers)
-    )
+            st.markdown(
+                render_ce_overdue_html_table(officer_overdue_df),
+                unsafe_allow_html=True,
+            )
 
-    debug_df = filtered_master_df[missing_any_mask].copy()
+st.divider()
 
-    if debug_df.empty:
-        st.success("🎉 No unassigned or missing fields found with current filters!")
-    else:
-        def _list_missing_cols(row):
-            missing = []
-            if row["subdivision_name"] in empty_markers:
-                missing.append("Sub-division")
-            if row["so_name"] in empty_markers:
-                missing.append("AE")
-            if row["aee_name"] in empty_markers:
-                missing.append("AEE")
-            if row["ee_name"] in empty_markers:
-                missing.append("EE")
-            if row["ta_name"] in empty_markers:
-                missing.append("TA")
-            if row["as_name"] in empty_markers:
-                missing.append("AS")
-            return ", ".join(missing)
+# =============================================================================
+# SECTION 3: OFFICER-WISE SUMMARY TABLE (ENGLISH)
+# =============================================================================
+st.markdown(
+    clean_html(
+        f"""
+        <div class="exec-section-banner">
+            <div class="exec-section-title">📋 Officer-Wise Summary Table</div>
+            <div class="exec-scope-badge">{html.escape(filter_scope_label)}</div>
+        </div>
+        """
+    ),
+    unsafe_allow_html=True,
+)
+display_table = summary_df[
+    [
+        view_choice,
+        "total_works",
+        "overdue_works",
+        "ets_works",
+        "rest_works",
+        "ongoing_p_works",
+        "overdue_pct",
+    ]
+].rename(
+    columns={
+        "total_works": "Total Works Assigned",
+        "overdue_works": "Overdue Works ('P')",
+        "ets_works": "ETS Works ('ETS')",
+        "rest_works": "Rest of Works",
+        "ongoing_p_works": "Ongoing Works ('P')",
+        "overdue_pct": "Overdue %",
+    }
+)
+display_table.index = display_table.index + 1
 
-        debug_df["⚠️ Missing Column(s)"] = debug_df.apply(_list_missing_cols, axis=1)
+st.dataframe(
+    display_table.style.format({"Overdue %": "{:.1f}%"}),
+    use_container_width=True,
+)
 
-        desired_debug_cols = [
-            "sheet_name",
-            "⚠️ Missing Column(s)",
-            "ಕಾಮಗಾರಿ ಹೆಸರು",
-            "division_name",
-            "subdivision_name",
-            "so_name",
-            "aee_name",
-            "ee_name",
-            "ta_name",
-            "as_name",
-            "status_raw",
-        ]
-        available_debug_cols = [
-            c for c in desired_debug_cols if c in debug_df.columns
-        ]
-
-        st.caption(
-            f"Showing **{len(debug_df):,}** work(s) where at least one column (Sub-division, AE, AEE, EE, TA, or AS) is missing:"
-        )
-        st.dataframe(
-            debug_df[available_debug_cols],
-            use_container_width=True,
-        )
+with st.expander("🔍 Inspect Worksheet Loading Status (23 Target Sheets)"):
+    st.dataframe(diag_df, use_container_width=True)
 
 inject_scroll_hud_graphics(enabled=show_scroll_hud)
+
+st.error("🔍 DEBUG: Find Unassigned / Missing Data Works (Across All Columns)")
+
+empty_markers = {UNASSIGNED_LABEL, UNSPECIFIED_LABEL, "", "-"}
+
+missing_any_mask = (
+    filtered_master_df["subdivision_name"].isin(empty_markers)
+    | filtered_master_df["so_name"].isin(empty_markers)
+    | filtered_master_df["aee_name"].isin(empty_markers)
+    | filtered_master_df["ee_name"].isin(empty_markers)
+    | filtered_master_df["ta_name"].isin(empty_markers)
+    | filtered_master_df["as_name"].isin(empty_markers)
+)
+
+debug_df = filtered_master_df[missing_any_mask].copy()
+
+if debug_df.empty:
+    st.success("🎉 No unassigned or missing fields found with current filters!")
+else:
+    def _list_missing_cols(row):
+        missing = []
+        if row["subdivision_name"] in empty_markers:
+            missing.append("Sub-division")
+        if row["so_name"] in empty_markers:
+            missing.append("AE")
+        if row["aee_name"] in empty_markers:
+            missing.append("AEE")
+        if row["ee_name"] in empty_markers:
+            missing.append("EE")
+        if row["ta_name"] in empty_markers:
+            missing.append("TA")
+        if row["as_name"] in empty_markers:
+            missing.append("AS")
+        return ", ".join(missing)
+
+    debug_df["⚠️ Missing Column(s)"] = debug_df.apply(_list_missing_cols, axis=1)
+
+    desired_debug_cols = [
+        "sheet_name",
+        "⚠️ Missing Column(s)",
+        "ಕಾಮಗಾರಿ ಹೆಸರು",
+        "division_name",
+        "subdivision_name",
+        "so_name",
+        "aee_name",
+        "ee_name",
+        "ta_name",
+        "as_name",
+        "status_raw",
+    ]
+    available_debug_cols = [c for c in desired_debug_cols if c in debug_df.columns]
+
+    st.caption(
+        f"Showing **{len(debug_df):,}** work(s) where at least one column (Sub-division, AE, AEE, EE, TA, or AS) is missing:"
+    )
+    st.dataframe(
+        debug_df[available_debug_cols],
+        use_container_width=True,
+    )
